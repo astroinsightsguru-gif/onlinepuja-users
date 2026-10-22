@@ -45,7 +45,9 @@ class ManagerApiController extends Controller
             $totalOrders = max($pujaOrderCount, 27);
 
             // Active astrologers
-            $activeAstrologers = Astrologer::where('isOnline', 1)->count();
+            $activeAstrologers = Astrologer::where('callStatus', 'Online')
+                ->orWhere('chatStatus', 'Online')
+                ->count();
             if ($activeAstrologers === 0) {
                 $activeAstrologers = max(Astrologer::where('isVerified', 1)->count(), 14);
             }
@@ -213,29 +215,34 @@ class ManagerApiController extends Controller
     {
         try {
             $sankalpsDb = DB::table('puja_orders')
-                ->orderBy('id', 'DESC')
+                ->leftJoin('pujas', 'puja_orders.puja_id', '=', 'pujas.id')
+                ->select('puja_orders.*', 'pujas.puja_place as puja_place', 'pujas.puja_title as fallback_puja_title')
+                ->orderBy('puja_orders.id', 'DESC')
                 ->limit(30)
                 ->get();
 
             $sankalps = [];
             foreach ($sankalpsDb as $ord) {
                 $status = 'Video Pending';
-                if (!empty($ord->puja_video) && !empty($ord->puja_order_status) && $ord->puja_order_status === 'Completed') {
+                if (!empty($ord->puja_video) && !empty($ord->puja_order_status) && strtolower($ord->puja_order_status) === 'completed') {
                     $status = 'Fulfilled';
                 } elseif (!empty($ord->puja_video)) {
                     $status = 'Prasad Dispatch Pending';
                 }
 
+                $rawGotra = !empty($ord->sankalp_gotra) ? $ord->sankalp_gotra : ($ord->address_landmark ?: 'Kashyap');
+                $gotraFormatted = stripos($rawGotra, 'gotra') !== false ? $rawGotra : $rawGotra . ' Gotra';
+
                 $sankalps[] = [
                     'id'       => '#OP-PUJA-' . $ord->id,
                     'orderId'  => (int)$ord->id,
-                    'devotee'  => $ord->address_name ?: 'Devotee',
-                    'gotra'    => ($ord->address_landmark ?: 'Kashyap') . ' Gotra',
-                    'puja'     => $ord->puja_name ?: 'Vedic Puja',
-                    'temple'   => $ord->puja_place ?: 'Dashashwamedh Ghat, Kashi',
+                    'devotee'  => !empty($ord->devotee_names) ? $ord->devotee_names : ($ord->address_name ?: 'Devotee'),
+                    'gotra'    => $gotraFormatted,
+                    'puja'     => $ord->puja_name ?: (!empty($ord->fallback_puja_title) ? $ord->fallback_puja_title : 'Vedic Puja'),
+                    'temple'   => !empty($ord->puja_place) ? $ord->puja_place : 'Dashashwamedh Ghat, Kashi',
                     'amount'   => '₹' . number_format($ord->order_total_price ?: 1500),
                     'videoUrl' => $ord->puja_video ?: '',
-                    'awb'      => '',
+                    'awb'      => $ord->prasad_tracking_number ?: '',
                     'status'   => $status,
                     'date'     => $ord->created_at ? Carbon::parse($ord->created_at)->diffForHumans() : 'Recent',
                 ];
