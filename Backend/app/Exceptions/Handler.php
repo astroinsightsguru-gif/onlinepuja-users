@@ -47,6 +47,12 @@ class Handler extends ExceptionHandler
     } 
 	public function render($request, Throwable $e)
     {
+        if ($e instanceof \Illuminate\Contracts\Encryption\DecryptException) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['status' => 401, 'message' => 'Session expired. Please log in again.'], 401);
+            }
+            return redirect('/login')->withCookie(\Illuminate\Support\Facades\Cookie::forget(config('session.cookie')));
+        }
         if ($this->isHttpException($e)) {
             switch ($e->getStatusCode()) {
 
