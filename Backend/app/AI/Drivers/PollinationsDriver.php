@@ -31,7 +31,7 @@ class PollinationsDriver implements TextProvider
         $fail = fn (string $e) => ['ok' => false, 'text' => '', 'model' => 'openai', 'usage' => [], 'error' => $e];
 
         try {
-            $res = Http::asJson()->timeout(10)
+            $res = Http::asJson()->timeout((int) ($args['timeout'] ?? 60))
                 ->post('https://text.pollinations.ai/openai', [
                     'model'      => $args['model'] ?? 'openai-fast',
                     'messages'   => [
@@ -92,3 +92,4 @@ class PollinationsDriver implements TextProvider
         ];
     }
 }
+

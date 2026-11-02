@@ -72,7 +72,7 @@ class OmniRouteDriver implements TextProvider, ImageProvider
 
         try {
             $res = Http::asJson()->withToken($this->key())
-                ->timeout(90)
+                ->timeout((int) ($args['timeout'] ?? 120))
                 ->post($this->base().'/chat/completions', $payload);
         } catch (\Throwable $e) {
             return $fail($e->getMessage());
@@ -149,15 +149,19 @@ class OmniRouteDriver implements TextProvider, ImageProvider
             return [];
         }
 
-        try {
-            $res = Http::withToken($this->key())->timeout(15)->get($this->base().'/models');
-        } catch (\Throwable $e) {
-            return [];
+        static $cachedData = null;
+        if ($cachedData === null) {
+            try {
+                $res = Http::withToken($this->key())->timeout(20)->get($this->base().'/models');
+                $cachedData = (array) $res->json('data');
+            } catch (\Throwable $e) {
+                $cachedData = [];
+            }
         }
 
         $out = [];
 
-        foreach ((array) $res->json('data') as $m) {
+        foreach ($cachedData as $m) {
             if ($id = $m['id'] ?? null) {
                 $idLower = strtolower($id);
 
@@ -171,7 +175,7 @@ class OmniRouteDriver implements TextProvider, ImageProvider
                     str_starts_with($idLower, 'wan-ai/')
                 ) && !str_contains($idLower, 'inkling');
 
-                // Precise image classification (reject vision chat models)
+                // Precise image classification (include Gemini Flash Image, FLUX, Imagen, Recraft, SDXL)
                 $isImage = (
                     str_contains($idLower, 'text-to-image') ||
                     str_contains($idLower, 'flux') ||
@@ -180,8 +184,10 @@ class OmniRouteDriver implements TextProvider, ImageProvider
                     str_contains($idLower, 'sdxl') ||
                     str_contains($idLower, 'stable-diffusion') ||
                     str_contains($idLower, 'recraft') ||
-                    str_contains($idLower, 'imagen')
-                ) && !str_contains($idLower, 'flash-image');
+                    str_contains($idLower, 'imagen') ||
+                    $idLower === 'gemini-3.1-flash-image' ||
+                    (str_contains($idLower, 'gemini') && str_contains($idLower, 'image'))
+                );
 
                 if ($kind === 'video' && $isVideo) {
                     $out[] = ['id' => $id, 'label' => $m['name'] ?? $id];

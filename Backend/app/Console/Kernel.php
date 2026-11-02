@@ -46,16 +46,64 @@ class Kernel extends ConsoleKernel
             ->name('seo_research')
             ->withoutOverlapping();
 
-        // 🧠 SELF-GROWING: AI content drafts (daily)
-        $schedule->command('content:generate --limit=2')
-            ->dailyAt('05:00')
-            ->name('content_generate')
+        // 🧠 SELF-GROWING: Content ramp - advance daily target gated by keyword headroom (daily 04:30 AM)
+        $schedule->command('content:ramp')
+            ->dailyAt('04:30')
+            ->name('content_ramp')
             ->withoutOverlapping();
 
-        // 🚀 AUTONOMOUS BLOG PUBLISHING: Publish approved/drafted articles to live blogs table with images & SEO sitemaps
+        // 🧠 SELF-GROWING: AI content drafts (3 slots: morning 04:45, midday 11:30, evening 17:30)
+        $schedule->command('content:generate --limit=2')
+            ->dailyAt('04:45')
+            ->name('content_generate_morning')
+            ->withoutOverlapping();
+
+        $schedule->command('content:generate --limit=2')
+            ->dailyAt('11:30')
+            ->name('content_generate_midday')
+            ->withoutOverlapping();
+
+        $schedule->command('content:generate --limit=2')
+            ->dailyAt('17:30')
+            ->name('content_generate_evening')
+            ->withoutOverlapping();
+
+        // 🚀 AUTONOMOUS BLOG PUBLISHING: Publish approved articles (3-6 blogs/day safely spaced)
+        // Morning Slot (07:00 AM)
         $schedule->command('content:publish --auto --limit=2')
             ->dailyAt('07:00')
-            ->name('content_publish_auto')
+            ->name('content_publish_morning')
+            ->withoutOverlapping();
+
+        // Midday Slot (01:00 PM)
+        $schedule->command('content:publish --auto --limit=2')
+            ->dailyAt('13:00')
+            ->name('content_publish_midday')
+            ->withoutOverlapping();
+
+        // Evening Slot (07:00 PM)
+        $schedule->command('content:publish --auto --limit=2')
+            ->dailyAt('19:00')
+            ->name('content_publish_evening')
+            ->withoutOverlapping();
+
+        // 📱 BLOG SOCIAL FANOUT: Promote published articles to Facebook & Instagram with Dual-App CTAs
+        // Morning Slot Fanout (07:20 AM)
+        $schedule->command('social:plan-blogs --limit=2 --horizon=14')
+            ->dailyAt('07:20')
+            ->name('social_plan_blogs_morning')
+            ->withoutOverlapping();
+
+        // Midday Slot Fanout (01:20 PM)
+        $schedule->command('social:plan-blogs --limit=2 --horizon=14')
+            ->dailyAt('13:20')
+            ->name('social_plan_blogs_midday')
+            ->withoutOverlapping();
+
+        // Evening Slot Fanout (07:20 PM)
+        $schedule->command('social:plan-blogs --limit=2 --horizon=14')
+            ->dailyAt('19:20')
+            ->name('social_plan_blogs_evening')
             ->withoutOverlapping();
 
         // 💰 REVENUE & SALES: Recover Abandoned Puja Bookings via Respectful WhatsApp Sequence (T+15m / T+2h)
@@ -164,6 +212,12 @@ class Kernel extends ConsoleKernel
             ->name('social_publish_queue')
             ->withoutOverlapping();
 
+        // 🕉️ FESTIVAL SCANNER: Scan upcoming Hindu festivals and queue content plans (Daily 00:30 AM)
+        $schedule->command('social:schedule --days=60')
+            ->dailyAt('00:30')
+            ->name('social_schedule_festivals')
+            ->withoutOverlapping();
+
         // 🌺 SOCIAL CONTENT FANOUT: Turn approved plans into queued posts (Daily 01:00 AM)
         $schedule->command('social:plan')
             ->dailyAt('01:00')
@@ -197,10 +251,15 @@ class Kernel extends ConsoleKernel
             ->name('agent_run_festival')
             ->withoutOverlapping();
 
-        // 🌐 PROGRAMMATIC SEO: Generate XML Sitemaps & Ping Google/Bing (Daily 02:00 AM)
+        // 🌐 PROGRAMMATIC SEO: Generate XML Sitemaps & Ping Google/Bing (Twice Daily: 02:00 AM & 20:00 PM)
         $schedule->command('sitemap:generate --ping')
             ->dailyAt('02:00')
-            ->name('sitemap_generate')
+            ->name('sitemap_generate_night')
+            ->withoutOverlapping();
+
+        $schedule->command('sitemap:generate --ping')
+            ->dailyAt('20:00')
+            ->name('sitemap_generate_evening')
             ->withoutOverlapping();
     }
 

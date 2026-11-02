@@ -51,7 +51,7 @@ use App\Http\Controllers\API\User\TokenGeneratorController;
 use App\Http\Controllers\API\User\UserController;
 use App\Http\Controllers\API\Partner\RegistrationController;
 use App\Http\Controllers\API\User\UserNotificationController;
-Route::post('partner/register', [Partner\RegistrationController::class, 'register']);
+Route::post('partner/register', [RegistrationController::class, 'register']);
 use App\Http\Controllers\API\User\UserOrderController;
 use App\Http\Controllers\API\User\UserReportController;
 use App\Http\Controllers\API\User\UserReviewController;
@@ -71,11 +71,6 @@ use App\Http\Controllers\API\User\TrainingVideoController;
 use App\Http\Controllers\Admin\SendScheduledNotificationsController;
 
 
-$session = new Session();
-$token = $session->get('token');
-header('Authorization:Bearer '.$token);
-// header('Content-Type:application/json');
-header('Accept:application/json');
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -110,16 +105,23 @@ Route::group(['middleware' => 'api'], function () {
 //================================================================ai-astrologer================================================================
 Route::get('ai-astrologer-list',[ApiAiAstrologerController::class, 'aiAstrologerList'])->name('ai.astrologer.list');
 Route::post('ai-chat-button',[ApiAiAstrologerController::class, 'aiChatButton'])->name('ai.chat.button');
-Route::get('ai-chatting-page',[ApiAiAstrologerController::class, 'aiChattingPage'])->name('ai.chatting.page');
-Route::post('/store-ai-chat-history', [ApiAiAstrologerController::class, 'storeAiChatHistory'])->name('store.ai.chat.history');
+Route::get('ai-chatting-page',[ApiAiAstrologerController::class, 'aiChattingPage'])->name('api.ai.chatting.page');
+Route::post('/store-ai-chat-history', [ApiAiAstrologerController::class, 'storeAiChatHistory'])->name('api.store.ai.chat.history');
 
 Route::post('/master-ai-response', [ApiMasterAiChatBotController::class, 'masterAiResponse'])->name('master.ai.response');
 Route::get('check-user-balance-api',[ApiMasterAiChatBotController::class, 'checkUserBalanceApi'])->name('check.user.balance.api');
 Route::get('master-chat-page-api',[ApiMasterAiChatBotController::class, 'masterChatPageApi'])->name('master.chat.page.api');
 Route::post('/store-master-ai-chat-history-api', [ApiMasterAiChatBotController::class, 'storeMasterAiChatHistoryApi'])->name('store.master.ai.chat.history.api');
-Route::post('/ask-master', [ApiChatGPTController::class, 'askMaster'])->name('ask.master');
+Route::post('/ask-master', [ApiChatGPTController::class, 'askMaster'])->name('api.ask.master');
 Route::post('/ai/generate-image', [ApiChatGPTController::class, 'generateImage'])->name('ai.generate.image');
 Route::post('/ai/generate-video', [ApiChatGPTController::class, 'generateVideo'])->name('ai.generate.video');
+
+Route::match(['get', 'post'], '/astrologer/prescriptions', [ApiAiAstrologerController::class, 'getPrescriptions'])->name('api.astrologer.prescriptions');
+Route::match(['get', 'post'], '/astrologer/prescriptions/pujas', [ApiAiAstrologerController::class, 'getPrescriptionPujas'])->name('api.astrologer.prescriptions.pujas');
+Route::post('/astrologer/prescribe', [ApiAiAstrologerController::class, 'prescribeRemedy'])->name('api.astrologer.prescribe');
+Route::match(['get', 'post'], '/astrologer/ai-twin/status', [ApiAiAstrologerController::class, 'getAiTwinStatus'])->name('api.astrologer.ai-twin.status');
+Route::post('/astrologer/ai-twin/setup', [ApiAiAstrologerController::class, 'setupAiTwin'])->name('api.astrologer.ai-twin.setup');
+Route::post('/ai-astrologer/chat', [ApiMasterAiChatBotController::class, 'masterAiResponse'])->name('api.ai-astrologer.chat');
 
 //================================================================ai-astrologer================================================================
 
@@ -421,7 +423,7 @@ Route::post('liveAstrologer/getUpcomingAstrologer', [LiveAstroController::class,
 Route::post('searchLiveAstro', [LiveAstroController::class, 'searchLiveAstrologer']);
 Route::post('/schedule-live', [LiveAstroController::class, 'addLiveSchedule'])->name('scheduleLive.store');
 Route::get('/scheduleLive/list', [LiveAstroController::class, 'scheduleList'])->name('scheduleLive.list');
-Route::post('/schedule/delete', [LiveAstroController::class, 'scheduleDelete'])->name('schedule.delete');
+Route::post('/schedule/delete', [LiveAstroController::class, 'scheduleDelete'])->name('api.schedule.delete');
 
 
 Route::post('userReminder', [LiveAstroController::class, 'userReminder']);
@@ -478,8 +480,8 @@ Route::post('addHoroscopeFeedback', [DailyHoroscopeController::class, 'addHorosc
 Route::post('livekit/token', [LiveKitController::class, 'token'])->name('api.livekit.token');
 
 // pages
-Route::post('privacy-policy', [DashboardController::class, 'privacyPolicy'])->name('privacyPolicy');
-Route::post('tnc', [DashboardController::class, 'termscond'])->name('termscond');
+Route::post('privacy-policy', [DashboardController::class, 'privacyPolicy'])->name('api.privacyPolicy');
+Route::post('tnc', [DashboardController::class, 'termscond'])->name('api.termscond');
 
 
 // Astrologer Stories
@@ -596,6 +598,7 @@ Route::prefix('manager')->group(function () {
     Route::post('radar', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getLiveRadar']);
     Route::get('banners', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getBanners']);
     Route::post('banners', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'saveBanner']);
+    Route::post('puja/{id}/price', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'updatePujaPrice']);
     Route::get('sankalps', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPendingSankalps']);
     Route::post('sankalp/fulfill', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'fulfillSankalp']);
     Route::post('growth/run-action', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'triggerGrowthAction']);
@@ -631,4 +634,58 @@ Route::prefix('manager')->group(function () {
 
     // ðŸ›• Master Bookings & Revenue Ledger
     Route::get('bookings', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getAllBookings']);
+
+    // Contact Management (Devotees & Astrologers)
+    Route::get('contacts', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getContacts']);
+    Route::get('contacts/{id}', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getContactDetail']);
+
+    // WhatsApp Central Inbox (Evolution API v2)
+    Route::get('whatsapp/status', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getWhatsappStatus']);
+    Route::get('whatsapp/threads', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getWhatsappThreads']);
+    Route::get('whatsapp/messages/{jid}', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getWhatsappMessages'])->where('jid', '.*');
+    Route::post('whatsapp/send', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'sendWhatsappMessage']);
+    Route::post('whatsapp/toggle-ai', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'toggleWhatsappAi']);
+    Route::post('whatsapp/webhook', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'handleWhatsappWebhook']);
+    Route::get('whatsapp/pair-code', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getWhatsappPairingCode']);
+    Route::post('whatsapp/restart', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'restartWhatsappInstance']);
+
+    // Lead Pipeline Management
+    Route::get('leads', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getLeads']);
+    Route::post('leads', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'createLead']);
+    Route::post('leads/{id}/stage', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'updateLeadStage']);
+    Route::post('leads/{id}/note', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'addLeadNote']);
+
+    // Marketing Automation Campaigns
+    Route::get('campaigns', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getCampaignAutomations']);
+    Route::post('campaigns/trigger', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'triggerCampaignAutomation']);
 });
+
+
+// Autonomous Free GPU Worker API (Kaggle Dual-T4 / Serverless)
+Route::prefix('v1/ai-worker')->group(function () {
+    Route::get('ping', [\App\Http\Controllers\API\AiWorkerController::class, 'ping']);
+    Route::get('jobs', [\App\Http\Controllers\API\AiWorkerController::class, 'jobs']);
+    Route::post('upload', [\App\Http\Controllers\API\AiWorkerController::class, 'upload']);
+});
+
+// Test / Mock Webhook Endpoints for Social Dispatch verification
+Route::match(['get', 'post'], 'dummy-webhook', function (\Illuminate\Http\Request $request) {
+    return response()->json([
+        'ok' => true,
+        'status' => 'success',
+        'message' => 'OnlinePuja Test Social Webhook received payload successfully!',
+        'received_at' => now()->toIso8601String(),
+        'payload_preview' => $request->all(),
+    ]);
+});
+
+Route::match(['get', 'post'], 'social/webhook', function (\Illuminate\Http\Request $request) {
+    return response()->json([
+        'ok' => true,
+        'status' => 'success',
+        'message' => 'OnlinePuja Social Webhook listener active!',
+        'received_at' => now()->toIso8601String(),
+        'payload_preview' => $request->all(),
+    ]);
+});
+

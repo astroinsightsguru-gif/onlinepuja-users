@@ -234,10 +234,18 @@ class GrowthOsController extends Controller
 
         try {
             $payload = json_decode((string) $issue->revert_payload, true);
-            if (! empty($payload['table']) && ! empty($payload['id']) && ! empty($payload['field'])) {
-                DB::table($payload['table'])
-                    ->where('id', $payload['id'])
-                    ->update([$payload['field'] => $payload['old_value'] ?? '']);
+            if (! empty($payload['table'])) {
+                if (! empty($payload['key']) && ! empty($payload['changes']) && is_array($payload['changes'])) {
+                    $q = DB::table($payload['table']);
+                    foreach ($payload['key'] as $k => $v) {
+                        $q->where($k, $v);
+                    }
+                    $q->update($payload['changes']);
+                } elseif (! empty($payload['id']) && ! empty($payload['field'])) {
+                    DB::table($payload['table'])
+                        ->where('id', $payload['id'])
+                        ->update([$payload['field'] => $payload['old_value'] ?? '']);
+                }
             }
 
             DB::table('seo_issues')->where('id', $id)->update([
@@ -415,6 +423,11 @@ class GrowthOsController extends Controller
         if ($request->has('autopilot_confidence_floor')) {
             Vault::set('autopilot_confidence_floor', $request->input('autopilot_confidence_floor'));
         }
+        Vault::set('loop_gochar_enabled', $request->has('autopilot_gochar_enabled') ? '1' : '0');
+        Vault::set('loop_panchang_enabled', $request->has('autopilot_panchang_enabled') ? '1' : '0');
+        Vault::set('loop_festival_enabled', $request->has('autopilot_festival_enabled') ? '1' : '0');
+        Vault::set('loop_twin_enabled', ($request->has('autopilot_twin_fallback_enabled') || $request->has('autopilot_twin_enabled')) ? '1' : '0');
+        Vault::set('loop_churn_enabled', $request->has('autopilot_churn_enabled') ? '1' : '0');
         return back()->with('success', 'Autopilot settings updated successfully.');
     }
 
@@ -489,6 +502,8 @@ class GrowthOsController extends Controller
             'video_logo_enabled', 'video_logo_path', 'video_logo_position',
             'video_brand_title', 'video_brand_tagline', 'video_brand_phone', 'video_brand_cta',
             'video_audio_track',
+            'meta_pixel_id', 'meta_capi_token', 'ga4_measurement_id', 'gtm_container_id',
+            'google_ads_id', 'google_ads_label', 'social_webhook_url',
         ];
 
         foreach ($keys as $key) {
@@ -571,6 +586,7 @@ class GrowthOsController extends Controller
                         'data'     => $blogRes,
                     ]);
 
+                case 'dispatch_festival_campaign':
                 case 'launch_festival_campaign':
                     $festEngine = app(\App\Services\FestivalCampaignEngine::class);
                     $festName = $request->input('festival', 'Dev Deepawali Varanasi');
@@ -607,6 +623,7 @@ class GrowthOsController extends Controller
                         'results' => $importRes,
                     ]);
 
+                case 'radar_b2b_search':
                 case 'radar_google_places':
                     $leadService = app(\App\Services\B2bLeadService::class);
                     $city = $request->input('city', 'Mumbai');
@@ -664,7 +681,7 @@ class GrowthOsController extends Controller
                     ]);
 
                 case 'test_branded_reel':
-                    $aiEngine = app(\App\services\AiEngineService::class);
+                    $aiEngine = app(\App\Services\AiEngineService::class);
                     $prompt = $request->input('prompt', 'Sacred Lord Shiva Rudrabhishek with bilva leaves in Varanasi');
                     $title = $request->input('title', Vault::get('video_brand_title', 'OnlinePuja.live'));
                     $subtitle = $request->input('subtitle', Vault::get('video_brand_tagline', 'Direct from Kashi Vishwanath, Varanasi'));
@@ -742,6 +759,7 @@ class GrowthOsController extends Controller
                         ]);
                     }
                     return response()->json(['ok' => false, 'error' => 'Invalid engine'], 400);
+                case 'dispatch_custom_broadcast':
                 case 'send_devotee_broadcast':
                     $channel = $request->input('channel', 'both');
                     $segment = $request->input('segment', 'test');
@@ -766,7 +784,7 @@ class GrowthOsController extends Controller
                         if (in_array($channel, ['whatsapp', 'both']) && !empty($testPhone)) {
                             $waMsg = "🕉️ *{$headline}*\n\n{$body}\n\n👉 *{$ctaText}*: {$ctaUrl}\n\n_Har Har Mahadev — OnlinePuja.live_";
                             if (!empty($mediaUrl)) {
-                                $waRes = $wa->sendMedia($testPhone, $mediaUrl, $mediaType === 'video' ? 'video' : 'image', $waMsg);
+                                $waRes = $wa->sendMedia($testPhone, $mediaUrl, $waMsg, $mediaType === 'video' ? 'video' : 'image');
                             } else {
                                 $waRes = $wa->sendText($testPhone, $waMsg);
                             }
@@ -796,7 +814,7 @@ class GrowthOsController extends Controller
                             if (in_array($channel, ['whatsapp', 'both']) && !empty($u->contactNo)) {
                                 $waMsg = "🕉️ *Pranam {$u->name}!*\n\n*{$headline}*\n\n{$body}\n\n👉 *{$ctaText}*: {$ctaUrl}\n\n_OnlinePuja.live Varanasi_";
                                 if (!empty($mediaUrl)) {
-                                    $waRes = $wa->sendMedia($u->contactNo, $mediaUrl, $mediaType === 'video' ? 'video' : 'image', $waMsg);
+                                    $waRes = $wa->sendMedia($u->contactNo, $mediaUrl, $waMsg, $mediaType === 'video' ? 'video' : 'image');
                                 } else {
                                     $waRes = $wa->sendText($u->contactNo, $waMsg);
                                 }
@@ -838,7 +856,7 @@ class GrowthOsController extends Controller
 
                 case 'test_brevo':
                     $brevo = app(\App\Services\BrevoEmailService::class);
-                    $testTo = $request->input('email', Auth::user()->email ?? 'contact@onlinepuja.live');
+                    $testTo = $request->input('email', Auth::user()->email ?? 'care@onlinepuja.live');
                     $html = $brevo->renderDevotionalHtml(
                         '🕉️ Test Devotional Dispatch',
                         '<p>Pranam! This is a live verification email from your OnlinePuja Marketing Automation Engine.</p><p>Brevo API v3 connection is active and validated.</p>',
@@ -846,17 +864,36 @@ class GrowthOsController extends Controller
                         'https://onlinepuja.live'
                     );
                     $res = $brevo->sendEmail($testTo, 'Devotee Admin', '🕉️ OnlinePuja Marketing Test Dispatch', $html);
+                    if (!empty($res['ok'])) {
+                        $res['message'] = "Test email sent successfully to {$testTo}!";
+                    }
                     return response()->json($res);
                 case 'test_whatsapp':
                     $wa = app(\App\Services\EvolutionWaService::class);
+                    $conn = $wa->getConnectionState();
+                    if (!empty($conn['ok']) && ($conn['state'] ?? '') !== 'open') {
+                        $st = $conn['state'] ?? 'unpaired';
+                        return response()->json([
+                            'ok'    => false,
+                            'state' => $st,
+                            'error' => "WhatsApp instance is currently '{$st}'. Please click 'Scan WhatsApp QR' to pair your device first."
+                        ]);
+                    }
                     $mobile = $request->input('mobile', Auth::user()->contactNo ?? '917007158014');
                     $text = "🕉️ *OnlinePuja Marketing Engine — Test Ping*\n\nYour Evolution API WhatsApp connection on wa.vmstudio.digital is active!\n\n_Har Har Mahadev_";
                     $res = $wa->sendText($mobile, $text);
                     return response()->json($res);
                 case 'get_wa_qr':
                     $wa = app(\App\Services\EvolutionWaService::class);
-                    $res = $wa->requestQrCode();
-                    return response()->json($res);
+                    $qrRes = $wa->requestQrCode();
+                    $stateRes = $wa->getConnectionState();
+                    return response()->json([
+                        'ok'          => true,
+                        'state'       => $stateRes['state'] ?? 'connecting',
+                        'base64'      => $qrRes['base64'] ?? null,
+                        'pairingCode' => $qrRes['pairingCode'] ?? null,
+                        'code'        => $qrRes['code'] ?? null,
+                    ]);
                 case 'seo_scan':
                     Artisan::call('seo:scan', ['--max' => 10]);
                     $output = Artisan::output() ?: 'SEO scan completed.';
@@ -930,7 +967,7 @@ class GrowthOsController extends Controller
                     $ratio = $request->input('aspect_ratio', '1:1');
                     $type  = $request->input('type', 'image');
                     $pujaId = $request->input('puja_id');
-                    $aiEngine = app(\App\services\AiEngineService::class);
+                    $aiEngine = app(\App\Services\AiEngineService::class);
                     if ($type === 'video') {
                         $puja = !empty($pujaId) ? DB::table('pujas')->where('id', $pujaId)->first() : null;
                         $brandingCfg = Vault::videoBranding();
@@ -970,7 +1007,7 @@ class GrowthOsController extends Controller
                     $pujaId = $request->input('puja_id');
                     $astroQuery = $request->input('astro_topic');
                     $astrologerId = $request->input('astrologer_id');
-                    $aiEngine = app(\App\services\AiEngineService::class);
+                    $aiEngine = app(\App\Services\AiEngineService::class);
 
                     if (!empty($pujaId)) {
                         $puja = DB::table('pujas')->where('id', $pujaId)->first();
@@ -1067,6 +1104,46 @@ class GrowthOsController extends Controller
                     }
 
                     return response()->json(['ok' => false, 'error' => 'Please select a Puja or Astrology topic'], 400);
+                case 'save_tracking_settings':
+                    $keysToSave = [
+                        'meta_pixel_id', 'meta_capi_token',
+                        'ga4_measurement_id', 'gtm_container_id',
+                        'google_ads_id', 'google_ads_label',
+                        'social_webhook_url', 'brevo_api_key'
+                    ];
+                    foreach ($keysToSave as $k) {
+                        if ($request->has($k)) {
+                            $v = trim((string)$request->input($k));
+                            Vault::set($k, $v, false);
+                        }
+                    }
+                    return response()->json(['ok' => true, 'message' => 'Marketing, Pixel & Ads settings saved successfully!']);
+
+                case 'test_brevo_key':
+                    $testKey = trim((string)$request->input('brevo_api_key')) ?: Vault::get('brevo_api_key');
+                    if (empty($testKey)) {
+                        return response()->json(['ok' => false, 'error' => 'Please provide a Brevo API key to test.'], 400);
+                    }
+                    try {
+                        $res = \Illuminate\Support\Facades\Http::withOptions([
+                            'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
+                        ])->withHeaders([
+                            'api-key' => $testKey,
+                            'accept'  => 'application/json'
+                        ])->get('https://api.brevo.com/v3/account');
+
+                        if ($res->successful()) {
+                            $acc = $res->json();
+                            $email = $acc['email'] ?? 'Verified Account';
+                            $company = $acc['companyName'] ?? 'Online Puja';
+                            Vault::set('brevo_api_key', $testKey, false);
+                            return response()->json(['ok' => true, 'message' => "Brevo Connected! {$company} ({$email})"]);
+                        }
+                        return response()->json(['ok' => false, 'error' => 'Brevo rejected key (HTTP ' . $res->status() . '). Please verify key in Brevo dashboard.'], 400);
+                    } catch (\Throwable $e) {
+                        return response()->json(['ok' => false, 'error' => 'Connection to Brevo failed: ' . $e->getMessage()], 500);
+                    }
+
                 case 'save_social_webhook':
                     $url = trim((string)$request->input('webhook_url', ''));
                     Vault::set('social_webhook_url', $url, false);
@@ -1077,7 +1154,7 @@ class GrowthOsController extends Controller
                         return response()->json(['ok' => false, 'error' => 'Please provide a valid webhook URL.'], 400);
                     }
                     try {
-                        $res = \Illuminate\Support\Facades\Http::timeout(10)->post($url, [
+                        $res = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(10)->post($url, [
                             'event'     => 'test_ping',
                             'source'    => 'OnlinePuja Varanasi Growth Engine',
                             'title'     => '🙏 Test Devotional Wish Ping from OnlinePuja',
@@ -1206,41 +1283,30 @@ class GrowthOsController extends Controller
                         'output' => trim($output),
                     ]);
                 case 'autopilot_approve':
-                    $id = $request->input('id');
-                    $item = DB::table('autopilot_queue')->where('id', $id)->first();
-                    if (!$item) {
-                        return response()->json(['ok' => false, 'error' => 'Autopilot item not found'], 404);
+                    $id = (int) $request->input('id');
+                    $engine = app(\App\Brain\AutopilotEngine::class);
+                    $ok = $engine->approveItem($id, Auth::id() ?: 1);
+                    if (!$ok) {
+                        return response()->json(['ok' => false, 'error' => "Autopilot item #{$id} could not be approved or not found."], 404);
                     }
-                    DB::table('autopilot_queue')->where('id', $id)->update([
-                        'status' => 'sent',
-                        'approved_by' => Auth::id() ?: 1,
-                        'sent_at' => now(),
-                        'updated_at' => now(),
-                    ]);
                     return response()->json([
                         'ok' => true,
-                        'message' => "Item #{$id} approved and marked sent!",
+                        'message' => "Item #{$id} approved and dispatched via omnichannel Autopilot!",
                     ]);
                 case 'autopilot_reject':
-                    $id = $request->input('id');
-                    DB::table('autopilot_queue')->where('id', $id)->update([
-                        'status' => 'rejected',
-                        'updated_at' => now(),
-                    ]);
+                    $id = (int) $request->input('id');
+                    $engine = app(\App\Brain\AutopilotEngine::class);
+                    $engine->rejectItem($id);
                     return response()->json([
                         'ok' => true,
                         'message' => "Item #{$id} rejected and dismissed.",
                     ]);
                 case 'autopilot_approve_all':
-                    $count = DB::table('autopilot_queue')->where('status', 'pending')->update([
-                        'status' => 'sent',
-                        'approved_by' => Auth::id() ?: 1,
-                        'sent_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                    $engine = app(\App\Brain\AutopilotEngine::class);
+                    $count = $engine->approveAll(Auth::id() ?: 1);
                     return response()->json([
                         'ok' => true,
-                        'message' => "All {$count} pending items approved and sent!",
+                        'message' => "All {$count} pending items approved and dispatched via omnichannel Autopilot!",
                     ]);
 
                 case 'run_ai_agent':

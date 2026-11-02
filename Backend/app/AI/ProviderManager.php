@@ -69,7 +69,7 @@ class ProviderManager
 
                 try {
                     $res = Http::asJson()->withToken($this->key)
-                        ->timeout(15)
+                        ->timeout((int) ($args['timeout'] ?? 120))
                         ->post(rtrim($this->base, '/').'/chat/completions', [
                             'model'       => $args['model'] ?? $this->defaultModel,
                             'messages'    => [
@@ -330,7 +330,127 @@ class ProviderManager
     public function imageProviders(): array
     {
         return [
-            'omniroute' => new OmniRouteDriver(),
+            'gemini_imagen'=> new \App\AI\Drivers\GoogleImagenDriver(),
+            'cloudflare'   => new \App\AI\Drivers\CloudflareImageDriver(),
+            'huggingface'  => new \App\AI\Drivers\HuggingFaceImageDriver(),
+            'pexels'       => new \App\AI\Drivers\PexelsImageDriver(),
+            'pollinations' => new \App\AI\Drivers\PollinationsImageDriver(),
+            'omniroute'    => new OmniRouteDriver(),
+        ];
+    }
+
+    public function videoProviders(): array
+    {
+        return [
+            'ffmpeg_reel' => new \App\AI\Drivers\FfmpegReelVideoDriver(),
+            'kaggle'      => new \App\AI\Drivers\KaggleBatchVideoDriver(),
+            'omniroute'   => new \App\AI\Drivers\OmniRouteVideoDriver(),
+        ];
+    }
+
+    /**
+     * Generate an image down the ordered fallback chain.
+     * Default chain: cloudflare,huggingface,pexels,pollinations,omniroute
+     *
+     * @param  array{width?:int,height?:int,image_model?:string,seed?:int}  $args
+     * @return array{ok:bool,binary:string,mime:string,credit:string,provider:string,model:string,error:string}
+     */
+    public function image(string $prompt, array $args = []): array
+    {
+        $rawChain = (string) ($this->creds['ai_image_chain'] ?? 'gemini_imagen,cloudflare,huggingface,pexels,pollinations,omniroute');
+        $chain = array_filter(array_map('trim', explode(',', $rawChain)));
+        $providers = $this->imageProviders();
+        $errors = [];
+
+        foreach ($chain as $slug) {
+            if (! isset($providers[$slug]) || $this->isBenched($slug)) {
+                continue;
+            }
+
+            /** @var \App\AI\Contracts\ImageProvider $p */
+            $p = $providers[$slug];
+
+            if (! $p->isConfigured()) {
+                continue;
+            }
+
+            $res = $p->create($prompt, $args);
+
+            if (! empty($res['ok']) && ! empty($res['binary'])) {
+                $this->recordSuccess($slug);
+
+                return $res + ['provider' => $slug, 'model' => $res['model'] ?? $slug, 'error' => ''];
+            }
+
+            $this->recordFailure($slug);
+            $errors[$slug] = $res['error'] ?? 'Unknown error';
+        }
+
+        // Guaranteed safety fallback: Pollinations (keyless)
+        if (isset($providers['pollinations'])) {
+            $fallback = $providers['pollinations']->create($prompt, $args);
+            if (! empty($fallback['ok']) && ! empty($fallback['binary'])) {
+                return $fallback + ['provider' => 'pollinations', 'model' => 'flux-safety', 'error' => ''];
+            }
+        }
+
+        return [
+            'ok' => false, 'binary' => '', 'mime' => '', 'credit' => '',
+            'provider' => '', 'model' => '',
+            'error' => 'All image providers failed: ' . implode(' | ', $errors),
+        ];
+    }
+
+    /**
+     * Generate a short-form video/reel down the video fallback chain.
+     * Default chain: ffmpeg_reel,kaggle,omniroute
+     *
+     * @param  array{width?:int,height?:int,seconds?:int,model?:string,image_url?:string,title?:string,subtitle?:string}  $args
+     * @return array{ok:bool,binary:string,url:string,mime:string,provider:string,model:string,duration_ms:int,credit:string,error:string}
+     */
+    public function video(string $prompt, array $args = []): array
+    {
+        $rawChain = (string) ($this->creds['ai_video_chain'] ?? 'ffmpeg_reel,kaggle,omniroute');
+        $chain = array_filter(array_map('trim', explode(',', $rawChain)));
+        $providers = $this->videoProviders();
+        $errors = [];
+
+        foreach ($chain as $slug) {
+            if (! isset($providers[$slug]) || $this->isBenched($slug)) {
+                continue;
+            }
+
+            /** @var \App\AI\Contracts\VideoProvider $p */
+            $p = $providers[$slug];
+
+            if (! $p->isConfigured()) {
+                continue;
+            }
+
+            $res = $p->create($prompt, $args);
+
+            if (! empty($res['ok']) && (! empty($res['binary']) || ! empty($res['url']) || ! empty($res['queued']))) {
+                $this->recordSuccess($slug);
+
+                return $res + ['provider' => $slug, 'model' => $res['model'] ?? $slug, 'error' => ''];
+            }
+
+            $this->recordFailure($slug);
+            $errors[$slug] = $res['error'] ?? 'Unknown error';
+        }
+
+        // Guaranteed safety fallback: Native FFmpeg reel
+        if (isset($providers['ffmpeg_reel'])) {
+            $fallback = $providers['ffmpeg_reel']->create($prompt, $args);
+            if (! empty($fallback['ok'])) {
+                return $fallback + ['provider' => 'ffmpeg_reel', 'model' => 'h264-reel-safety', 'error' => ''];
+            }
+        }
+
+        return [
+            'ok' => false, 'binary' => '', 'url' => '', 'mime' => '',
+            'provider' => '', 'model' => '', 'duration_ms' => 0, 'credit' => '',
+            'error' => 'All video providers failed: ' . implode(' | ', $errors),
         ];
     }
 
@@ -345,13 +465,4 @@ class ProviderManager
         }
         return $state;
     }
-
-
-    public function videoProviders(): array
-    {
-        return [
-            'omniroute' => new OmniRouteDriver(),
-        ];
-    }
-
 }
