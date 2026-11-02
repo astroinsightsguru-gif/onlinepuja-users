@@ -10,62 +10,68 @@
 @endphp
 <div class="space-y-5">
 
-    {{-- TOP: Metric KPI Strip (Clean, Compact, High-Signal) --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+    {{-- TOP: Vibrant High-Signal Metric Strip --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {{-- Metric 1: Webhook Status --}}
-        <div class="bg-white p-4 rounded-xl border border-slate-200/70 shadow-2xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dispatch Webhook</span>
-                <div class="text-sm font-bold text-slate-800 mt-1 flex items-center gap-1.5">
-                    @if(!empty($webhookUrl))
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Connected (Active)
-                    @else
-                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Setup Required
-                    @endif
+        <div class="ai-stat-card ai-stat-card-blue">
+            <div class="flex items-center gap-3">
+                <div class="ai-icon-bubble ai-icon-bubble-blue">📡</div>
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Dispatch Webhook</span>
+                    <div class="text-sm font-black text-slate-800 mt-0.5 flex items-center gap-1.5">
+                        @if(!empty($webhookUrl))
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Connected (Active)
+                        @else
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span> Setup Required
+                        @endif
+                    </div>
                 </div>
             </div>
-            <button type="button" id="toggle-webhook-config" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            <button type="button" id="toggle-webhook-config" class="ai-btn-secondary" style="font-size: 11px; padding: 5px 10px;">
                 Configure
             </button>
         </div>
 
         {{-- Metric 2: Hindu Festivals --}}
-        <div class="bg-white p-4 rounded-xl border border-slate-200/70 shadow-2xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Seeded Festivals</span>
-                <div class="text-sm font-bold text-slate-800 mt-1">
-                    {{ $festivals->count() }} <span class="text-xs font-normal text-slate-400">Events (2026-27)</span>
+        <div class="ai-stat-card ai-stat-card-gold">
+            <div class="flex items-center gap-3">
+                <div class="ai-icon-bubble ai-icon-bubble-gold">🪔</div>
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Seeded Festivals</span>
+                    <div class="text-base font-black text-amber-900 mt-0.5 font-mono">
+                        {{ $festivals->count() }} <span class="text-[11px] font-semibold text-slate-500">Events</span>
+                    </div>
                 </div>
             </div>
-            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                <i data-lucide="calendar" class="w-4 h-4"></i>
-            </div>
+            <span class="ai-pill ai-pill-amber">2026–27</span>
         </div>
 
         {{-- Metric 3: Queued Social Posts --}}
-        <div class="bg-white p-4 rounded-xl border border-slate-200/70 shadow-2xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Approved Post Queue</span>
-                <div class="text-sm font-bold text-slate-800 mt-1">
-                    {{ $socialPosts->count() }} <span class="text-xs font-normal text-slate-400">Posts Ready</span>
+        <div class="ai-stat-card ai-stat-card-purple">
+            <div class="flex items-center gap-3">
+                <div class="ai-icon-bubble ai-icon-bubble-purple">🚀</div>
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Post Queue</span>
+                    <div class="text-base font-black text-purple-900 mt-0.5 font-mono">
+                        {{ $socialPosts->count() }} <span class="text-[11px] font-semibold text-slate-500">Ready</span>
+                    </div>
                 </div>
             </div>
-            <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-                <i data-lucide="send" class="w-4 h-4"></i>
-            </div>
+            <span class="ai-pill" style="background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe;">Approved</span>
         </div>
 
         {{-- Metric 4: Channels & Schedule --}}
-        <div class="bg-white p-4 rounded-xl border border-slate-200/70 shadow-2xs flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Morning Schedule</span>
-                <div class="text-sm font-bold text-slate-800 mt-1">
-                    06:30 AM <span class="text-xs font-normal text-slate-400">IST Daily</span>
+        <div class="ai-stat-card ai-stat-card-emerald">
+            <div class="flex items-center gap-3">
+                <div class="ai-icon-bubble ai-icon-bubble-emerald">⏰</div>
+                <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Morning Schedule</span>
+                    <div class="text-base font-black text-emerald-900 mt-0.5 font-mono">
+                        06:30 AM <span class="text-[11px] font-semibold text-slate-500">IST Daily</span>
+                    </div>
                 </div>
             </div>
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <i data-lucide="clock" class="w-4 h-4"></i>
-            </div>
+            <span class="ai-pill ai-pill-emerald">Automated</span>
         </div>
     </div>
 
@@ -440,8 +446,80 @@
     <div id="pane-automation" class="section-pane hidden">
         <div class="grid grid-cols-12 gap-5">
 
+            {{-- 0. Meta & Instagram Business Suite Card --}}
+            <div class="col-span-12 lg:col-span-6">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-2xs flex flex-col justify-between h-full">
+                    <div>
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-xs">
+                                    📸
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Meta & Instagram Business</h4>
+                                    <span class="text-[11px] text-slate-500 font-mono">@onlinepuja.live &middot; Meta Graph v21.0</span>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                Native Graph API
+                            </span>
+                        </div>
+
+                        <div class="mt-4 space-y-2.5 text-xs text-slate-600">
+                            @php
+                                $fbAcct = isset($socialAccounts) ? $socialAccounts->firstWhere('platform', 'facebook') : null;
+                                $igAcct = isset($socialAccounts) ? $socialAccounts->firstWhere('platform', 'instagram') : null;
+                            @endphp
+                            <div class="flex items-center justify-between py-1.5 border-b border-slate-50">
+                                <span class="text-slate-500 flex items-center gap-1.5">
+                                    <span class="text-blue-600 font-bold">f</span> Facebook Page
+                                </span>
+                                <span class="font-medium text-slate-800 flex items-center gap-1">
+                                    {{ $fbAcct ? $fbAcct->label : 'Online Puja' }}
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 ml-1"></span>
+                                    <span class="text-[10px] text-emerald-600 font-bold">Publishing Active</span>
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between py-1.5 border-b border-slate-50">
+                                <span class="text-slate-500 flex items-center gap-1.5">
+                                    <span class="text-pink-600 font-bold">📸</span> Instagram Account
+                                </span>
+                                <span class="font-medium text-slate-800 flex items-center gap-1">
+                                    {{ $igAcct ? $igAcct->label : '@onlinepuja.live' }}
+                                    <span class="w-2 h-2 rounded-full bg-amber-500 ml-1"></span>
+                                    <span class="text-[10px] text-amber-600 font-bold">Token Refresh Required</span>
+                                </span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-600 leading-relaxed">
+                                💡 To enable autonomous Instagram posting, connect your Meta App with <code>instagram_content_publish</code> permissions, or paste a fresh Page Access Token below.
+                            </div>
+                        </div>
+
+                        {{-- Token Update Box --}}
+                        <div class="mt-3 space-y-2">
+                            <label class="block text-[11px] font-bold text-slate-700">Update Instagram / Meta Page Access Token</label>
+                            <div class="flex items-center gap-2">
+                                <input type="password" id="input-ig-token" placeholder="Paste Page Access Token (EAA...)" class="flex-1 text-xs rounded-xl border-slate-200 px-3 py-2 bg-slate-50 focus:bg-white font-mono">
+                                <button type="button" id="btn-save-ig-token" class="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs whitespace-nowrap transition">
+                                    Save Token
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <a href="{{ route('social.connect', 'instagram') }}" class="flex-1 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-bold text-xs transition text-center shadow-xs">
+                            🔗 Connect via Meta OAuth
+                        </a>
+                        <a href="https://developers.facebook.com/tools/explorer/" target="_blank" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition text-center border border-slate-200">
+                            Graph Explorer ↗
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             {{-- 1. WhatsApp Evolution API Card --}}
-            <div class="col-span-12 lg:col-span-4">
+            <div class="col-span-12 lg:col-span-6">
                 <div class="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-2xs flex flex-col justify-between h-full">
                     <div>
                         <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -1110,6 +1188,46 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(function(err) {
                 btnTestWebhook.disabled = false;
+                btnTestWebhook.textContent = 'Test Ping';
+                if (typeof toastr !== 'undefined') toastr.error(err.message);
+            });
+        });
+    }
+
+    var btnSaveIgToken = document.getElementById('btn-save-ig-token');
+    var inputIgToken = document.getElementById('input-ig-token');
+    if (btnSaveIgToken && inputIgToken) {
+        btnSaveIgToken.addEventListener('click', function() {
+            var tok = inputIgToken.value.trim();
+            if (!tok) {
+                if (typeof toastr !== 'undefined') toastr.error('Please enter a valid token.');
+                return;
+            }
+            btnSaveIgToken.disabled = true;
+            btnSaveIgToken.textContent = 'Saving…';
+            fetch('{{ route("growth-os.action") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'save_social_token', platform: 'instagram', token: tok })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                btnSaveIgToken.disabled = false;
+                btnSaveIgToken.textContent = 'Save Token';
+                if (d.ok) {
+                    if (typeof toastr !== 'undefined') toastr.success(d.message || 'Token saved!');
+                    setTimeout(function() { window.location.reload(); }, 1000);
+                } else {
+                    if (typeof toastr !== 'undefined') toastr.error(d.error || 'Failed to save token');
+                }
+            })
+            .catch(function(err) {
+                btnSaveIgToken.disabled = false;
+                btnSaveIgToken.textContent = 'Save Token';
+                if (typeof toastr !== 'undefined') toastr.error(err.message);
+            });
+        });
+    }
                 btnTestWebhook.textContent = 'Test Ping';
                 if (typeof toastr !== 'undefined') toastr.error(err.message);
             });

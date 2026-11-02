@@ -272,8 +272,9 @@ class GrowthOsController extends Controller
         $webhookUrl = Vault::get('social_webhook_url') ?: env('SOCIAL_DISPATCH_WEBHOOK', '');
         $pujas = DB::table('pujas')->select('id', 'puja_title', 'puja_place', 'slug', 'puja_price')->where('puja_status', 1)->orderBy('id', 'DESC')->limit(100)->get();
         $astrologers = DB::table('astrologers')->select('id', 'name', 'primarySkill')->where('isDelete', 0)->limit(30)->get();
+        $socialAccounts = DB::table('social_accounts')->get();
 
-        return view('pages.growth-os.social', compact('festivals', 'socialPosts', 'socialCreds', 'webhookUrl', 'pujas', 'astrologers'));
+        return view('pages.growth-os.social', compact('festivals', 'socialPosts', 'socialCreds', 'webhookUrl', 'pujas', 'astrologers', 'socialAccounts'));
     }
 
     /** 5c. Omnichannel Marketing & Devotee Broadcast Hub */
@@ -1170,6 +1171,24 @@ class GrowthOsController extends Controller
                         }
                     } catch (\Throwable $e) {
                         return response()->json(['ok' => false, 'error' => 'Connection failed: ' . $e->getMessage()], 500);
+                    }
+                case 'save_social_token':
+                    $platform = $request->input('platform', 'instagram');
+                    $token = trim((string)$request->input('token', ''));
+                    if (empty($token)) {
+                        return response()->json(['ok' => false, 'error' => 'Please provide a non-empty access token.'], 400);
+                    }
+                    $account = DB::table('social_accounts')->where('platform', $platform)->first();
+                    if ($account) {
+                        DB::table('social_accounts')->where('id', $account->id)->update([
+                            'access_token_enc' => \Illuminate\Support\Facades\Crypt::encryptString($token),
+                            'status' => 'connected',
+                            'last_error' => null,
+                            'updated_at' => now(),
+                        ]);
+                        return response()->json(['ok' => true, 'message' => ucfirst($platform) . ' Access Token updated successfully!']);
+                    } else {
+                        return response()->json(['ok' => false, 'error' => 'No ' . ucfirst($platform) . ' account registered to update.'], 404);
                     }
                 case 'publish_social_post':
                     $postId = $request->input('post_id');
