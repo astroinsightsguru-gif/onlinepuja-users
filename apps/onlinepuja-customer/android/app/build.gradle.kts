@@ -52,8 +52,14 @@ android {
         release {
             val hasKey = keystorePropertiesFile.exists() && keystoreProperties.getProperty("storeFile") != null
             signingConfig = if (hasKey) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
-            isMinifyEnabled = false
-            isShrinkResources = false
+            
+            // 🛡️ DEX Optimization & R8 Shrinking for Play Console Compliance
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

@@ -2,9 +2,9 @@ import '../api/api_client.dart';
 import '../models/astromall.dart';
 import '../models/misc.dart';
 
-/// AstroMall product endpoints (legacy `/getproductCategory`,
-/// `/getAstromallProduct`, `/getAstromallProductById`,
-/// `/getProductRecommend`, `/getOrderAddress`).
+/// AstroMall (e-commerce shop) endpoints mirroring the legacy Customer-app:
+/// `/getproductCategory`, `/getAstromallProduct`, `/getAstromallProductById`,
+/// `/getProductRecommend`, `/getOrderAddress`, `/userOrder/add`.
 class MallApi {
   MallApi._();
   static final MallApi instance = MallApi._();
@@ -72,11 +72,21 @@ class MallApi {
     double gstPercent = 0,
     String paymentMethod = 'wallet',
   }) async {
+    final pId = productId is num
+        ? productId.toInt()
+        : (int.tryParse(productId.toString()) ?? productId);
+    final cId = categoryId is num
+        ? categoryId.toInt()
+        : (int.tryParse(categoryId.toString()) ?? categoryId);
+    final aId = addressId is num
+        ? addressId.toInt()
+        : (int.tryParse(addressId.toString()) ?? addressId);
+
     final decoded = await _api.post('/userOrder/add', body: {
       'userId': userId,
-      'productId': productId,
-      'productCategoryId': categoryId,
-      'orderAddressId': addressId,
+      'productId': pId,
+      'productCategoryId': cId,
+      'orderAddressId': aId,
       'payableAmount': payableAmount,
       'gstPercent': gstPercent,
       'totalPayable': totalPayable,

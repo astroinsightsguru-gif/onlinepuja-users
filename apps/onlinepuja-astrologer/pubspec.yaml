@@ -2,7 +2,7 @@ name: onlinepuja_astrologer
 description: "Online Puja Astrologer - the astrologer-side app."
 publish_to: 'none'
 
-version: 2.3.5+10
+version: 2.3.5+12
 
 environment:
   sdk: ^3.13.2

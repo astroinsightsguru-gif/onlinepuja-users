@@ -30,11 +30,15 @@ class AppSession extends ChangeNotifier {
     booted = true;
     notifyListeners();
 
-    // Initialize OneSignal & sync device push token
-    final appId = flags.get('OneSignalAppId');
-    await PushNotificationService.instance.init(appId: appId.isNotEmpty ? appId : null);
-    if (user != null && user!.id != null && user!.id! > 0) {
-      await PushNotificationService.instance.syncDeviceToken(userId: user!.id!);
+    // Initialize OneSignal & sync device push token (safely guarded)
+    try {
+      final appId = flags.get('OneSignalAppId');
+      await PushNotificationService.instance.init(appId: appId.isNotEmpty ? appId : null);
+      if (user != null && user!.id != null && user!.id! > 0) {
+        await PushNotificationService.instance.syncDeviceToken(userId: user!.id!);
+      }
+    } catch (e) {
+      debugPrint('[AppSession] PushNotificationService init error (non-fatal): $e');
     }
   }
 
@@ -91,7 +95,7 @@ class AppSession extends ChangeNotifier {
       name: 'Guest Devotee',
       contactNo: '9999999999',
       email: 'guest@onlinepuja.live',
-      walletAmount: 501.0,
+      walletAmount: 0.0,
     );
     await SessionStore.instance.saveSession(
       token: 'guest_token_preview',

@@ -10,5 +10,5 @@ void main() {
       expect(a.id, isNotNull);
       expect(a.name, isNotEmpty);
     }
-  });
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }

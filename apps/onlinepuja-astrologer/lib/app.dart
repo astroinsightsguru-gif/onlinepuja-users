@@ -69,7 +69,7 @@ class OnlinePujaPartnerApp extends StatelessWidget {
               ),
             );
         }
-        return null;
+        return MaterialPageRoute(builder: (_) => const HomeShell());
       },
     );
       },

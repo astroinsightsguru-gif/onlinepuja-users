@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:op_shared/op_shared.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../state/app_session.dart';
@@ -107,6 +108,14 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
         }
         return;
       }
+
+      // Google Play Prominent Disclosure for Microphone & Camera permissions
+      final agreed = await _checkAndPromptMediaDisclosure(context, isVideo: widget.isVideo);
+      if (!agreed) {
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+
       _sessionId = widget.sessionId;
       _sessionId ??= await AstrologerApi.instance.addCallRequest(
         astrologerId: widget.astrologerId,
@@ -769,5 +778,87 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
         ),
       ),
     );
+  }
+
+  /// Google Play Prominent In-App Disclosure for Camera & Microphone permissions.
+  Future<bool> _checkAndPromptMediaDisclosure(BuildContext context, {required bool isVideo}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final alreadyAccepted = prefs.getBool('accepted_media_disclosure') ?? false;
+    if (alreadyAccepted) return true;
+
+    if (!context.mounted) return false;
+
+    final accepted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.brandSaffron.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isVideo ? Icons.videocam_rounded : Icons.mic_rounded,
+                  color: AppTheme.brandSaffron,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Media Permission',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'OnlinePuja requires access to your device ${isVideo ? 'Camera and Microphone' : 'Microphone'} to enable real-time consultation with astrologers.',
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '• Real-time Transmission: Audio and video are streamed in real time via secure encrypted peer connections.\n'
+                '• Privacy Guaranteed: Media streams are not recorded or saved on our servers.\n'
+                '• Consultation Only: Media access is utilized strictly during active consultation sessions.',
+                style: TextStyle(fontSize: 12, height: 1.45, color: Colors.grey),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Deny', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.brandSaffron,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Agree & Continue', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (accepted == true) {
+      await prefs.setBool('accepted_media_disclosure', true);
+      return true;
+    }
+    return false;
   }
 }

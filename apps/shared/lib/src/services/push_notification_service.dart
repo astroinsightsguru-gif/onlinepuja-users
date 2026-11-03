@@ -20,6 +20,11 @@ class PushNotificationService {
 
   /// Initialize OneSignal SDK. Safe to call multiple times.
   Future<void> init({String? appId}) async {
+    if (kIsWeb) {
+      debugPrint('[PushNotificationService] Push notifications are not supported on Web; skipping.');
+      _initialized = true;
+      return;
+    }
     if (_initialized) return;
 
     try {
@@ -58,6 +63,25 @@ class PushNotificationService {
   }) async {
     _currentUserId = userId;
 
+    if (kIsWeb) {
+      try {
+        final deviceId = 'web_${userId}_${DateTime.now().millisecondsSinceEpoch}';
+        await ApiClient.instance.post('/deviceDetails', auth: true, body: {
+          'userId': userId,
+          'appId': 1,
+          'deviceId': deviceId,
+          'subscription_id': subscriptionId ?? '',
+          'deviceManufacturer': 'Web Browser',
+          'deviceModel': 'Chrome/Web',
+          'appVersion': '2.3.6',
+        });
+        debugPrint('[PushNotificationService] Web device recorded for user $userId');
+      } catch (e) {
+        debugPrint('[PushNotificationService] Web syncDeviceToken non-fatal error: $e');
+      }
+      return;
+    }
+
     try {
       final subId = subscriptionId ?? OneSignal.User.pushSubscription.id;
       final token = OneSignal.User.pushSubscription.token;
@@ -79,7 +103,7 @@ class PushNotificationService {
         if (token != null && token.isNotEmpty) 'fcmToken': token,
         'deviceManufacturer': Platform.operatingSystem,
         'deviceModel': Platform.operatingSystemVersion,
-        'appVersion': '2.3.3',
+        'appVersion': '2.3.6',
       });
 
       debugPrint('[PushNotificationService] Successfully synced device token to backend for user $userId (subId: $subId)');
@@ -91,6 +115,7 @@ class PushNotificationService {
   /// Logout cleanup when user signs out
   Future<void> logout() async {
     _currentUserId = null;
+    if (kIsWeb) return;
     try {
       await OneSignal.logout();
     } catch (_) {}

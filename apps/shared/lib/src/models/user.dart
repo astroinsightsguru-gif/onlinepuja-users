@@ -102,7 +102,11 @@ class User {
                 : int.tryParse(json['userId'].toString())),
         astrologerId = json['astrologerId'] == null
             ? (json['astrologer_id'] == null
-                ? null
+                ? (json['userId'] != null || json['user_id'] != null
+                    ? (json['id'] is num
+                        ? (json['id'] as num).toInt()
+                        : int.tryParse(json['id']?.toString() ?? ''))
+                    : null)
                 : (json['astrologer_id'] is num
                     ? (json['astrologer_id'] as num).toInt()
                     : int.tryParse(json['astrologer_id'].toString())))
@@ -138,20 +142,20 @@ class User {
         emergencyVideoCharge = _d(json['emergency_video_charge'], 100.0),
         emergencyChatStatus = _b(json['emergencyChatStatus']),
         emergencyCallStatus = _b(json['emergencyCallStatus']),
-        bankName = json['bankName'],
-        accountNumber = json['accountNumber'],
-        accountHolderName = json['accountHolderName'],
-        ifscCode = json['ifscCode'],
-        bankBranch = json['bankBranch'],
-        accountType = json['accountType'],
-        upi = json['upi'],
-        pancardNo = json['pancardNo'],
-        aadharNo = json['aadharNo'];
+        bankName = json['bankName']?.toString(),
+        accountNumber = json['accountNumber']?.toString(),
+        accountHolderName = json['accountHolderName']?.toString(),
+        ifscCode = json['ifscCode']?.toString(),
+        bankBranch = json['bankBranch']?.toString(),
+        accountType = json['accountType']?.toString(),
+        upi = json['upi']?.toString(),
+        pancardNo = json['pancardNo']?.toString(),
+        aadharNo = json['aadharNo']?.toString();
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'userId': userId ?? id,
-        'astrologerId': astrologerId,
+        'astrologerId': astrologerId ?? (userId != null ? id : null),
         'name': name,
         'contactNo': contactNo,
         'email': email,

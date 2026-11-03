@@ -36,6 +36,7 @@ import 'ui/screens/profile/wallet_screen.dart';
 import 'ui/screens/puja/puja_detail_screen.dart';
 import 'ui/screens/puja/puja_list_screen.dart';
 import 'ui/screens/puja/sankalp_vault_screen.dart';
+import 'ui/screens/shorts/spiritual_shorts_screen.dart';
 import 'ui/screens/splash_screen.dart';
 
 import 'ui/theme/customer_theme.dart';
@@ -81,6 +82,7 @@ class OnlinePujaApp extends StatelessWidget {
         KpCalendarScreen.route: (_) => const KpCalendarScreen(),
         ExploreScreen.route: (_) => const ExploreScreen(),
         VedicAudioScreen.route: (_) => const VedicAudioScreen(),
+        SpiritualShortsScreen.route: (_) => const SpiritualShortsScreen(),
       },
       onGenerateRoute: (settings) {
         final args = settings.arguments;
@@ -131,6 +133,14 @@ class OnlinePujaApp extends StatelessWidget {
                 builder: (_) => KundliDetailScreen(kundli: args),
               );
             }
+            if (args is Map<String, dynamic>) {
+              final k = args['kundli'] is Kundli
+                  ? args['kundli'] as Kundli
+                  : Kundli.fromJson(args);
+              return MaterialPageRoute(
+                builder: (_) => KundliDetailScreen(kundli: k),
+              );
+            }
             break;
           case PujaDetailScreen.route:
             if (args is Puja) {
@@ -157,6 +167,14 @@ class OnlinePujaApp extends StatelessWidget {
                 builder: (_) => ProductDetailScreen(product: args),
               );
             }
+            if (args is Map<String, dynamic>) {
+              final p = args['product'] is Product
+                  ? args['product'] as Product
+                  : Product.fromJson(args);
+              return MaterialPageRoute(
+                builder: (_) => ProductDetailScreen(product: p),
+              );
+            }
             break;
           case BlogDetailScreen.route:
             if (args is Blog) {
@@ -164,9 +182,24 @@ class OnlinePujaApp extends StatelessWidget {
                 builder: (_) => BlogDetailScreen(blog: args),
               );
             }
+            if (args is Map<String, dynamic>) {
+              final b = args['blog'] is Blog
+                  ? args['blog'] as Blog
+                  : Blog.fromJson(args);
+              return MaterialPageRoute(
+                builder: (_) => BlogDetailScreen(blog: b),
+              );
+            }
             break;
+          case SpiritualShortsScreen.route:
+            final idx = args is int
+                ? args
+                : (args is Map<String, dynamic> ? asInt(args['initialIndex'] ?? args['index']) : 0);
+            return MaterialPageRoute(
+              builder: (_) => SpiritualShortsScreen(initialIndex: idx),
+            );
         }
-        return null;
+        return MaterialPageRoute(builder: (_) => const MainShell());
       },
     );
   }
@@ -245,6 +278,8 @@ extension OpNav on BuildContext {
   Future<void> openKpCalendar() => pushNamed(KpCalendarScreen.route);
   Future<void> openNotifications() => pushNamed(NotificationsScreen.route);
   Future<void> openVedicAudio() => pushNamed(VedicAudioScreen.route);
+  Future<void> openSpiritualShorts([int initialIndex = 0]) =>
+      pushNamed(SpiritualShortsScreen.route, {'initialIndex': initialIndex});
 
   Future<void> pushNamed(String route, [Map<String, dynamic>? args]) =>
       Navigator.of(this).pushNamed(route, arguments: args);

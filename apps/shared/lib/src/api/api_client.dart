@@ -42,6 +42,16 @@ class ApiClient {
   String? Function() tokenResolver = () => null;
   String? Function() tokenTypeResolver = () => null;
 
+  String _resolveUrl(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    final cleanPath = path.startsWith('/') ? path : '/$path';
+    if (cleanPath.startsWith('/api/') && Env.apiBase.endsWith('/api')) {
+      final baseWithoutApi = Env.apiBase.substring(0, Env.apiBase.length - 4);
+      return '$baseWithoutApi$cleanPath';
+    }
+    return '${Env.apiBase}$cleanPath';
+  }
+
   Map<String, String> headers({bool auth = true}) {
     final langCode = LocaleManager.instance.currentLanguage.value.code;
     final h = <String, String>{
@@ -66,7 +76,7 @@ class ApiClient {
     Map<String, dynamic>? body,
     bool auth = true,
   }) async {
-    final url = path.startsWith('http') ? path : '${Env.apiBase}$path';
+    final url = _resolveUrl(path);
     final http.Response response;
     try {
       response = await http
@@ -86,7 +96,7 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     bool auth = true,
   }) async {
-    final base = path.startsWith('http') ? path : '${Env.apiBase}$path';
+    final base = _resolveUrl(path);
     final q = query ?? queryParameters;
     final uri = q != null && q.isNotEmpty
         ? Uri.parse(base).replace(
@@ -113,34 +123,33 @@ class ApiClient {
         decoded = response.body;
       }
     }
-    final int effectiveStatus = (decoded is Map<String, dynamic> && decoded['status'] is int)
-        ? (decoded['status'] as int)
-        : response.statusCode;
 
-    if (response.statusCode >= 400 || effectiveStatus >= 400) {
-      Map<String, dynamic>? errors;
-      var msg = 'Request failed ($effectiveStatus)';
+    if (response.statusCode >= 200 && response.statusCode < 300) {
       if (decoded is Map<String, dynamic>) {
-        final err = decoded['error'];
-        final rl = decoded['recordList'];
-        if (err is Map<String, dynamic>) {
-          errors = err;
-          msg = err.values
-              .whereType<List>()
-              .map((l) => l.join(', '))
-              .where((s) => s.isNotEmpty)
-              .join('\n');
-          if (msg.isEmpty) msg = err.values.join(', ');
-        } else if (err is String && err.isNotEmpty) {
-          msg = err;
-        } else if (decoded['message'] is String && decoded['message'].toString().isNotEmpty) {
-          msg = decoded['message'].toString();
-        } else if (rl is Map && rl['message'] is String && rl['message'].toString().isNotEmpty) {
-          msg = rl['message'].toString();
+        final status = decoded['status'];
+        if (status != null && status != 200 && status != '200' && status != true) {
+          final msg = decoded['message'] ?? decoded['error'] ?? 'API error';
+          final errors = decoded['error'] is Map<String, dynamic>
+              ? decoded['error'] as Map<String, dynamic>
+              : null;
+          throw ApiException(msg.toString(),
+              statusCode: int.tryParse(status.toString()) ?? 400,
+              errors: errors);
         }
       }
-      throw ApiException(msg, statusCode: effectiveStatus, errors: errors);
+      return decoded;
     }
-    return decoded;
+
+    String message = 'Request failed (${response.statusCode})';
+    Map<String, dynamic>? errors;
+    if (decoded is Map<String, dynamic>) {
+      if (decoded['message'] != null) message = decoded['message'].toString();
+      if (decoded['error'] is Map<String, dynamic>) {
+        errors = decoded['error'] as Map<String, dynamic>;
+      } else if (decoded['error'] != null) {
+        message = decoded['error'].toString();
+      }
+    }
+    throw ApiException(message, statusCode: response.statusCode, errors: errors);
   }
 }

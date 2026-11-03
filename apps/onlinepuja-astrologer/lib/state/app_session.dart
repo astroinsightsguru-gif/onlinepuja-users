@@ -44,10 +44,10 @@ class PartnerSession extends ChangeNotifier {
     booted = true;
     notifyListeners();
 
-    // Initialize OneSignal & sync astrologer device push token
+    // Initialize OneSignal & sync astrologer device push token (using users.id)
     final appId = flags.get('OneSignalAppId');
     await PushNotificationService.instance.init(appId: appId.isNotEmpty ? appId : null);
-    final targetUid = user?.id ?? user?.astrologerId;
+    final targetUid = user?.userId ?? user?.id ?? user?.astrologerId;
     if (targetUid != null && targetUid > 0) {
       await PushNotificationService.instance.syncDeviceToken(userId: targetUid);
     }
@@ -83,7 +83,7 @@ class PartnerSession extends ChangeNotifier {
     callStatus = user?.callStatus ?? 'Online';
     videoCallStatus = user?.callStatus ?? 'Online';
 
-    final targetUid = user?.id ?? user?.astrologerId;
+    final targetUid = user?.userId ?? user?.id ?? user?.astrologerId;
     if (targetUid != null && targetUid > 0) {
       await PushNotificationService.instance.syncDeviceToken(userId: targetUid);
     }
@@ -233,7 +233,8 @@ class PartnerSession extends ChangeNotifier {
     final uid = user?.id;
     if (uid != null && uid > 0) {
       try {
-        await ApiClient.instance.post('/astrologer/delete', body: {'id': uid, 'astrologerId': uid});
+        final aid = astrologerId;
+        await ApiClient.instance.post('/astrologer/delete', body: {'id': aid > 0 ? aid : uid, 'astrologerId': aid > 0 ? aid : uid, 'userId': uid});
       } catch (e) {
         debugPrint('deleteAstrologer api best-effort: $e');
       }

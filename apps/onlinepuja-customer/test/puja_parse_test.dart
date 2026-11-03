@@ -14,7 +14,7 @@ void main() {
         expect(p.packages!.first.priceValue, greaterThan(0));
       }
     }
-  });
+  }, timeout: const Timeout(Duration(minutes: 2)));
 
   test('PujaApi.instance.categories fetches and parses categories', () async {
     final cats = await PujaApi.instance.categories();
@@ -23,5 +23,5 @@ void main() {
       expect(c.id, isNotNull);
       expect(c.name, isNotEmpty);
     }
-  });
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }

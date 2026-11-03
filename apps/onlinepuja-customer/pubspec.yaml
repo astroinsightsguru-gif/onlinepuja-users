@@ -2,7 +2,7 @@ name: onlinepuja_customer
 description: "Online Puja Customer - consult verified astrologers, free kundli, pujas & more."
 publish_to: 'none'
 
-version: 2.3.6+11
+version: 2.3.6+12
 
 environment:
   sdk: ^3.13.2

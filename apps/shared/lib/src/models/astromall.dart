@@ -9,6 +9,8 @@ class ProductCategory {
   dynamic id, name, image;
   dynamic isActive;
 
+  int get numericId => id is num ? (id as num).toInt() : (int.tryParse(id?.toString() ?? '') ?? 0);
+
   factory ProductCategory.fromJson(Map<String, dynamic> json) {
     final rawImg = json['categoryImage'] ?? json['image'] ?? json['category_image'];
     return ProductCategory(
@@ -47,6 +49,9 @@ class Product {
   List<String>? images;
   dynamic price, discountPrice, stock, isActive;
   dynamic createdAt;
+
+  int get numericId => id is num ? (id as num).toInt() : (int.tryParse(id?.toString() ?? '') ?? 0);
+  int get numericCategoryId => categoryId is num ? (categoryId as num).toInt() : (int.tryParse(categoryId?.toString() ?? '') ?? 0);
 
   factory Product.fromJson(Map<String, dynamic> json) {
     List<String> parsedImages = [];

@@ -36,6 +36,7 @@ class _ChatSessionScreenState extends State<ChatSessionScreen> {
   final _composer = TextEditingController();
   final _scroll = ScrollController();
   Timer? _poller;
+  Timer? _sessionTimer;
   String? _sessionId;
   List<ChatMessage> _messages = const [];
   bool _sending = false;
@@ -65,6 +66,7 @@ class _ChatSessionScreenState extends State<ChatSessionScreen> {
   @override
   void dispose() {
     _poller?.cancel();
+    _sessionTimer?.cancel();
     _composer.dispose();
     _scroll.dispose();
     super.dispose();
@@ -123,10 +125,20 @@ class _ChatSessionScreenState extends State<ChatSessionScreen> {
       );
       _sessionStart ??= DateTime.now();
       if (!mounted) return;
-      await _fetch();
+      await _fetch(forceScroll: true);
       _poller = Timer.periodic(const Duration(seconds: 3), (_) {
         if (!mounted) return;
         _fetch();
+      });
+      _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() {
+          if (_sessionStart != null) {
+            _elapsed = DateTime.now().difference(_sessionStart!);
+          } else {
+            _elapsed += const Duration(seconds: 1);
+          }
+        });
         _checkWalletExpiry();
       });
       setState(() {});
@@ -170,6 +182,7 @@ class _ChatSessionScreenState extends State<ChatSessionScreen> {
     if (_ending) return;
     _ending = true;
     _poller?.cancel();
+    _sessionTimer?.cancel();
     try {
       if (_sessionId != null) {
         await AstrologerApi.instance.endChat(sessionId: _sessionId!);
@@ -188,26 +201,29 @@ class _ChatSessionScreenState extends State<ChatSessionScreen> {
     }
   }
 
-  Future<void> _fetch() async {
+  Future<void> _fetch({bool forceScroll = false}) async {
     if (_sessionId == null) return;
     try {
       final fresh = await AstrologerApi.instance
           .chatHistory(sessionId: _sessionId!, myId: _myId);
       if (!mounted) return;
+      final hasNewMessages = fresh.length != _messages.length;
       setState(() {
         _messages = fresh;
         if (_sessionStart != null) {
           _elapsed = DateTime.now().difference(_sessionStart!);
         }
       });
-      _jumpToBottom();
+      if (forceScroll || hasNewMessages) {
+        _jumpToBottom();
+      }
     } catch (_) {}
   }
 
   void _jumpToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) {
-        _scroll.jumpTo(_scroll.position.maxScrollExtent);
+        _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
       }
     });
   }
@@ -221,7 +237,7 @@ class _ChatSessionScreenState extends State<ChatSessionScreen> {
         fromUserId: _myId,
         text: text,
       );
-      await _fetch();
+      await _fetch(forceScroll: true);
     } on ApiException catch (e) {
       if (mounted) showSnack(context, e.message, error: true);
     } finally {
@@ -240,7 +256,7 @@ class _ChatSessionScreenState extends State<ChatSessionScreen> {
         fromUserId: _myId,
         text: text,
       );
-      await _fetch();
+      await _fetch(forceScroll: true);
     } on ApiException catch (e) {
       if (mounted) showSnack(context, e.message, error: true);
     } finally {

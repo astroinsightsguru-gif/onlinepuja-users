@@ -29,5 +29,5 @@ class Env {
   );
 
   /// Gemini free-tier proxy (Cosmic AI) routed through the backend.
-  static const String aiChatPath = '/api/ai-chat/send';
+  static const String aiChatPath = '/ai-chat/send';
 }
