@@ -73,7 +73,7 @@ class PushNotificationService {
           'subscription_id': subscriptionId ?? '',
           'deviceManufacturer': 'Web Browser',
           'deviceModel': 'Chrome/Web',
-          'appVersion': '2.3.6',
+          'appVersion': '2.3.7',
         });
         debugPrint('[PushNotificationService] Web device recorded for user $userId');
       } catch (e) {
@@ -103,7 +103,7 @@ class PushNotificationService {
         if (token != null && token.isNotEmpty) 'fcmToken': token,
         'deviceManufacturer': Platform.operatingSystem,
         'deviceModel': Platform.operatingSystemVersion,
-        'appVersion': '2.3.6',
+        'appVersion': '2.3.7',
       });
 
       debugPrint('[PushNotificationService] Successfully synced device token to backend for user $userId (subId: $subId)');
