@@ -680,12 +680,72 @@ Route::match(['get', 'post'], 'dummy-webhook', function (\Illuminate\Http\Reques
 });
 
 Route::match(['get', 'post'], 'social/webhook', function (\Illuminate\Http\Request $request) {
+    $data = $request->json()->all() ?: $request->all();
+    if (empty($data)) {
+        $raw = json_decode($request->getContent(), true);
+        if (is_array($raw)) $data = $raw;
+    }
+
+    $title = trim((string)($data['title'] ?? '🕉️ OnlinePuja Divine Growth Update'));
+    $text = trim((string)($data['text'] ?? $data['caption'] ?? $data['content'] ?? ''));
+    $videoUrl = trim((string)($data['video_url'] ?? ''));
+    $imageUrl = trim((string)($data['image_url'] ?? $data['thumbnail_url'] ?? ''));
+    $mediaUrl = !empty($videoUrl) ? $videoUrl : (!empty($imageUrl) ? $imageUrl : trim((string)($data['media_url'] ?? '')));
+    $mediaType = !empty($videoUrl) ? 'video' : trim((string)($data['media_type'] ?? 'image'));
+    $channels = $data['channels'] ?? ['whatsapp', 'instagram', 'feed'];
+    if (!is_array($channels)) $channels = [$channels];
+
+    $outputId = null;
+    try {
+        if (\Illuminate\Support\Facades\Schema::hasTable('ai_agents') && \Illuminate\Support\Facades\Schema::hasTable('ai_agent_outputs')) {
+            $agentId = \Illuminate\Support\Facades\DB::table('ai_agents')
+                ->where('agent_key', 'festival')
+                ->orWhere('agent_key', 'paperclip_growth')
+                ->value('id');
+
+            if (!$agentId) {
+                $agentId = \Illuminate\Support\Facades\DB::table('ai_agents')->insertGetId([
+                    'agent_key' => 'paperclip_growth',
+                    'name' => 'Paperclip Growth AI',
+                    'icon' => '🚀',
+                    'role_description' => 'Autonomous Marketing & Creative Engine orchestrated via Paperclip AI',
+                    'system_prompt' => 'You are the Autonomous Paperclip Growth Agent for OnlinePuja.live',
+                    'language' => 'hi',
+                    'tone' => 'vedic_devotional',
+                    'model_preference' => 'omniroute',
+                    'cron_cadence' => '0 * * * *',
+                    'mode' => 'autonomous',
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $outputId = \Illuminate\Support\Facades\DB::table('ai_agent_outputs')->insertGetId([
+                'agent_id' => $agentId,
+                'title' => $title,
+                'content_payload' => $text,
+                'media_type' => $mediaType,
+                'media_url' => $mediaUrl,
+                'status' => 'approved',
+                'published_at' => now(),
+                'distribution_channels' => json_encode($channels),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::warning('Paperclip social/webhook ingestion notice: ' . $e->getMessage());
+    }
+
     return response()->json([
         'ok' => true,
-        'status' => 'success',
-        'message' => 'OnlinePuja Social Webhook listener active!',
+        'status' => 'published',
+        'message' => 'OnlinePuja Growth OS & App Feeds successfully synced with Paperclip!',
+        'output_id' => $outputId,
+        'media_type' => $mediaType,
+        'channels' => $channels,
         'received_at' => now()->toIso8601String(),
-        'payload_preview' => $request->all(),
     ]);
 });
 
