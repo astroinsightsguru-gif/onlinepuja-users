@@ -12,12 +12,21 @@ use Illuminate\Support\Facades\Log;
 
 class MarketingCockpitController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * Display the Executive Growth & AI Marketing Command Center
-     * URL: https://onlinepuja.live/marketing
+     * URL: https://onlinepuja.live/marketing (Restricted: Admin Only)
      */
     public function index(Request $request)
     {
+        // Enforce admin authentication check
+        if (!auth()->check()) {
+            return redirect('/admin/login?redirect=' . urlencode('/marketing'));
+        }
         // 1. Live Devotee Radar Metrics
         $radar = $this->getRadarSummary();
 
