@@ -267,8 +267,8 @@ Route::get('login', function() { return redirect('/admin/login', 301); });
 // OnlinePuja Growth & AI Marketing Command Center
 // URL: https://onlinepuja.live/marketing
 // ========================================================
-Route::middleware(['web', 'auth'])->group(function () {
-    Route::get('marketing', [\App\Http\Controllers\Admin\MarketingCockpitController::class, 'index'])->name('marketing.cockpit');
+Route::middleware(['web'])->group(function () {
+    Route::match(['get', 'post'], 'marketing', [\App\Http\Controllers\Admin\MarketingCockpitController::class, 'index'])->name('marketing.cockpit');
 });
 Route::any('growth-os/{any?}', function ($any = null) {
     return redirect('/admin/growth-os' . ($any ? '/' . $any : ''), 301);

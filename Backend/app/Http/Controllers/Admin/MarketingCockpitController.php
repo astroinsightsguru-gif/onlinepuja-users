@@ -6,37 +6,60 @@ use App\Http\Controllers\Controller;
 use App\Brain\Vault;
 use App\Services\BrevoService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class MarketingCockpitController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['web', 'auth']);
-    }
-
     /**
      * Display the Executive Growth & AI Marketing Command Center
-     * URL: https://onlinepuja.live/marketing (Restricted: Admin Only)
+     * URL: https://onlinepuja.live/marketing (Strictly Admin Only)
      */
     public function index(Request $request)
     {
-        // Enforce admin authentication check across session
-        if (!auth()->check() && !\Illuminate\Support\Facades\Auth::guard('web')->check()) {
-            return redirect('/admin/login');
+        // 1. Handle Inline Executive Unlock POST Submission
+        $authError = null;
+        if ($request->isMethod('post') && $request->has('admin_password')) {
+            $inputPassword = (string) $request->input('admin_password');
+            $adminUser = DB::table('users')->where('id', 1)->first();
+
+            if ($adminUser && Hash::check($inputPassword, $adminUser->password)) {
+                Auth::guard('web')->loginUsingId($adminUser->id, true);
+                session()->put('marketing_admin_auth', true);
+                session()->put('loginId', $adminUser->id);
+                return redirect('/marketing');
+            } else {
+                $authError = 'Invalid Administrator Password. Access Denied.';
+            }
         }
-        // 1. Live Devotee Radar Metrics
+
+        // 2. Check if user is currently authenticated as an Admin
+        $isAdmin = false;
+        if (session()->get('marketing_admin_auth') === true) {
+            $isAdmin = true;
+        } elseif (Auth::guard('web')->check() || Auth::check()) {
+            $user = Auth::guard('web')->user() ?: Auth::user();
+            if ($user && in_array($user->userRoleName ?? '', ['SUPERADMIN', 'ADMIN', 'OTHER']) && ($user->id == 1 || $user->id == 2)) {
+                $isAdmin = true;
+            } elseif ($user && $user->id == 1) {
+                $isAdmin = true;
+            }
+        }
+
+        // 3. If NOT authenticated, render the dedicated Executive Lock Gate right on /marketing
+        // (Never redirect to /admin/login to prevent the bouncing redirect to /admin/dashboard!)
+        if (!$isAdmin) {
+            return view('pages.marketing.lock', compact('authError'));
+        }
+
+        // 4. Authenticated Admin: Load Full Executive Cockpit Data
         $radar = $this->getRadarSummary();
-
-        // 2. Paperclip Autonomous Squad Overview
         $paperclip = $this->getPaperclipSummary();
-
-        // 3. Vedic SEO & AEO Health
         $seo = $this->getSeoSummary();
 
-        // 4. Omnichannel Marketing & Vault Tracking Status
         $tracking = [
             'ga4' => [
                 'id' => Vault::get('ga4_measurement_id', 'G-7T63JY1D93'),
@@ -62,7 +85,6 @@ class MarketingCockpitController extends Controller
             ],
         ];
 
-        // 5. Autopilot & Devotee Drip Queue
         $autopilot = [
             'mode' => Vault::get('autopilot_mode', 'supervised'),
             'pending_count' => DB::table('autopilot_queue')->where('status', 'pending')->count(),
@@ -75,7 +97,6 @@ class MarketingCockpitController extends Controller
 
     protected function getRadarSummary(): array
     {
-        // 6 Devotee seeds with live simulated dwell and high-intent Vedic intent
         $visitors = [
             [
                 'id' => 'dev_108',
@@ -172,7 +193,7 @@ class MarketingCockpitController extends Controller
                 ];
             }
         } catch (\Throwable $e) {
-            // Paperclip fallback response
+            // fallback
         }
 
         return [
