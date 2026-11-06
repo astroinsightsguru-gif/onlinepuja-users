@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'providers/call_provider.dart';
+import 'providers/devotee_lead_provider.dart';
+import 'providers/growth_ai_provider.dart';
+import 'providers/paperclip_provider.dart';
+import 'providers/quotation_provider.dart';
+import 'services/manager_api_service.dart';
 import 'services/manager_auth_session.dart';
 import 'theme/manager_theme.dart';
 import 'ui/screens/auth/manager_login_screen.dart';
@@ -16,8 +22,17 @@ class OnlinePujaManagerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ManagerAuthSession(),
+    final apiService = ManagerApiService();
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ManagerAuthSession()),
+        ChangeNotifierProvider(create: (_) => CallProvider(apiService: apiService)),
+        ChangeNotifierProvider(create: (_) => DevoteeLeadProvider(apiService: apiService)),
+        ChangeNotifierProvider(create: (_) => QuotationProvider(apiService: apiService)),
+        ChangeNotifierProvider(create: (_) => GrowthAiProvider(apiService: apiService)),
+        ChangeNotifierProvider(create: (_) => PaperclipProvider(apiService: apiService)),
+      ],
       child: MaterialApp(
         title: 'OnlinePuja Manager',
         debugShowCheckedModeBanner: false,

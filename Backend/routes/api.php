@@ -658,6 +658,13 @@ Route::prefix('manager')->group(function () {
     // Marketing Automation Campaigns
     Route::get('campaigns', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getCampaignAutomations']);
     Route::post('campaigns/trigger', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'triggerCampaignAutomation']);
+
+    // 🤖 Paperclip Autonomous AI Squad Proxy (7 AI Agents)
+    Route::get('paperclip/overview', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipOverview']);
+    Route::get('paperclip/agents', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipAgents']);
+    Route::get('paperclip/issues', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipIssues']);
+    Route::post('paperclip/dispatch', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'dispatchPaperclipMission']);
+    Route::post('paperclip/pause-agent', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'togglePaperclipAgentPause']);
 });
 
 

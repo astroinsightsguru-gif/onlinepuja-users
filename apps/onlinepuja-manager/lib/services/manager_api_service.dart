@@ -245,6 +245,20 @@ class ManagerApiService {
     return {'banners': <Map<String, dynamic>>[], 'pujas': <Map<String, dynamic>>[]};
   }
 
+  // 14b. Update Bookable Puja Price
+  Future<bool> updatePujaPrice(int id, double price) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/puja/$id/price'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'price': price}),
+      ).timeout(const Duration(seconds: 10));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // 15. Fetch Upcoming Festivals & Milestone Countdown
   Future<List<Map<String, dynamic>>> fetchFestivals() async {
     try {
@@ -439,5 +453,397 @@ class ManagerApiService {
       }
     } catch (_) {}
     return [];
+  }
+
+  // 26. Fetch CRM Contacts (Devotees & Astrologers)
+  Future<Map<String, dynamic>> fetchContacts({String type = 'all', String search = ''}) async {
+    try {
+      String url = '$baseUrl/contacts?type=$type';
+      if (search.isNotEmpty) url += '&search=${Uri.encodeComponent(search)}';
+      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return {'success': false, 'contacts': [], 'summary': {}};
+  }
+
+  // 27. Fetch Contact Detail
+  Future<Map<String, dynamic>?> fetchContactDetail(String id) async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/contacts/$id')).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 28. Fetch WhatsApp Gateway Status
+  Future<Map<String, dynamic>> fetchWhatsappStatus({bool requestQr = false}) async {
+    try {
+      String url = '$baseUrl/whatsapp/status';
+      if (requestQr) url += '?request_qr=true';
+      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 12));
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return {'success': false, 'is_connected': false, 'connection_state': 'offline'};
+  }
+
+  // 28b. Fetch Pairing Code
+  Future<Map<String, dynamic>> fetchWhatsappPairingCode({String phone = '917007158014'}) async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/whatsapp/pair-code?phone=$phone')).timeout(const Duration(seconds: 15));
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return {'ok': false};
+  }
+
+  // 28c. Restart WhatsApp Instance
+  Future<bool> restartWhatsappInstance() async {
+    try {
+      final res = await http.post(Uri.parse('$baseUrl/whatsapp/restart')).timeout(const Duration(seconds: 15));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 29. Fetch WhatsApp Threads
+  Future<List<Map<String, dynamic>>> fetchWhatsappThreads({String search = ''}) async {
+    try {
+      String url = '$baseUrl/whatsapp/threads';
+      if (search.isNotEmpty) url += '?search=${Uri.encodeComponent(search)}';
+      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['threads'] is List) {
+          return List<Map<String, dynamic>>.from(decoded['threads']);
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // 30. Fetch WhatsApp Messages for Thread
+  Future<List<Map<String, dynamic>>> fetchWhatsappMessages(String jid) async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/whatsapp/messages/${Uri.encodeComponent(jid)}')).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['messages'] is List) {
+          return List<Map<String, dynamic>>.from(decoded['messages']);
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // 31. Send WhatsApp Message
+  Future<bool> sendWhatsappMessage({
+    required String jid,
+    required String message,
+    String? phone,
+    String? mediaUrl,
+    String? mediaType,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/whatsapp/send'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'jid': jid,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
+          'message': message,
+          if (mediaUrl != null && mediaUrl.isNotEmpty) 'media_url': mediaUrl,
+          if (mediaType != null) 'media_type': mediaType,
+        }),
+      ).timeout(const Duration(seconds: 12));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 32. Toggle AI Bot on WhatsApp Thread
+  Future<bool> toggleWhatsappAi({required String jid, required bool enable}) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/whatsapp/toggle-ai'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'jid': jid,
+          'is_ai_handling': enable,
+        }),
+      ).timeout(const Duration(seconds: 8));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 33. Fetch Leads Pipeline
+  Future<Map<String, dynamic>> fetchLeads({String stage = 'all', String search = ''}) async {
+    try {
+      String url = '$baseUrl/leads?stage=$stage';
+      if (search.isNotEmpty) url += '&search=${Uri.encodeComponent(search)}';
+      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return {'success': false, 'leads': [], 'summary': {}};
+  }
+
+  // 34. Create Lead
+  Future<bool> createLead(Map<String, dynamic> data) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/leads'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      ).timeout(const Duration(seconds: 8));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 35. Update Lead Stage
+  Future<bool> updateLeadStage(int id, String stage) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/leads/$id/stage'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'stage': stage}),
+      ).timeout(const Duration(seconds: 8));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 36. Add Lead Note
+  Future<bool> addLeadNote(int id, String note) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/leads/$id/note'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'note': note}),
+      ).timeout(const Duration(seconds: 8));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 37. Fetch Real Marketing & Growth Campaigns Telemetry
+  Future<Map<String, dynamic>> fetchCampaignAutomations() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/campaigns')).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return {'success': false, 'channels': [], 'campaigns': []};
+  }
+
+  // 38. Trigger Campaign Automation
+  Future<bool> triggerCampaignAutomation(String campaignId) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/campaigns/trigger'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'id': campaignId}),
+      ).timeout(const Duration(seconds: 20));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 🔮 Master AI Executive Assistant & Ops Copilot
+  Future<Map<String, dynamic>?> chatWithMasterAi(String message, {List<Map<String, String>>? history}) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/ai/chat'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'message': message,
+          'history': history ?? [],
+        }),
+      ).timeout(const Duration(seconds: 30));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['success'] == true) {
+          return Map<String, dynamic>.from(decoded);
+        }
+      }
+    } catch (e) {
+      // Return offline graceful response
+    }
+    return null;
+  }
+
+  // 🪔 Save Devotee Sacred Gotra Vault & Family Members
+  Future<bool> updateGotraVault(String contactId, {
+    required String gotra,
+    String? kuldevta,
+    List<Map<String, dynamic>>? familyMembers,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/contacts/devotee/$contactId/gotra-vault'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'gotra': gotra,
+          'kuldevta': kuldevta ?? '',
+          'family_members': familyMembers ?? [],
+        }),
+      ).timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        return decoded['success'] == true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  // 🚩 Assign Pandit to Lead
+  Future<bool> assignPanditToLead(int leadId, int panditId) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/leads/$leadId/assign-pandit'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({'pandit_id': panditId}),
+      ).timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        return decoded['success'] == true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  // 📜 Generate 1-Click Sankalp Patra for Pandit Handover
+  Future<Map<String, dynamic>?> generateSankalpPatra(String contactId) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/contacts/devotee/$contactId/sankalp-patra'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['success'] == true && decoded['sankalp_patra'] != null) {
+          return Map<String, dynamic>.from(decoded['sankalp_patra']);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 🤖 PAPERCLIP AUTONOMOUS AI ENGINE (7 AI AGENTS)
+  // ===============================================
+
+  Future<Map<String, dynamic>?> fetchPaperclipOverview() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/paperclip/overview'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 12));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<List<dynamic>?> fetchPaperclipAgents() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/paperclip/agents'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 12));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded != null && decoded['agents'] is List) {
+          return decoded['agents'] as List<dynamic>;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<List<dynamic>?> fetchPaperclipIssues() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/paperclip/issues'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 12));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded != null && decoded['issues'] is List) {
+          return decoded['issues'] as List<dynamic>;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> dispatchPaperclipMission({
+    required String title,
+    String description = '',
+    String priority = 'high',
+    String? assigneeId,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/paperclip/dispatch'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'title': title,
+          'description': description,
+          'priority': priority,
+          if (assigneeId != null) 'assigneeId': assigneeId,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<bool> togglePaperclipAgentPause({
+    required String agentId,
+    required bool pause,
+    String? reason,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/paperclip/pause-agent'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'agentId': agentId,
+          'pause': pause,
+          if (reason != null) 'reason': reason,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      return res.statusCode == 200;
+    } catch (_) {}
+    return false;
   }
 }
