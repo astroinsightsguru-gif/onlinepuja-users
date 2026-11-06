@@ -131,6 +131,8 @@ Route::middleware(['auth'])->prefix('social')->group(function () {
 
 // Direct Aliases for Growth OS & Marketing Hub (web.php is already prefixed with 'admin' in RouteServiceProvider)
 Route::middleware(['auth'])->group(function () {
+    Route::get('marketing', [\App\Http\Controllers\Admin\MarketingCockpitController::class, 'index']);
+    Route::get('marketing-cockpit', [\App\Http\Controllers\Admin\MarketingCockpitController::class, 'index']);
     Route::get('growth/marketing-hub', [GrowthOsController::class, 'marketingHub']);
     Route::get('growth/marketing_hub', [GrowthOsController::class, 'marketingHub']);
     Route::get('growth/marketing', [GrowthOsController::class, 'marketingHub']);

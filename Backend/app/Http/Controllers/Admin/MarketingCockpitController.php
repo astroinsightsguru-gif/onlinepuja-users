@@ -14,7 +14,7 @@ class MarketingCockpitController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['web', 'auth']);
     }
 
     /**
@@ -23,9 +23,9 @@ class MarketingCockpitController extends Controller
      */
     public function index(Request $request)
     {
-        // Enforce admin authentication check
-        if (!auth()->check()) {
-            return redirect('/admin/login?redirect=' . urlencode('/marketing'));
+        // Enforce admin authentication check across session
+        if (!auth()->check() && !\Illuminate\Support\Facades\Auth::guard('web')->check()) {
+            return redirect('/admin/login');
         }
         // 1. Live Devotee Radar Metrics
         $radar = $this->getRadarSummary();
