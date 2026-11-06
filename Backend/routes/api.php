@@ -596,6 +596,7 @@ Route::prefix('manager')->group(function () {
 
     Route::get('radar', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getLiveRadar']);
     Route::post('radar', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getLiveRadar']);
+    Route::get('radar/visitors', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getLiveRadarVisitors']);
     Route::get('banners', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getBanners']);
     Route::post('banners', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'saveBanner']);
     Route::post('puja/{id}/price', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'updatePujaPrice']);

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:onlinepuja_manager/models/website_visitor_model.dart';
+import 'package:onlinepuja_manager/providers/website_radar_provider.dart';
 import 'package:onlinepuja_manager/services/manager_api_service.dart';
 import 'package:onlinepuja_manager/services/manager_auth_session.dart';
 import 'package:onlinepuja_manager/theme/manager_theme.dart';
@@ -8,6 +11,7 @@ import '../social/social_management_screen.dart';
 import '../bookings/master_bookings_screen.dart';
 import '../b2b/b2b_partner_hub_screen.dart';
 import '../campaigns/campaign_automation_screen.dart';
+import '../agents/master_ai_assistant_sheet.dart';
 
 class LiveRadarScreen extends StatefulWidget {
   const LiveRadarScreen({super.key});
@@ -20,50 +24,14 @@ class _LiveRadarScreenState extends State<LiveRadarScreen> {
   final ManagerApiService _apiService = ManagerApiService();
 
   bool _isLoading = false;
-  double _todayGmv = 48500.0;
-  int _activeAstrologers = 14;
-  int _ongoingCalls = 3;
-  int _pendingSankalps = 8;
-  int _totalOrdersToday = 27;
+  double _todayGmv = 0.0;
+  int _activeAstrologers = 0;
+  int _ongoingCalls = 0;
+  int _pendingSankalps = 0;
+  int _prasadDispatch = 0;
+  int _totalOrdersToday = 0;
 
-  List<Map<String, dynamic>> _recentOrders = [
-    {
-      'id': 'OP-PUJA-1049',
-      'devotee': 'Rohan Sharma',
-      'gotra': 'Kashyap',
-      'puja': 'Varanasi Dev Deepawali 108 Deepdaan',
-      'amount': '₹1,500',
-      'status': 'Confirmed',
-      'time': '10 mins ago'
-    },
-    {
-      'id': 'OP-CONSULT-892',
-      'devotee': 'Ananya Verma',
-      'gotra': 'Vashistha',
-      'puja': 'Call Consultation with Acharya Shastri',
-      'amount': '₹650',
-      'status': 'Completed',
-      'time': '24 mins ago'
-    },
-    {
-      'id': 'OP-PUJA-1048',
-      'devotee': 'Amitabh Trivedi',
-      'gotra': 'Bharadwaj',
-      'puja': 'Shri Kashi Vishwanath Rudrabhishek',
-      'amount': '₹2,100',
-      'status': 'Awaiting Video',
-      'time': '42 mins ago'
-    },
-    {
-      'id': 'OP-PUJA-1047',
-      'devotee': 'Pooja Agarwal',
-      'gotra': 'Garg',
-      'puja': 'Diwali Maha Lakshmi Havan',
-      'amount': '₹5,100',
-      'status': 'Confirmed',
-      'time': '1 hour ago'
-    },
-  ];
+  List<Map<String, dynamic>> _recentOrders = [];
 
   @override
   void initState() {
@@ -77,14 +45,25 @@ class _LiveRadarScreenState extends State<LiveRadarScreen> {
     if (mounted) {
       if (data != null) {
         setState(() {
-          _todayGmv = (data['todayGmv'] as num?)?.toDouble() ?? _todayGmv;
-          _totalOrdersToday = (data['totalOrdersToday'] as num?)?.toInt() ?? _totalOrdersToday;
-          _activeAstrologers = (data['activeAstrologers'] as num?)?.toInt() ?? _activeAstrologers;
-          _ongoingCalls = (data['ongoingCalls'] as num?)?.toInt() ?? _ongoingCalls;
-          _pendingSankalps = (data['pendingSankalps'] as num?)?.toInt() ?? _pendingSankalps;
-          if (data['recentOrders'] is List && (data['recentOrders'] as List).isNotEmpty) {
-            _recentOrders = List<Map<String, dynamic>>.from(data['recentOrders']);
-          }
+          _todayGmv = (data['todayGmv'] is num)
+              ? (data['todayGmv'] as num).toDouble()
+              : (double.tryParse(data['todayGmv']?.toString() ?? '') ?? 0.0);
+          _totalOrdersToday = (data['totalOrdersToday'] is num)
+              ? (data['totalOrdersToday'] as num).toInt()
+              : (int.tryParse(data['totalOrdersToday']?.toString() ?? '') ?? 0);
+          _activeAstrologers = (data['activeAstrologers'] is num)
+              ? (data['activeAstrologers'] as num).toInt()
+              : (int.tryParse(data['activeAstrologers']?.toString() ?? '') ?? 0);
+          _ongoingCalls = (data['ongoingCalls'] is num)
+              ? (data['ongoingCalls'] as num).toInt()
+              : (int.tryParse(data['ongoingCalls']?.toString() ?? '') ?? 0);
+          _pendingSankalps = (data['pendingSankalps'] is num)
+              ? (data['pendingSankalps'] as num).toInt()
+              : (int.tryParse(data['pendingSankalps']?.toString() ?? '') ?? 0);
+          _prasadDispatch = int.tryParse(data['prasadDispatchCount']?.toString() ?? data['prasadDispatch']?.toString() ?? '') ?? 0;
+          _recentOrders = data['recentOrders'] is List
+              ? List<Map<String, dynamic>>.from(data['recentOrders'])
+              : [];
           _isLoading = false;
         });
       } else {
@@ -119,7 +98,12 @@ class _LiveRadarScreenState extends State<LiveRadarScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: ManagerTheme.brandGold),
+            icon: const Icon(Icons.auto_awesome, color: ManagerTheme.brandGold, size: 20),
+            tooltip: 'AI Ops Copilot',
+            onPressed: () => MasterAiAssistantSheet.show(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
             tooltip: 'Refresh Radar',
             onPressed: _refresh,
           ),
@@ -192,6 +176,10 @@ class _LiveRadarScreenState extends State<LiveRadarScreen> {
               _buildBusinessControlTower(),
               const SizedBox(height: 24),
 
+              // 3b. Real-Time Devotee Live Radar
+              _buildLiveDevoteeRadarStream(context),
+              const SizedBox(height: 28),
+
               // 4. Live Order Stream
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -219,16 +207,34 @@ class _LiveRadarScreenState extends State<LiveRadarScreen> {
               ),
               const SizedBox(height: 12),
 
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _recentOrders.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, index) {
-                  final order = _recentOrders[index];
-                  return _buildOrderStreamCard(order);
-                },
-              ),
+              if (_recentOrders.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: ManagerTheme.surfaceDark,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'No recent orders today yet. Live transactions will stream here in real time.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: Colors.white60),
+                    ),
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _recentOrders.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final order = _recentOrders[index];
+                    return _buildOrderStreamCard(order);
+                  },
+                ),
             ],
           ),
         ),
@@ -334,7 +340,7 @@ class _LiveRadarScreenState extends State<LiveRadarScreen> {
           icon: Icons.local_shipping_rounded,
           iconColor: ManagerTheme.brandRuby,
           title: 'Prasad Dispatch',
-          value: '19 Ready',
+          value: '$_prasadDispatch Ready',
           subtitle: 'AWB labels queued',
         ),
       ],
@@ -571,6 +577,259 @@ class _LiveRadarScreenState extends State<LiveRadarScreen> {
                     color: isAwaitingVideo ? ManagerTheme.brandGold : ManagerTheme.brandEmerald,
                   ),
                 ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveDevoteeRadarStream(BuildContext context) {
+    final radar = context.watch<WebsiteRadarProvider>();
+    final visitors = radar.visitors;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.radar_rounded, color: Color(0xFF10B981), size: 18),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Live Devotee Radar',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircleAvatar(radius: 3.5, backgroundColor: Color(0xFF10B981)),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${radar.activeCount} Online · ${radar.hotCount} High Intent',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        if (visitors.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: ManagerTheme.surfaceDark,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: const Center(
+              child: Text(
+                'Scanning for active on-site devotees...',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: visitors.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              return _buildDevoteeVisitorCard(visitors[index]);
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDevoteeVisitorCard(WebsiteVisitor visitor) {
+    final isHot = visitor.intentScore >= 80;
+    final minutes = visitor.durationSeconds ~/ 60;
+    final seconds = visitor.durationSeconds % 60;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: ManagerTheme.surfaceDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isHot ? ManagerTheme.brandGold.withValues(alpha: 0.4) : Colors.white12,
+          width: isHot ? 1.2 : 0.8,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(visitor.flag, style: const TextStyle(fontSize: 16)),
+                  const SizedBox(width: 6),
+                  Text(
+                    visitor.city,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '${minutes}m ${seconds}s',
+                      style: const TextStyle(fontSize: 10, color: Colors.white70),
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isHot
+                      ? ManagerTheme.brandGold.withValues(alpha: 0.15)
+                      : ManagerTheme.brandEmerald.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${visitor.intentScore}% ${visitor.intentLabel}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isHot ? ManagerTheme.brandGold : ManagerTheme.brandEmerald,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('🕉️ ', style: TextStyle(fontSize: 13)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      visitor.pageTitle,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Via: ${visitor.referrer} · Device: ${visitor.device}',
+                      style: const TextStyle(fontSize: 10, color: Colors.white54),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (visitor.devoteeName != null && visitor.devoteeName!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.person_outline_rounded, size: 14, color: ManagerTheme.brandGold),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${visitor.devoteeName} (${visitor.gotra ?? "Vedic"} Gotra)',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                  ),
+                  const Spacer(),
+                  if (visitor.devoteePhone != null)
+                    Text(
+                      visitor.devoteePhone!,
+                      style: const TextStyle(fontSize: 11, color: ManagerTheme.brandGold, fontFamily: 'monospace'),
+                    ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (visitor.devoteePhone != null && visitor.devoteePhone!.isNotEmpty) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.phone_in_talk_rounded, size: 14, color: Color(0xFF10B981)),
+                    label: const Text('Call Devotee', style: TextStyle(fontSize: 11, color: Colors.white)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      side: const BorderSide(color: Color(0xFF10B981)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () async {
+                      final url = Uri.parse('tel:${visitor.devoteePhone}');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.chat_bubble_rounded, size: 14, color: Colors.black),
+                    label: const Text('WhatsApp', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF25D366),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () async {
+                      final cleanPhone = visitor.devoteePhone!.replaceAll(RegExp(r'[^0-9]'), '');
+                      final msg = Uri.encodeComponent(
+                        'Pranam ${visitor.devoteeName ?? "Ji"}, OnlinePuja Varanasi sanctum here. We noticed you were viewing ${visitor.pageTitle}. How may our Purohit team assist with your Sankalp?',
+                      );
+                      final waUrl = Uri.parse('https://wa.me/$cleanPhone?text=$msg');
+                      if (await canLaunchUrl(waUrl)) {
+                        await launchUrl(waUrl, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              IconButton(
+                icon: const Icon(Icons.open_in_new_rounded, size: 18, color: Colors.white60),
+                tooltip: 'Open Page',
+                onPressed: () async {
+                  final url = Uri.parse('https://onlinepuja.live${visitor.currentPage}');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
               ),
             ],
           ),

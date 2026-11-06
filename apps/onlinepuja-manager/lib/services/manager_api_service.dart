@@ -24,6 +24,20 @@ class ManagerApiService {
     return null;
   }
 
+  // 1b. Fetch Real-time Live Devotee Visitors
+  Future<List<Map<String, dynamic>>> fetchLiveRadarVisitors() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/radar/visitors')).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['success'] == true && decoded['visitors'] is List) {
+          return List<Map<String, dynamic>>.from(decoded['visitors']);
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
   // 2. Fetch Banners
   Future<List<Map<String, dynamic>>> fetchBanners() async {
     try {

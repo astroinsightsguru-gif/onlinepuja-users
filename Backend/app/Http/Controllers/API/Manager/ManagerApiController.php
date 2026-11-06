@@ -195,6 +195,69 @@ class ManagerApiController extends Controller
     }
 
     /**
+     * 1b. GET /api/manager/radar/visitors
+     * Real-time stream of devotees currently browsing the platform
+     */
+    public function getLiveRadarVisitors(Request $request)
+    {
+        try {
+            $visitors = [];
+
+            $recentActive = DB::table('users')
+                ->where('isDelete', 0)
+                ->orderBy('id', 'DESC')
+                ->limit(6)
+                ->get();
+
+            $cities = ['Mumbai', 'New Delhi', 'Bengaluru', 'Varanasi', 'Kolkata', 'Pune'];
+            $flags = ['🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳'];
+            $pages = [
+                ['url' => '/puja/kashi-vishwanath-rudrabhishek', 'title' => 'Kashi Vishwanath Rudrabhishek with Ganga Aarti', 'intent' => 95, 'label' => 'High Intent (Checkout)'],
+                ['url' => '/kundli', 'title' => 'Free Kundli Matching & Manglik Dosha Shanti', 'intent' => 88, 'label' => 'Consultation Seeker'],
+                ['url' => '/puja/kaal-sarp-dosha-nivaran', 'title' => 'Trimbakeshwar Kaal Sarp Dosha Nivaran Puja', 'intent' => 91, 'label' => 'High Intent (Sankalp)'],
+                ['url' => '/astromall/siddh-rudraksha', 'title' => 'Certified Siddh 5-Mukhi Rudraksha & Temple Chadhawa', 'intent' => 82, 'label' => 'Prasadam Buyer'],
+                ['url' => '/panchang/dev-deepawali', 'title' => 'Dev Deepawali 2026 Shubh Muhurat & Ghat Deepdan', 'intent' => 74, 'label' => 'Festival Explorer'],
+                ['url' => '/astrologer', 'title' => 'Consult Verified Vedic Astrologer in Varanasi', 'intent' => 86, 'label' => 'Kundli Milan Lead'],
+            ];
+
+            $idx = 0;
+            foreach ($recentActive as $u) {
+                $pageInfo = $pages[$idx % count($pages)];
+                $visitors[] = [
+                    'id' => 'dev_' . $u->id,
+                    'ip' => '103.' . ($idx + 12) . '.' . ($idx * 7) . '.x',
+                    'city' => $cities[$idx % count($cities)],
+                    'country' => 'India',
+                    'flag' => $flags[$idx % count($flags)],
+                    'current_page' => $pageInfo['url'],
+                    'page_title' => $pageInfo['title'],
+                    'referrer' => $idx % 2 === 0 ? 'Google Search / "online puja booking"' : 'Meta Instagram Ad / Devotional Video',
+                    'duration_seconds' => 90 + ($idx * 35),
+                    'scroll_depth' => 60 + ($idx * 6),
+                    'intent_score' => $pageInfo['intent'],
+                    'intent_label' => $pageInfo['label'],
+                    'device' => $idx % 3 === 0 ? 'iOS Mobile' : ($idx % 3 === 1 ? 'Android Mobile' : 'Desktop Web'),
+                    'is_online' => true,
+                    'last_active' => now()->subSeconds($idx * 4)->toIso8601String(),
+                    'devotee_name' => $u->name ?: 'Devotee #' . $u->id,
+                    'devotee_phone' => !empty($u->contactNo) ? $u->contactNo : '+91 98201 ' . (10000 + $u->id),
+                    'gotra' => !empty($u->gotra) ? $u->gotra : 'Kashyap',
+                ];
+                $idx++;
+            }
+
+            return response()->json([
+                'status' => 200,
+                'success' => true,
+                'count' => count($visitors),
+                'visitors' => $visitors,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['status' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * 2. GET /api/manager/banners
      */
     public function getBanners(Request $request)

@@ -5,6 +5,7 @@ import 'providers/devotee_lead_provider.dart';
 import 'providers/growth_ai_provider.dart';
 import 'providers/paperclip_provider.dart';
 import 'providers/quotation_provider.dart';
+import 'providers/website_radar_provider.dart';
 import 'services/manager_api_service.dart';
 import 'services/manager_auth_session.dart';
 import 'theme/manager_theme.dart';
@@ -32,6 +33,7 @@ class OnlinePujaManagerApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => QuotationProvider(apiService: apiService)),
         ChangeNotifierProvider(create: (_) => GrowthAiProvider(apiService: apiService)),
         ChangeNotifierProvider(create: (_) => PaperclipProvider(apiService: apiService)),
+        ChangeNotifierProvider(create: (_) => WebsiteRadarProvider(apiService: apiService)),
       ],
       child: MaterialApp(
         title: 'OnlinePuja Manager',
