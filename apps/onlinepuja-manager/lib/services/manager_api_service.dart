@@ -38,6 +38,49 @@ class ManagerApiService {
     return [];
   }
 
+  // 1c. Fetch Vedic SEO & AEO Overview
+  Future<Map<String, dynamic>?> fetchVedicSeoOverview() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/seo/overview')).timeout(const Duration(seconds: 12));
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 1d. Auto-Fix AEO Quotability on Article
+  Future<Map<String, dynamic>?> fixAeoArticle(int id) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/seo/aeo-fix'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({'id': id}),
+      ).timeout(const Duration(seconds: 25));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 1e. Generate New Vedic Article Draft
+  Future<Map<String, dynamic>?> generateVedicDraft(String topic) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/seo/generate-draft'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({'topic': topic}),
+      ).timeout(const Duration(seconds: 35));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   // 2. Fetch Banners
   Future<List<Map<String, dynamic>>> fetchBanners() async {
     try {

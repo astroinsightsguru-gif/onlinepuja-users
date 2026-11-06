@@ -628,6 +628,9 @@ Route::prefix('manager')->group(function () {
     // ðŸ“ Blogs & SEO Publishing Hub
     Route::get('blogs', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getBlogs']);
     Route::post('blogs/{id}/toggle', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'toggleBlog']);
+    Route::get('seo/overview', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getVedicSeoOverview']);
+    Route::post('seo/aeo-fix', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'fixAeoArticle']);
+    Route::post('seo/generate-draft', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generateVedicDraft']);
 
     // ðŸ“± Social Media Omnichannel Control
     Route::get('social/posts', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getSocialPosts']);

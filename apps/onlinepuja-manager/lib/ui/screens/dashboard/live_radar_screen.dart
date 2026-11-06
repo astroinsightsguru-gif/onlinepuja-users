@@ -6,7 +6,7 @@ import 'package:onlinepuja_manager/providers/website_radar_provider.dart';
 import 'package:onlinepuja_manager/services/manager_api_service.dart';
 import 'package:onlinepuja_manager/services/manager_auth_session.dart';
 import 'package:onlinepuja_manager/theme/manager_theme.dart';
-import '../blogs/blogs_management_screen.dart';
+import '../blogs/vedic_seo_aeo_screen.dart';
 import '../social/social_management_screen.dart';
 import '../bookings/master_bookings_screen.dart';
 import '../b2b/b2b_partner_hub_screen.dart';
@@ -398,11 +398,11 @@ class _LiveRadarScreenState extends State<LiveRadarScreen> {
           children: [
             Expanded(
               child: _buildControlCard(
-                title: 'Blogs & SEO',
-                subtitle: '46 Live Guides',
+                title: 'Vedic SEO & AEO',
+                subtitle: 'AEO 87% · 5 Silos',
                 icon: Icons.auto_stories_rounded,
                 color: const Color(0xFFF59E0B),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BlogsManagementScreen())),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VedicSeoAeoScreen())),
               ),
             ),
             const SizedBox(width: 10),

@@ -2340,4 +2340,176 @@ class ManagerApiController extends Controller
 
         return response()->json(['ok' => $res !== null, 'agent' => $res]);
     }
+
+    /**
+     * GET /api/manager/seo/overview
+     * Complete Vedic SEO & AEO Command Center overview
+     */
+    public function getVedicSeoOverview(Request $request)
+    {
+        try {
+            $blogs = DB::table('blogs')
+                ->where('isActive', 1)
+                ->where('isDelete', 0)
+                ->orderByDesc('id')
+                ->get(['id', 'title', 'slug', 'description', 'isActive', 'created_at']);
+
+            $totalPublished = $blogs->count();
+            $totalDrafts = DB::table('content_plans')->whereIn('status', ['drafted', 'approved'])->count();
+
+            $scores = [];
+            $articles = [];
+
+            // Silo buckets
+            $siloStats = [];
+            foreach (\App\Brain\SiloEngine::SILOS as $key => $silo) {
+                $siloStats[$key] = [
+                    'key' => $key,
+                    'name' => $silo['name'],
+                    'pillar_url' => $silo['pillar_url'],
+                    'pillar_title' => $silo['pillar_title'],
+                    'articles_count' => 0,
+                    'pillar_links' => 0,
+                    'health' => 'Healthy',
+                ];
+            }
+
+            foreach ($blogs as $blog) {
+                $html = (string) ($blog->description ?? '');
+                $audit = \App\Brain\AeoEngine::audit($html);
+                $score = $audit['score'];
+                $scores[] = $score;
+
+                $text = $blog->title . ' ' . strip_tags($html);
+                $siloKey = \App\Brain\SiloEngine::detectSilo($text);
+                $siloStats[$siloKey]['articles_count']++;
+
+                $pillarUrl = \App\Brain\SiloEngine::SILOS[$siloKey]['pillar_url'];
+                if (str_contains($html, $pillarUrl)) {
+                    $siloStats[$siloKey]['pillar_links']++;
+                }
+
+                $articles[] = [
+                    'id' => $blog->id,
+                    'title' => $blog->title,
+                    'slug' => $blog->slug,
+                    'aeo_score' => $score,
+                    'silo' => $siloKey,
+                    'silo_name' => \App\Brain\SiloEngine::SILOS[$siloKey]['name'],
+                    'has_direct_answer' => $audit['features']['has_direct_answer_block'] ?? false,
+                    'issues' => $audit['issues'] ?? [],
+                    'word_count' => $audit['features']['word_count'] ?? 0,
+                    'created_at' => $blog->created_at,
+                ];
+            }
+
+            foreach ($siloStats as $key => &$st) {
+                if ($st['articles_count'] === 0) {
+                    $st['health'] = 'Empty Silo';
+                } elseif ($st['pillar_links'] < ($st['articles_count'] * 0.5)) {
+                    $st['health'] = 'Needs Links';
+                } else {
+                    $st['health'] = 'Healthy';
+                }
+            }
+
+            $avgScore = count($scores) > 0 ? (int) round(array_sum($scores) / count($scores)) : 85;
+
+            return response()->json([
+                'ok' => true,
+                'total_published' => $totalPublished,
+                'total_drafts' => $totalDrafts,
+                'avg_aeo_score' => $avgScore,
+                'ai_primary_engine' => 'OmniRoute / Gemini 2.0 Flash',
+                'silos' => array_values($siloStats),
+                'articles' => array_slice($articles, 0, 30),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/manager/seo/aeo-fix
+     * Synthesizes and injects an AEO Direct Answer block into an article
+     */
+    public function fixAeoArticle(Request $request)
+    {
+        $id = (int) $request->input('id');
+        $blog = DB::table('blogs')->where('id', $id)->first();
+
+        if (!$blog) {
+            return response()->json(['ok' => false, 'error' => 'Article not found'], 404);
+        }
+
+        try {
+            $html = (string) ($blog->description ?? '');
+            $aeo = \App\Brain\AeoEngine::synthesizeAeoBlock($blog->title, $html);
+
+            if (!empty($aeo['html_snippet'])) {
+                $newHtml = $html;
+                if (preg_match('/<\/h2>/i', $newHtml, $matches, PREG_OFFSET_CAPTURE)) {
+                    $insertPos = $matches[0][1] + strlen($matches[0][0]);
+                    $newHtml = substr($newHtml, 0, $insertPos) . "\n" . $aeo['html_snippet'] . "\n" . substr($newHtml, $insertPos);
+                } else {
+                    $newHtml = $aeo['html_snippet'] . "\n" . $newHtml;
+                }
+
+                DB::table('blogs')->where('id', $id)->update([
+                    'description' => $newHtml,
+                    'updated_at' => now(),
+                ]);
+
+                \App\Support\LiteSpeedCache::purgeFromCli('/blog/' . $blog->slug, '/blog');
+                $audit = \App\Brain\AeoEngine::audit($newHtml);
+
+                return response()->json([
+                    'ok' => true,
+                    'message' => "AEO Direct Answer block synthesized and injected into #{$id}!",
+                    'new_score' => $audit['score'],
+                ]);
+            }
+
+            return response()->json(['ok' => false, 'error' => 'AEO block generation returned empty'], 500);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/manager/seo/generate-draft
+     * Generates a new Vedic article draft with AEO and Silo links
+     */
+    public function generateVedicDraft(Request $request)
+    {
+        $topic = trim($request->input('topic', ''));
+        if ($topic === '') {
+            return response()->json(['ok' => false, 'error' => 'Topic or keyword is required'], 422);
+        }
+
+        try {
+            $kwId = DB::table('keywords')->insertGetId([
+                'phrase' => $topic,
+                'intent' => 'informational',
+                'difficulty' => 20,
+                'search_volume' => 1200,
+                'status' => 'new',
+                'language' => 'hi',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $kw = DB::table('keywords')->where('id', $kwId)->first();
+            $pipeline = app(\App\Brain\ContentPipeline::class);
+            $res = $pipeline->draftOne($kw);
+
+            return response()->json([
+                'ok' => $res['ok'] ?? false,
+                'plan_id' => $res['plan_id'] ?? null,
+                'message' => ($res['ok'] ?? false) ? 'Article successfully drafted with AEO & Silo anchors!' : 'Drafting failed editorial lint.',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
 }
