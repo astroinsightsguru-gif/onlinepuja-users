@@ -36,10 +36,6 @@ $professionTitle = strtolower(getProfessionTitle() ?: 'partner');
 // $prefix='partner';
 $session = new Session();
 $token = $session->get('token');
-header('Authorization:Bearer ' . $token);
-// header('Content-Type:application/json');
-header('Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization');
-header('Accept:application/json');
 
 /*
  * |--------------------------------------------------------------------------
@@ -58,7 +54,7 @@ Route::get('/sendnotificationjob', function () {
 });
 
 Route::get('/404', function () {
-    return view('pages/404');
+    return response()->view('pages/404', ['layout' => 'side-menu'], 404);
 });
 
 Route::get('testmail', function () {
@@ -72,8 +68,8 @@ Route::get('terms-condition', [PageManagementController::class, 'termscondition'
 Route::post('storeSubscriptionId', [HomeController::class, 'storeSubscriptionId'])->name('storeSubscriptionId');
 Route::post('storeSubscriptionIdForAstro', [AstrologerHomeController::class, 'storeSubscriptionIdForAstro'])->name('storeSubscriptionIdForAstro');
 
-Route::get('payment', [PaymentController::class, 'payment'])->name('payment');
-Route::post('payment', [PaymentController::class, 'payment'])->name('payment');
+Route::match(['get', 'post'], 'payment', [PaymentController::class, 'payment'])->name('payment');
+
 Route::get('payment-success', [PaymentController::class, 'paymentsuccess']);
 Route::post('payment-success', [PaymentController::class, 'paymentsuccess'])->name('payment-success');
 Route::get('payment-failed', [PaymentController::class, 'paymentfailed'])->name('payment-faileds');
@@ -111,6 +107,9 @@ Route::get('/chat-with-' . $professionTitle, [AstrologerChatController::class, '
 Route::get('/' . $professionTitle . '-details/{slug}', [AstrologerController::class, 'astrologerDetails'])->name('front.astrologerDetails');
 Route::get('/panchang', [KundaliController::class, 'getPanchang'])->name('front.getPanchang');
 Route::get('/dailyhoroscope/{slug}', [HoroscopeController::class, 'dailyHoroscope'])->name('front.dailyHoroscope');
+Route::get('/daily-horoscope/{slug}', [HoroscopeController::class, 'dailyHoroscope'])->name('front.dailyHoroscope.slug');
+Route::get('/daily-horoscope', [HoroscopeController::class, 'horoScope'])->name('front.dailyHoroscope.root');
+Route::get('/dailyhoroscope', [HoroscopeController::class, 'horoScope'])->name('front.dailyHoroscope.main');
 Route::get('/ajax/dailyhoroscope/{id}', [HoroscopeController::class, 'ajaxDailyHoroscope'])->name('front.ajaxDailyHoroscope');
 Route::get('/horoscope', [HoroscopeController::class, 'horoScope'])->name('front.horoScope');
 Route::get('/blog', [BlogController::class, 'getBlog'])->name('front.getBlog');
@@ -150,7 +149,7 @@ Route::get('refundPolicy', [FrontendPageManagementController::class, 'refundPoli
 Route::get('about-us', [FrontendPageManagementController::class, 'aboutus'])->name('front.aboutus');
 Route::get('contact', [FrontendPageManagementController::class, 'contactUS'])->name('front.contact');
 Route::post('savecontactUS', [FrontendPageManagementController::class, 'SavecontactUS'])->name('front.store.contact');
-Route::get('/{slug}', [FrontendPageManagementController::class, 'show'])->name('pages.show');
+// Slug route moved to end of file to prevent shadowing specific routes
 
 Route::get('/' . $professionTitle . '-privacy-policy', [FrontendPageManagementController::class, 'astrologerPrivacyPolicy'])->name('front.astrologerPrivacyPolicy');
 Route::get('/' . $professionTitle . '-terms-condition', [FrontendPageManagementController::class, 'astrologerTermsCondition'])->name('front.astrologerTermsCondition');
@@ -239,6 +238,7 @@ Route::get('puja-details/{slug}', [PujaController::class, 'pujaDetails'])->name(
 Route::get('/pujas/{slug}', [PujaController::class, 'pujaDetails'])->name('front.pujaDetails.alias1');
 Route::get('/puja/{slug}', [PujaController::class, 'pujaDetails'])->name('front.pujaDetails.alias2');
 Route::get('/pujas', [PujaController::class, 'pujaCategory'])->name('front.pujaCategory.alias');
+Route::get('/puja', [PujaController::class, 'pujaCategory'])->name('front.puja.root');
 
 Route::get('/puja/checkout/{slug}/{id}/{package_id?}', [PujaController::class, 'pujacheckout'])->name('front.pujacheckout');
 Route::post('userPujaOrder/add', [PujaController::class, 'addUserPujaOrder'])->name('front.addUserPujaOrder');
@@ -249,4 +249,46 @@ Route::post('/broadcast/endpuja', [BroadcastController::class, 'endPujabyAstrolo
 
 Route::get('puja-update-commission', [BroadcastController::class, 'pujaUpdateCommission'])->name('pujaUpdateCommission');
 
+// User-friendly SEO redirects & aliases
+
 Route::post('/store-defaulter-message', [DefaulterMessageController::class, 'storeDefaulterMessage']);
+// ========================================================
+// SEO Redirects & Canonical Aliases (Before Catch-All Slug)
+// ========================================================
+Route::get('pujas', [PujaController::class, 'pujaCategory'])->name('front.pujaCategory.alias');
+Route::get('talk-to-partner', function() { return redirect('/talk-to-astrologer', 301); });
+Route::get('chat-with-partner', function() { return redirect('/chat-with-astrologer', 301); });
+Route::get('contact-us', function() { return redirect('/contact', 301); });
+Route::get('astrologer-login', function() { return redirect('/astrologer/login', 301); });
+Route::get('astrologers', function() { return redirect('/talk-to-astrologer', 301); });
+Route::get('login', function() { return redirect('/admin/login', 301); });
+
+// ========================================================
+// OnlinePuja Growth & AI Marketing Command Center
+// URL: https://onlinepuja.live/marketing
+// ========================================================
+Route::get('marketing', [\App\Http\Controllers\Admin\MarketingCockpitController::class, 'index'])->name('marketing.cockpit');
+Route::any('growth-os/{any?}', function ($any = null) {
+    return redirect('/admin/growth-os' . ($any ? '/' . $any : ''), 301);
+})->where('any', '.*');
+
+// Catch-All Dynamic Pages (MUST remain at the very bottom of route definitions)
+// ========================================================
+// OnlinePuja Manager PWA SPA Deep-Link Fallback & Aliases
+// ========================================================
+Route::get('manager/{any?}', function () {
+    $indexPath = public_path('manager/index.html');
+    if (file_exists($indexPath)) {
+        return response()->file($indexPath, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'Cache-Control' => 'no-cache, private',
+        ]);
+    }
+    abort(404);
+})->where('any', '.*');
+
+Route::get('maneger/{any?}', function ($any = null) {
+    return redirect('/manager' . ($any ? '/' . $any : '/'));
+})->where('any', '.*');
+
+Route::get('/{slug}', [FrontendPageManagementController::class, 'show'])->name('pages.show');
