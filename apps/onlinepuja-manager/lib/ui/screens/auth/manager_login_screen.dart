@@ -17,6 +17,7 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
   final _pinCtrl = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
   bool _enableQuickPin = true;
 
   @override
@@ -25,6 +26,26 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
     _passCtrl.dispose();
     _pinCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      final session = context.read<ManagerAuthSession>();
+      final result = await session.loginWithGoogle();
+      if (!mounted) return;
+      if (result.success) {
+        _showSnack(result.message, isError: false);
+      } else {
+        _showSnack(result.message, isError: true);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnack('Google sign-in error: $e', isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
   }
 
   Future<void> _handleLogin() async {
@@ -60,7 +81,6 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
 
     if (result.success) {
       _showSnack('Superadmin session authorized 🙏', isError: false);
-      // Navigation happens automatically via Consumer in main.dart
     } else {
       _showSnack(result.message, isError: true);
     }
@@ -167,7 +187,7 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                           Icon(Icons.shield_rounded, color: ManagerTheme.brandGold, size: 14),
                           SizedBox(width: 6),
                           Text(
-                            'SUPERADMIN COMMAND TOWER',
+                            'SUPERADMIN & TEAM COMMAND TOWER',
                             style: TextStyle(
                               color: ManagerTheme.brandGold,
                               fontSize: 10,
@@ -179,7 +199,106 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
+
+                  // 1-Click Google Sign-In Primary Button
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _isGoogleLoading || _isLoading ? null : _handleGoogleLogin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF1E293B),
+                        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isGoogleLoading
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF1E293B)),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'G',
+                                      style: TextStyle(
+                                        color: Color(0xFF4285F4),
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  '1-Click Continue with Google',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.2,
+                                    color: Color(0xFF1F2937),
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // OR Divider
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: const Color(0xFF334155),
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14),
+                        child: Text(
+                          'OR SUPERADMIN PASSWORD',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: const Color(0xFF334155),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 22),
 
                   // Email Input
                   const Text(
@@ -211,7 +330,7 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
                   // Password Input
                   const Text(
@@ -226,12 +345,12 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFF1E293B),
-                      hintText: '••••••••••••',
+                      hintText: '••••••••',
                       hintStyle: const TextStyle(color: Colors.white30),
                       prefixIcon: const Icon(Icons.lock_outline_rounded, color: ManagerTheme.brandGold, size: 20),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                           color: Colors.white54,
                           size: 20,
                         ),
@@ -250,17 +369,16 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                         borderSide: const BorderSide(color: ManagerTheme.brandGold, width: 1.5),
                       ),
                     ),
-                    onSubmitted: (_) => _handleLogin(),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
-                  // Optional 4-Digit Quick PIN Setup
+                  // Master Quick PIN Option
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF131D31),
+                      color: const Color(0xFF1E293B).withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFF1E293B)),
+                      border: Border.all(color: const Color(0xFF334155)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,11 +439,11 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
 
                   // Login Button
                   ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
+                    onPressed: _isLoading || _isGoogleLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ManagerTheme.brandGold,
                       foregroundColor: const Color(0xFF0B0F19),
@@ -373,7 +491,7 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   const Center(
                     child: Text(
                       'Protected by 256-bit TLS · End-to-End Encrypted\nOnlinePuja Technologies Private Limited',

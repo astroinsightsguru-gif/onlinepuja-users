@@ -17,8 +17,8 @@ class MenuComposer
      */
     public function compose(View $view)
     {
-        if (!is_null(request()->route())) {
-            $pageName = request()->route()->getName();
+        if (true) {
+            $pageName = (!is_null(request()->route())) ? (request()->route()->getName() ?: '') : '';
             $layout = $this->layout($view);
             $activeMenu = $this->activeMenu($pageName, $layout);
 

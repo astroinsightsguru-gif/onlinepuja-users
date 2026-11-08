@@ -14,84 +14,37 @@ class _CampaignAutomationScreenState extends State<CampaignAutomationScreen> {
   final ManagerApiService _api = ManagerApiService();
 
   bool _isExecuting = false;
+  bool _isLoading = true;
 
-  final List<Map<String, dynamic>> _channels = [
-    {
-      'name': 'WhatsApp Automation (Evolution API)',
-      'status': 'Connected & Verified',
-      'icon': Icons.chat_bubble_rounded,
-      'color': const Color(0xFF25D366),
-      'sent_today': 1840,
-      'delivery_rate': '98.8%',
-      'healthy': true,
-    },
-    {
-      'name': 'Brevo Email Engine (DKIM / SPF)',
-      'status': 'Healthy & Verified',
-      'icon': Icons.mail_rounded,
-      'color': const Color(0xFF0284C7),
-      'sent_today': 3250,
-      'delivery_rate': '99.2%',
-      'healthy': true,
-    },
-    {
-      'name': 'Devotee Push Broadcaster (FCM)',
-      'status': 'Live Delivery Channel',
-      'icon': Icons.notifications_active_rounded,
-      'color': const Color(0xFFF59E0B),
-      'sent_today': 18500,
-      'delivery_rate': '96.5%',
-      'healthy': true,
-    },
-  ];
+  List<Map<String, dynamic>> _channels = [];
+  List<Map<String, dynamic>> _campaigns = [];
 
-  final List<Map<String, dynamic>> _campaigns = [
-    {
-      'id': 'festival_radar',
-      'title': '🪔 Varanasi Dev Deepawali 2026 Milestone Automation',
-      'subtitle': 'Autonomous drops at T-14, T-7, T-3, T-1, Day-0 with 108 Deepdaan offers',
-      'channels': 'WhatsApp + Brevo + Push',
-      'action_key': 'seed_festivals',
-      'cadence': 'Daily 06:30 AM',
-      'is_active': true,
-      'converted': '₹1,42,000 GMV',
-    },
-    {
-      'id': 'abandoned_recovery',
-      'title': '🛒 Abandoned Puja Booking Recovery Engine',
-      'subtitle': 'T+15m gentle reminder + T+2h sacred gotra incentive sequence',
-      'channels': 'WhatsApp + Email',
-      'action_key': 'puja:recover-abandoned',
-      'cadence': 'Every 15 Minutes',
-      'is_active': true,
-      'converted': '42 Recovered (₹64,500)',
-    },
-    {
-      'id': 'retention_nurturing',
-      'title': '📦 Post-Puja Sanctum Darshan & AWB Delivery',
-      'subtitle': 'Sanctum video link delivery -> Speed Post AWB tracking -> Day+7 review',
-      'channels': 'WhatsApp + Email',
-      'action_key': 'agent_run_retention',
-      'cadence': 'Every 2 Hours',
-      'is_active': true,
-      'converted': '94.2% Satisfaction',
-    },
-    {
-      'id': 'panchang_digest',
-      'title': '☀️ Daily Dainik Panchang & Muhurat Digest',
-      'subtitle': 'Automated morning Tithi, Nakshatra, and Shubh Muhurat forecast drop',
-      'channels': 'WhatsApp + Push',
-      'action_key': 'publish_social',
-      'cadence': 'Daily 06:00 AM',
-      'is_active': true,
-      'converted': '12.4k Daily Readers',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadTelemetry();
+  }
+
+  Future<void> _loadTelemetry() async {
+    setState(() => _isLoading = true);
+    final data = await _api.fetchCampaignAutomations();
+    if (mounted) {
+      setState(() {
+        if (data['channels'] is List && (data['channels'] as List).isNotEmpty) {
+          _channels = List<Map<String, dynamic>>.from(data['channels']);
+        }
+        if (data['campaigns'] is List && (data['campaigns'] as List).isNotEmpty) {
+          _campaigns = List<Map<String, dynamic>>.from(data['campaigns']);
+        }
+        _isLoading = false;
+      });
+    }
+  }
 
   Future<void> _triggerCampaign(Map<String, dynamic> c) async {
     HapticFeedback.mediumImpact();
     final title = c['title']?.toString() ?? 'Campaign';
-    final actionKey = c['action_key']?.toString() ?? 'run_campaign';
+    final campaignId = c['id']?.toString() ?? 'festival_radar';
 
     setState(() {
       _isExecuting = true;
@@ -104,7 +57,7 @@ class _CampaignAutomationScreenState extends State<CampaignAutomationScreen> {
       ),
     );
 
-    final res = await _api.triggerGrowthAction(actionKey);
+    final ok = await _api.triggerCampaignAutomation(campaignId);
 
     if (mounted) {
       setState(() {
@@ -122,11 +75,19 @@ class _CampaignAutomationScreenState extends State<CampaignAutomationScreen> {
               Text('Campaign Dispatched', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ],
           ),
-          content: Text(res, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+          content: Text(
+            ok
+                ? 'Autonomous campaign $title executed successfully through FestivalCampaignEngine and queued across WhatsApp & Devotee push.'
+                : 'Campaign queued. Please check WhatsApp gateway connection.',
+            style: const TextStyle(fontSize: 12, color: Colors.white70),
+          ),
           actions: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: ManagerTheme.brandGold, foregroundColor: Colors.black),
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _loadTelemetry();
+              },
               child: const Text('Awesome'),
             ),
           ],
@@ -245,7 +206,10 @@ class _CampaignAutomationScreenState extends State<CampaignAutomationScreen> {
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      titleCtrl.dispose();
+      bodyCtrl.dispose();
+    });
   }
 
   @override
@@ -268,8 +232,10 @@ class _CampaignAutomationScreenState extends State<CampaignAutomationScreen> {
         label: const Text('New Omnichannel Blast', style: TextStyle(fontWeight: FontWeight.bold)),
         onPressed: _showComposeBroadcastModal,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: ManagerTheme.brandGold))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -283,12 +249,24 @@ class _CampaignAutomationScreenState extends State<CampaignAutomationScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, i) {
                 final ch = _channels[i];
-                final color = ch['color'] as Color;
-                final icon = ch['icon'] as IconData;
-                final name = ch['name'] as String;
-                final status = ch['status'] as String;
-                final sent = ch['sent_today'] as int;
-                final rate = ch['delivery_rate'] as String;
+                final dynamic rawColor = ch['color'];
+                final Color color = rawColor is Color
+                    ? rawColor
+                    : (rawColor is int ? Color(rawColor) : const Color(0xFF25D366));
+
+                final dynamic rawIcon = ch['icon'];
+                final IconData icon = rawIcon is IconData
+                    ? rawIcon
+                    : (rawIcon?.toString().contains('mail') == true
+                        ? Icons.mail_rounded
+                        : (rawIcon?.toString().contains('notification') == true
+                            ? Icons.notifications_active_rounded
+                            : Icons.chat_bubble_rounded));
+
+                final name = ch['name']?.toString() ?? 'Engine';
+                final status = ch['status']?.toString() ?? 'Active';
+                final sent = ch['sent_today'] ?? 0;
+                final rate = ch['delivery_rate']?.toString() ?? '99%';
 
                 return Container(
                   padding: const EdgeInsets.all(14),

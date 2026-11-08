@@ -355,9 +355,10 @@ class KundaliController extends Controller
             $time = now($timezone)->format('H:i');
             $lang = $req->lang;
 
+            $apiKeyValue = ($api_key && !empty($api_key->value)) ? $api_key->value : '';
             $curl = curl_init();
             curl_setopt_array($curl, [
-                CURLOPT_URL => 'https://api.vedicastroapi.com/v3-json/panchang/panchang?api_key=' . $api_key->value . '&date=' . $date . '&tz=' . $this->getTimezoneOffset($timezone) . '&lat=' . $latitude . '&lon=' . $longitude . '&time=' . $time . '&lang=' . $lang,
+                CURLOPT_URL => 'https://api.vedicastroapi.com/v3-json/panchang/panchang?api_key=' . $apiKeyValue . '&date=' . $date . '&tz=' . $this->getTimezoneOffset($timezone) . '&lat=' . $latitude . '&lon=' . $longitude . '&time=' . $time . '&lang=' . $lang,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING => '',
                 CURLOPT_MAXREDIRS => 10,
@@ -422,7 +423,7 @@ class KundaliController extends Controller
     }
 
     // Dynamic part
-    public function getKundliViaVedic($lang = 'en', $name, $lat, $long, $dob, $tob, $timezone, $pob, $pdfType = 'small', $match_type = 'north', $company_name, $company_address, $company_website, $company_email, $company_number)
+    public function getKundliViaVedic($lang = 'en', $name = '', $lat = 0, $long = 0, $dob = '', $tob = '', $timezone = '5.5', $pob = '', $pdfType = 'small', $match_type = 'north', $company_name = '', $company_address = '', $company_website = '', $company_email = '', $company_number = '')
     {
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
 
@@ -437,7 +438,7 @@ class KundaliController extends Controller
             'lon' => $long,
             'tz' => $timezone,
             'pob' => $pob,
-            'api_key' => $api_key->value,
+            'api_key' => ($api_key && !empty($api_key->value)) ? $api_key->value : '',
             'lang' => $lang,
             'style' => $match_type,
             'color' => '140',
@@ -732,6 +733,22 @@ class KundaliController extends Controller
         // Get API key
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
 
+        if (!$kundali || empty($kundali->birthDate)) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Kundali profile or birth details not found.',
+                'recordList' => null,
+            ], 404);
+        }
+
+        if (!$api_key || empty($api_key->value)) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Vedic Astro API key not configured.',
+                'recordList' => $kundali,
+            ], 500);
+        }
+
         // Make API call for planet details
         $planet = Http::get('https://api.vedicastroapi.com/v3-json/horoscope/planet-details', [
             'dob' => date('d/m/Y', strtotime($kundali->birthDate)),
@@ -790,6 +807,22 @@ class KundaliController extends Controller
 
         // Get API key
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
+
+        if (!$kundali || empty($kundali->birthDate)) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Kundali profile or birth details not found.',
+                'recordList' => null,
+            ], 404);
+        }
+
+        if (!$api_key || empty($api_key->value)) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Vedic Astro API key not configured.',
+                'recordList' => $kundali,
+            ], 500);
+        }
 
         // Make API call for chart image
         $chart = Http::get('https://api.vedicastroapi.com/v3-json/horoscope/chart-image', [
@@ -857,6 +890,22 @@ class KundaliController extends Controller
         // Get API key
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
 
+        if (!$kundali || empty($kundali->birthDate)) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Kundali profile or birth details not found.',
+                'recordList' => null,
+            ], 404);
+        }
+
+        if (!$api_key || empty($api_key->value)) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Vedic Astro API key not configured.',
+                'recordList' => $kundali,
+            ], 500);
+        }
+
         $params = [
             'dob' => date('d/m/Y', strtotime($kundali->birthDate)),
             'tob' => Carbon::parse($kundali->birthTime)->format('H:i'),
@@ -922,6 +971,22 @@ class KundaliController extends Controller
         // Get API key
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
 
+        if (!$kundali || empty($kundali->birthDate)) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Kundali profile or birth details not found.',
+                'recordList' => null,
+            ], 404);
+        }
+
+        if (!$api_key || empty($api_key->value)) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Vedic Astro API key not configured.',
+                'recordList' => $kundali,
+            ], 500);
+        }
+
         // API call for Ascendant report
         $ascendant = Http::get('https://api.vedicastroapi.com/v3-json/horoscope/ascendant-report', [
             'dob' => date('d/m/Y', strtotime($kundali->birthDate)),
@@ -980,6 +1045,22 @@ class KundaliController extends Controller
         // Get API key
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
 
+        if (!$kundali || empty($kundali->birthDate)) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Kundali profile or birth details not found.',
+                'recordList' => null,
+            ], 404);
+        }
+
+        if (!$api_key || empty($api_key->value)) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Vedic Astro API key not configured.',
+                'recordList' => $kundali,
+            ], 500);
+        }
+
         // API call for Planet Report
         $planet_report = Http::get('https://api.vedicastroapi.com/v3-json/horoscope/planet-report', [
             'dob' => date('d/m/Y', strtotime($kundali->birthDate)),
@@ -1035,6 +1116,7 @@ class KundaliController extends Controller
         }
 
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
+        $apiKeyValue = ($api_key && !empty($api_key->value)) ? $api_key->value : '';
 
         $commonParams = [
             'dob' => date('d/m/Y', strtotime($kundali->birthDate)),
@@ -1042,7 +1124,7 @@ class KundaliController extends Controller
             'tz' => $kundali->timezone,
             'lat' => $kundali->latitude,
             'lon' => $kundali->longitude,
-            'api_key' => $api_key->value,
+            'api_key' => $apiKeyValue,
             'lang' => $request->language,
         ];
 
@@ -1106,6 +1188,7 @@ class KundaliController extends Controller
         }
 
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
+        $apiKeyValue = ($api_key && !empty($api_key->value)) ? $api_key->value : '';
 
         $params = [
             'dob' => date('d/m/Y', strtotime($kundali->birthDate)),
@@ -1113,7 +1196,7 @@ class KundaliController extends Controller
             'tz' => $kundali->timezone,
             'lat' => $kundali->latitude,
             'lon' => $kundali->longitude,
-            'api_key' => $api_key->value,
+            'api_key' => $apiKeyValue,
             'lang' => $request->language,
         ];
 

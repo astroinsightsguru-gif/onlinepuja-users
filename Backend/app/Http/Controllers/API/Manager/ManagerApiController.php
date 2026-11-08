@@ -109,7 +109,7 @@ class ManagerApiController extends Controller
                     'devotee'   => $ord->address_name ?: ($ord->devotee_names ? explode(',', $ord->devotee_names)[0] : 'Devotee'),
                     'gotra'     => $ord->sankalp_gotra ?: ($ord->address_landmark ?: 'Kashyap'),
                     'puja'      => $ord->puja_name ?: 'Vedic Puja',
-                    'amount'    => '₹' . number_format($ord->order_total_price ?: 1500),
+                    'amount'    => 'â‚¹' . number_format($ord->order_total_price ?: 1500),
                     'status'    => !empty($ord->puja_video) ? 'Completed' : 'Awaiting Video',
                     'time'      => !empty($ord->created_at) ? Carbon::parse($ord->created_at)->diffForHumans() : 'Recent',
                     'timestamp' => !empty($ord->created_at) ? strtotime($ord->created_at) : 0,
@@ -132,7 +132,7 @@ class ManagerApiController extends Controller
                         'devotee'   => $c->userName ?: 'Devotee',
                         'gotra'     => 'Astrology Client',
                         'puja'      => 'Call with ' . ($c->astroName ?: 'Astrologer'),
-                        'amount'    => '₹' . number_format((double)($c->deduction ?: ($c->callRate ?: 500))),
+                        'amount'    => 'â‚¹' . number_format((double)($c->deduction ?: ($c->callRate ?: 500))),
                         'status'    => ucfirst(strtolower($c->callStatus ?: 'Completed')),
                         'time'      => !empty($c->created_at) ? Carbon::parse($c->created_at)->diffForHumans() : 'Recent',
                         'timestamp' => !empty($c->created_at) ? strtotime($c->created_at) : 0,
@@ -156,7 +156,7 @@ class ManagerApiController extends Controller
                         'devotee'   => $ch->userName ?: 'Devotee',
                         'gotra'     => 'Chat Client',
                         'puja'      => 'Chat with ' . ($ch->astroName ?: 'Astrologer'),
-                        'amount'    => '₹' . number_format((double)($ch->deduction ?: ($ch->chatRate ?: 350))),
+                        'amount'    => 'â‚¹' . number_format((double)($ch->deduction ?: ($ch->chatRate ?: 350))),
                         'status'    => ucfirst(strtolower($ch->chatStatus ?: 'Completed')),
                         'time'      => !empty($ch->created_at) ? Carbon::parse($ch->created_at)->diffForHumans() : 'Recent',
                         'timestamp' => !empty($ch->created_at) ? strtotime($ch->created_at) : 0,
@@ -210,7 +210,7 @@ class ManagerApiController extends Controller
                 ->get();
 
             $cities = ['Mumbai', 'New Delhi', 'Bengaluru', 'Varanasi', 'Kolkata', 'Pune'];
-            $flags = ['🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳'];
+            $flags = ['ðŸ‡®ðŸ‡³', 'ðŸ‡®ðŸ‡³', 'ðŸ‡®ðŸ‡³', 'ðŸ‡®ðŸ‡³', 'ðŸ‡®ðŸ‡³', 'ðŸ‡®ðŸ‡³'];
             $pages = [
                 ['url' => '/puja/kashi-vishwanath-rudrabhishek', 'title' => 'Kashi Vishwanath Rudrabhishek with Ganga Aarti', 'intent' => 95, 'label' => 'High Intent (Checkout)'],
                 ['url' => '/kundli', 'title' => 'Free Kundli Matching & Manglik Dosha Shanti', 'intent' => 88, 'label' => 'Consultation Seeker'],
@@ -352,7 +352,7 @@ class ManagerApiController extends Controller
                     'gotra'    => $gotraFormatted,
                     'puja'     => $ord->puja_name ?: (!empty($ord->fallback_puja_title) ? $ord->fallback_puja_title : 'Vedic Puja'),
                     'temple'   => !empty($ord->puja_place) ? $ord->puja_place : 'Dashashwamedh Ghat, Kashi',
-                    'amount'   => '₹' . number_format($ord->order_total_price ?: 1500),
+                    'amount'   => 'â‚¹' . number_format($ord->order_total_price ?: 1500),
                     'videoUrl' => $ord->puja_video ?: '',
                     'awb'      => $ord->prasad_tracking_number ?: '',
                     'status'   => $status,
@@ -613,7 +613,7 @@ class ManagerApiController extends Controller
             return response()->json([
                 'status'  => 200,
                 'success' => true,
-                'message' => "✓ Output '{$output->title}' approved & dispatched!",
+                'message' => "âœ“ Output '{$output->title}' approved & dispatched!",
                 'data'    => $output,
             ]);
         } catch (\Throwable $e) {
@@ -745,13 +745,13 @@ class ManagerApiController extends Controller
             $partnerName = $lead ? $lead->business_name : 'Valued Partner';
             $partnerCode = $lead ? $lead->partner_code : 'OP-B2B-MUM-77';
 
-            $pitch = "💼 Auspicious Dev Deepawali 2026 Commercial Proposal\n\n" .
+            $pitch = "ðŸ’¼ Auspicious Dev Deepawali 2026 Commercial Proposal\n\n" .
                 "Respected {$partnerName},\n\n" .
                 "Hotels and boat rides in Kashi are 100% booked for Dev Deepawali 2026 (Tuesday, 24 November).\n" .
                 "Partner with OnlinePuja.live to offer your clients 108 Deepdaan & Rudrabhishek Puja in their personal Gotra on Manikarnika & Dashashwamedh Ghats.\n\n" .
-                "• Your Partner Margin: 25% Net Profit (₹300 - ₹600 per booking)\n" .
-                "• Attribution Link: https://onlinepuja.live/pujas?ref={$partnerCode}\n" .
-                "• Fulfillment: Handled completely by Kashi Purohits with HD Video proof & Speed Post Mahaprasad.\n\n" .
+                "â€¢ Your Partner Margin: 25% Net Profit (â‚¹300 - â‚¹600 per booking)\n" .
+                "â€¢ Attribution Link: https://onlinepuja.live/pujas?ref={$partnerCode}\n" .
+                "â€¢ Fulfillment: Handled completely by Kashi Purohits with HD Video proof & Speed Post Mahaprasad.\n\n" .
                 "Shall we activate your partner account?";
 
             return response()->json([
@@ -804,7 +804,7 @@ class ManagerApiController extends Controller
             $channel = $request->input('channel', 'both');
             $segment = $request->input('segment', 'all');
             $mediaUrl = $request->input('media_url');
-            $ctaText = $request->input('cta_text', 'Book Sacred Puja 🙏');
+            $ctaText = $request->input('cta_text', 'Book Sacred Puja ðŸ™');
             $ctaUrl = $request->input('cta_url', 'https://onlinepuja.live');
 
             if (!$headline || !$body) {
@@ -1084,7 +1084,7 @@ class ManagerApiController extends Controller
                 ], 400);
             }
 
-            // Find Superadmin user
+            // Find user in users or teammember
             $user = DB::table('users')->where('email', $email)->first();
             if (!$user) {
                 return response()->json([
@@ -1095,7 +1095,7 @@ class ManagerApiController extends Controller
             }
 
             // Verify role
-            if (!in_array($user->userRoleName, ['SUPERADMIN', 'ADMIN'])) {
+            if (!in_array($user->userRoleName, ['SUPERADMIN', 'ADMIN', 'MANAGER', 'STAFF'])) {
                 return response()->json([
                     'status' => 403,
                     'success' => false,
@@ -1128,6 +1128,7 @@ class ManagerApiController extends Controller
                     'name' => $user->name ?? 'Online Puja Admin',
                     'email' => $user->email,
                     'role' => $user->userRoleName,
+                    'permissions' => ['*'],
                 ],
                 'message' => 'Superadmin authentication successful.',
             ], 200);
@@ -1484,7 +1485,7 @@ class ManagerApiController extends Controller
                 [
                     'phone' => $phone,
                     'name' => $thread && !empty($thread->name) ? $thread->name : $pushName,
-                    'last_message' => $text ?: '📎 Media message',
+                    'last_message' => $text ?: 'ðŸ“Ž Media message',
                     'last_message_at' => $now,
                     'unread_count' => $fromMe ? 0 : DB::raw('unread_count + 1'),
                     'is_ai_handling' => $isAiHandling,
@@ -1496,7 +1497,7 @@ class ManagerApiController extends Controller
             DB::table('whatsapp_messages')->insert([
                 'thread_jid' => $remoteJid,
                 'direction' => $fromMe ? 'outbound' : 'inbound',
-                'message' => $text ?: '📎 Media message',
+                'message' => $text ?: 'ðŸ“Ž Media message',
                 'status' => $fromMe ? 'sent' : 'delivered',
                 'is_ai_generated' => false,
                 'timestamp' => $now,
@@ -1521,7 +1522,7 @@ class ManagerApiController extends Controller
         try {
             $prompt = "You are the verified Acharya / Vedic Assistant of OnlinePuja.live (Varanasi operations hub). Devotee Name: {$devoteeName}. They just messaged via WhatsApp: '{$incomingText}'. Provide a warm, authentic Vedic greeting with 'Har Har Mahadev' or 'Jai Shri Ram', address their spiritual concern or puja booking request concisely (within 2-3 sentences), and offer authentic rituals or consultation at https://onlinepuja.live. Keep it respectful, devotional, and concise in natural Hinglish or Hindi/English.";
 
-            $reply = "Har Har Mahadev {$devoteeName}! 🙏 Welcome to OnlinePuja.live Varanasi Devotee Seva. We perform authentic Vedic Pujas with your Gotra & Sankalp directly from Kashi Vishwanath and sanctified temples. You can book sacred pujas or talk to our verified Acharyas at https://onlinepuja.live/puja/category/list. How may we assist your family today?";
+            $reply = "Har Har Mahadev {$devoteeName}! ðŸ™ Welcome to OnlinePuja.live Varanasi Devotee Seva. We perform authentic Vedic Pujas with your Gotra & Sankalp directly from Kashi Vishwanath and sanctified temples. You can book sacred pujas or talk to our verified Acharyas at https://onlinepuja.live/puja/category/list. How may we assist your family today?";
 
             if (class_exists(\App\AI\ProviderManager::class)) {
                 try {
@@ -1749,7 +1750,7 @@ class ManagerApiController extends Controller
                 ['remote_jid' => $jid],
                 [
                     'phone' => $phone,
-                    'last_message' => $message ?: '📎 Media sent',
+                    'last_message' => $message ?: 'ðŸ“Ž Media sent',
                     'last_message_at' => Carbon::now(),
                     'unread_count' => 0,
                     'updated_at' => Carbon::now(),
@@ -2066,29 +2067,29 @@ class ManagerApiController extends Controller
             $campaigns = [
                 [
                     'id' => 'festival_radar',
-                    'title' => '🪔 ' . ($primaryFestival['name'] ?? 'Dev Deepawali') . ' Milestone Automation',
+                    'title' => 'ðŸª” ' . ($primaryFestival['name'] ?? 'Dev Deepawali') . ' Milestone Automation',
                     'subtitle' => 'Autonomous drops at T-14, T-7, T-3, T-1, Day-0 with 108 Deepdaan & Rudrabhishek offers',
                     'channels' => 'WhatsApp + Brevo + Push',
                     'action_key' => 'festival_campaign',
                     'cadence' => 'Daily 06:30 AM',
                     'is_active' => true,
                     'target_audience' => "{$devoteesWithPhone} Devotees",
-                    'converted' => '₹84,500 GMV',
+                    'converted' => 'â‚¹84,500 GMV',
                 ],
                 [
                     'id' => 'abandoned_recovery',
-                    'title' => '🛒 Abandoned Puja Booking Recovery Engine',
+                    'title' => 'ðŸ›’ Abandoned Puja Booking Recovery Engine',
                     'subtitle' => 'T+15m gentle reminder + T+2h sacred gotra incentive sequence',
                     'channels' => 'WhatsApp + Email',
                     'action_key' => 'recover_abandoned',
                     'cadence' => 'Every 15 Minutes',
                     'is_active' => true,
                     'target_audience' => "{$pendingRecoveries} Pending Pujas",
-                    'converted' => "₹" . number_format($abandonedGmv, 0) . " in Pipeline",
+                    'converted' => "â‚¹" . number_format($abandonedGmv, 0) . " in Pipeline",
                 ],
                 [
                     'id' => 'retention_nurturing',
-                    'title' => '📦 Post-Puja Sanctum Darshan & AWB Delivery',
+                    'title' => 'ðŸ“¦ Post-Puja Sanctum Darshan & AWB Delivery',
                     'subtitle' => 'Sanctum video link delivery -> Speed Post AWB tracking -> Day+7 review',
                     'channels' => 'WhatsApp + Email',
                     'action_key' => 'sanctum_darshan_dispatch',
@@ -2099,7 +2100,7 @@ class ManagerApiController extends Controller
                 ],
                 [
                     'id' => 'panchang_digest',
-                    'title' => '☀️ Daily Dainik Panchang & Muhurat Digest',
+                    'title' => 'â˜€ï¸ Daily Dainik Panchang & Muhurat Digest',
                     'subtitle' => 'Automated morning Tithi, Nakshatra, and Shubh Muhurat forecast drop',
                     'channels' => 'WhatsApp + Push',
                     'action_key' => 'publish_panchang',
@@ -2512,4 +2513,701 @@ class ManagerApiController extends Controller
             return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
         }
     }
+
+
+    /**
+     * 25b. POST /api/manager/google-login
+     * 1-Click Google Authentication for Superadmin and Authorized Team Members
+     */
+    public function googleLogin(Request $request)
+    {
+        try {
+            $data = $request->json()->all() ?: $request->all();
+            if (empty($data)) {
+                $raw = json_decode($request->getContent(), true);
+                if (is_array($raw)) $data = $raw;
+            }
+
+            $email = trim(strtolower((string)($data['email'] ?? '')));
+            $name = trim((string)($data['name'] ?? 'Team Member'));
+            $googleId = (string)($data['googleId'] ?? $data['id'] ?? '');
+            $photoUrl = (string)($data['photoUrl'] ?? $data['picture'] ?? '');
+
+            if (empty($email)) {
+                return response()->json([
+                    'status' => 400,
+                    'success' => false,
+                    'message' => 'Google account email is required.',
+                ], 400);
+            }
+
+            // Check if Superadmin master account
+            if ($email === 'admin@onlinepuja.live' || $email === 'tripcosmos.co@gmail.com' || $email === 'mohaniaonline@gmail.com') {
+                $user = DB::table('users')->where('email', $email)->first();
+                if (!$user) {
+                    $userId = DB::table('users')->insertGetId([
+                        'name' => $name ?: 'Super Admin',
+                        'email' => $email,
+                        'google_id' => $googleId,
+                        'userRoleName' => 'SUPERADMIN',
+                        'isActive' => 1,
+                        'isDelete' => 0,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ]);
+                    $user = DB::table('users')->where('id', $userId)->first();
+                } else {
+                    DB::table('users')->where('id', $user->id)->update([
+                        'google_id' => $googleId,
+                        'updated_at' => Carbon::now(),
+                    ]);
+                }
+
+                $sessionToken = bin2hex(random_bytes(32));
+                DB::table('users')->where('id', $user->id)->update(['token' => $sessionToken]);
+
+                return response()->json([
+                    'status' => 200,
+                    'success' => true,
+                    'token' => $sessionToken,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => 'SUPERADMIN',
+                        'profile' => $photoUrl ?: $user->profile,
+                    ],
+                    'permissions' => ['*'],
+                    'message' => 'Superadmin Google 1-Click login verified ðŸ™',
+                ], 200);
+            }
+
+            // Check teammember table
+            $teamMember = DB::table('teammember')
+                ->where('email', $email)
+                ->where('isDelete', 0)
+                ->first();
+
+            if (!$teamMember) {
+                // Also check users table if created via CLI or admin panel
+                $user = DB::table('users')->where('email', $email)->where('isDelete', 0)->first();
+                if ($user && in_array(strtoupper($user->userRoleName ?? ''), ['SUPERADMIN', 'ADMIN', 'MANAGER'])) {
+                    $sessionToken = bin2hex(random_bytes(32));
+                    DB::table('users')->where('id', $user->id)->update([
+                        'token' => $sessionToken,
+                        'google_id' => $googleId,
+                        'updated_at' => Carbon::now(),
+                    ]);
+
+                    return response()->json([
+                        'status' => 200,
+                        'success' => true,
+                        'token' => $sessionToken,
+                        'user' => [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'role' => $user->userRoleName,
+                            'profile' => $photoUrl ?: $user->profile,
+                        ],
+                        'permissions' => ['*'],
+                        'message' => 'Admin Google 1-Click login verified ðŸ™',
+                    ], 200);
+                }
+
+                return response()->json([
+                    'status' => 403,
+                    'success' => false,
+                    'message' => "Access denied. {$email} is not an authorized team member in OnlinePuja Manager. Please ask the Superadmin to add your email in Team Manager.",
+                ], 403);
+            }
+
+            // Verify active status
+            if ($teamMember->isActive != 1) {
+                return response()->json([
+                    'status' => 403,
+                    'success' => false,
+                    'message' => 'Your staff account is currently suspended. Please contact Superadmin.',
+                ], 403);
+            }
+
+            // Fetch role name
+            $role = DB::table('teamrole')->where('id', $teamMember->teamRoleId)->first();
+            $roleName = $role ? $role->name : 'Staff';
+
+            // Parse granular permissions
+            $perms = [];
+            if (!empty($teamMember->manager_permissions)) {
+                $perms = json_decode($teamMember->manager_permissions, true) ?: [];
+            } else {
+                $perms = ['crm', 'astrologers', 'campaigns', 'kundli'];
+            }
+
+            // Issue session token
+            $sessionToken = bin2hex(random_bytes(32));
+            if ($teamMember->userId) {
+                DB::table('users')->where('id', $teamMember->userId)->update([
+                    'token' => $sessionToken,
+                    'google_id' => $googleId,
+                    'updated_at' => Carbon::now(),
+                ]);
+            }
+
+            return response()->json([
+                'status' => 200,
+                'success' => true,
+                'token' => $sessionToken,
+                'user' => [
+                    'id' => $teamMember->id,
+                    'name' => $teamMember->name,
+                    'email' => $teamMember->email,
+                    'role' => $roleName,
+                    'profile' => $photoUrl ?: $teamMember->profile,
+                ],
+                'permissions' => $perms,
+                'message' => "Welcome {$teamMember->name}! 1-Click login verified ðŸ™",
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 500,
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /api/manager/team
+     * List all team members with roles and permissions
+     */
+    public function getTeamList(Request $request)
+    {
+        try {
+            $members = DB::table('teammember as tm')
+                ->leftJoin('teamrole as tr', 'tm.teamRoleId', '=', 'tr.id')
+                ->where('tm.isDelete', 0)
+                ->select([
+                    'tm.id',
+                    'tm.userId',
+                    'tm.name',
+                    'tm.email',
+                    'tm.contactNo',
+                    'tm.profile',
+                    'tm.isActive',
+                    'tm.teamRoleId',
+                    'tr.name as roleName',
+                    'tm.manager_permissions',
+                    'tm.created_at',
+                    'tm.updated_at',
+                ])
+                ->orderByDesc('tm.id')
+                ->get();
+
+            $formatted = $members->map(function ($m) {
+                $perms = [];
+                if (!empty($m->manager_permissions)) {
+                    $perms = is_string($m->manager_permissions) ? (json_decode($m->manager_permissions, true) ?: []) : $m->manager_permissions;
+                } else {
+                    $perms = ['crm', 'astrologers', 'campaigns', 'kundli'];
+                }
+                return [
+                    'id' => $m->id,
+                    'userId' => $m->userId,
+                    'name' => $m->name,
+                    'email' => $m->email,
+                    'contactNo' => $m->contactNo,
+                    'profile' => $m->profile,
+                    'isActive' => (int)$m->isActive === 1,
+                    'roleId' => $m->teamRoleId,
+                    'roleName' => $m->roleName ?? 'Staff Member',
+                    'permissions' => $perms,
+                    'created_at' => $m->created_at,
+                ];
+            });
+
+            $total = count($formatted);
+            $active = $formatted->where('isActive', true)->count();
+            $rolesCount = DB::table('teamrole')->count();
+
+            return response()->json([
+                'ok' => true,
+                'total' => $total,
+                'active' => $active,
+                'rolesCount' => $rolesCount,
+                'team' => $formatted->values(),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * GET /api/manager/team/roles
+     * List all available roles and system modules
+     */
+    public function getTeamRoles(Request $request)
+    {
+        try {
+            $roles = DB::table('teamrole')->orderBy('id')->get(['id', 'name']);
+
+            $modules = [
+                ['id' => 'crm', 'name' => 'Devotees CRM & Sankalp Vault', 'icon' => 'people', 'description' => 'View devotees, Sankalp history, VIP tags, and lifetime orders.'],
+                ['id' => 'astrologers', 'name' => 'Astrologers & AI Acharya', 'icon' => 'self_improvement', 'description' => 'Manage pandits, verify profiles, live consultations & AI bridge.'],
+                ['id' => 'campaigns', 'name' => 'WhatsApp Campaigns & Dispatcher', 'icon' => 'campaign', 'description' => 'Anti-ban bulk WhatsApp campaigns, Spintax & QR scanner.'],
+                ['id' => 'kundli', 'name' => 'Vedic Janampatri PDF Studio', 'icon' => 'auto_stories', 'description' => 'Generate sacred gold Janampatri PDFs & 1-tap WhatsApp dispatch.'],
+                ['id' => 'b2b', 'name' => 'B2B Partner & Corporate Hub', 'icon' => 'handshake', 'description' => 'Travel agents, temple tour operators & corporate puja packages.'],
+                ['id' => 'paperclip', 'name' => 'Autonomous 8-Agent AI Squad', 'icon' => 'smart_toy', 'description' => 'Chief of Staff, SEO Silos, Festival Radar & 1-on-1 Agent Chat.'],
+                ['id' => 'finance', 'name' => 'Financial Ledger & Wallets', 'icon' => 'account_balance_wallet', 'description' => 'View gross puja volume, astrologer earnings & commission payout.'],
+                ['id' => 'seo', 'name' => 'Programmatic SEO & Silos', 'icon' => 'trending_up', 'description' => 'Publish SEO blogs, AEO audit, and localized temple pilgrimage silos.'],
+                ['id' => 'team', 'name' => 'Team & Permission Management', 'icon' => 'security', 'description' => 'Add staff, manage roles, configure permissions & audit access.'],
+            ];
+
+            return response()->json([
+                'ok' => true,
+                'roles' => $roles,
+                'modules' => $modules,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/manager/team/create
+     * Add new team member with granular permissions
+     */
+    public function createTeamMember(Request $request)
+    {
+        $v = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'name' => 'required|string|max:191',
+            'email' => 'required|email|max:191',
+            'contactNo' => 'nullable|string|max:20',
+            'password' => 'nullable|string|min:6',
+            'roleId' => 'required|integer',
+            'permissions' => 'nullable|array',
+        ]);
+
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'error' => $v->errors()->first()], 422);
+        }
+
+        $validated = $v->validated();
+        $email = strtolower(trim($validated['email']));
+
+        $existing = DB::table('teammember')->where('email', $email)->where('isDelete', 0)->first();
+        if ($existing) {
+            return response()->json(['ok' => false, 'error' => 'A team member with this email already exists.'], 400);
+        }
+
+        $passwordPlain = !empty($validated['password']) ? $validated['password'] : 'OnlinePuja@' . rand(1000, 9999);
+        $hashed = \Illuminate\Support\Facades\Hash::make($passwordPlain);
+
+        $user = DB::table('users')->where('email', $email)->first();
+        $role = DB::table('teamrole')->where('id', $validated['roleId'])->first();
+        $roleName = $role ? $role->name : 'Staff';
+
+        if (!$user) {
+            $userId = DB::table('users')->insertGetId([
+                'name' => $validated['name'],
+                'email' => $email,
+                'contactNo' => $validated['contactNo'] ?? '',
+                'password' => $hashed,
+                'userRoleName' => $roleName,
+                'isActive' => 1,
+                'isDelete' => 0,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        } else {
+            $userId = $user->id;
+            DB::table('users')->where('id', $userId)->update([
+                'name' => $validated['name'],
+                'password' => $hashed,
+                'isActive' => 1,
+                'isDelete' => 0,
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+
+        $perms = $validated['permissions'] ?? ['crm', 'astrologers', 'campaigns', 'kundli'];
+
+        $teamMemberId = DB::table('teammember')->insertGetId([
+            'userId' => $userId,
+            'name' => $validated['name'],
+            'email' => $email,
+            'contactNo' => $validated['contactNo'] ?? '',
+            'password' => $hashed,
+            'teamRoleId' => $validated['roleId'],
+            'manager_permissions' => json_encode($perms),
+            'isActive' => 1,
+            'isDelete' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Team member added successfully! They can log in with Google 1-Click or password.',
+            'member' => [
+                'id' => $teamMemberId,
+                'userId' => $userId,
+                'name' => $validated['name'],
+                'email' => $email,
+                'contactNo' => $validated['contactNo'] ?? '',
+                'roleId' => $validated['roleId'],
+                'roleName' => $roleName,
+                'permissions' => $perms,
+                'isActive' => true,
+            ],
+        ]);
+    }
+
+    /**
+     * POST /api/manager/team/update
+     * Update team member details and permission matrix
+     */
+    public function updateTeamMember(Request $request)
+    {
+        $v = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'name' => 'required|string|max:191',
+            'email' => 'required|email|max:191',
+            'contactNo' => 'nullable|string|max:20',
+            'roleId' => 'required|integer',
+            'permissions' => 'nullable|array',
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'error' => $v->errors()->first()], 422);
+        }
+
+        $validated = $v->validated();
+        $id = $validated['id'];
+
+        $tm = DB::table('teammember')->where('id', $id)->first();
+        if (!$tm) {
+            return response()->json(['ok' => false, 'error' => 'Team member not found.'], 404);
+        }
+
+        $role = DB::table('teamrole')->where('id', $validated['roleId'])->first();
+        $roleName = $role ? $role->name : 'Staff';
+
+        $perms = $validated['permissions'] ?? [];
+
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => strtolower(trim($validated['email'])),
+            'contactNo' => $validated['contactNo'] ?? $tm->contactNo,
+            'teamRoleId' => $validated['roleId'],
+            'manager_permissions' => json_encode($perms),
+            'updated_at' => Carbon::now(),
+        ];
+
+        if (!empty($validated['password'])) {
+            $updateData['password'] = \Illuminate\Support\Facades\Hash::make($validated['password']);
+        }
+
+        DB::table('teammember')->where('id', $id)->update($updateData);
+
+        if ($tm->userId) {
+            $userUpdate = [
+                'name' => $validated['name'],
+                'email' => strtolower(trim($validated['email'])),
+                'userRoleName' => $roleName,
+                'updated_at' => Carbon::now(),
+            ];
+            if (!empty($validated['password'])) {
+                $userUpdate['password'] = $updateData['password'];
+            }
+            DB::table('users')->where('id', $tm->userId)->update($userUpdate);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Team member profile & permissions updated successfully!',
+        ]);
+    }
+
+    /**
+     * POST /api/manager/team/toggle-status
+     * Activate or suspend a team member's access
+     */
+    public function toggleTeamMemberStatus(Request $request)
+    {
+        $v = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'isActive' => 'required|boolean',
+        ]);
+
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'error' => $v->errors()->first()], 422);
+        }
+
+        $validated = $v->validated();
+        $id = $validated['id'];
+        $isActive = $validated['isActive'] ? 1 : 0;
+
+        $tm = DB::table('teammember')->where('id', $id)->first();
+        if (!$tm) {
+            return response()->json(['ok' => false, 'error' => 'Team member not found.'], 404);
+        }
+
+        DB::table('teammember')->where('id', $id)->update([
+            'isActive' => $isActive,
+            'updated_at' => Carbon::now(),
+        ]);
+
+        if ($tm->userId) {
+            DB::table('users')->where('id', $tm->userId)->update([
+                'isActive' => $isActive,
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'isActive' => (bool)$isActive,
+            'message' => $isActive ? 'Team member account activated!' : 'Team member account suspended.',
+        ]);
+    }
+
+    /**
+     * POST /api/manager/team/delete
+     * Soft delete team member
+     */
+    public function deleteTeamMember(Request $request)
+    {
+        $v = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'error' => $v->errors()->first()], 422);
+        }
+
+        $id = $request->input('id');
+        $tm = DB::table('teammember')->where('id', $id)->first();
+        if (!$tm) {
+            return response()->json(['ok' => false, 'error' => 'Team member not found.'], 404);
+        }
+
+        DB::table('teammember')->where('id', $id)->update([
+            'isDelete' => 1,
+            'isActive' => 0,
+            'updated_at' => Carbon::now(),
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Team member removed successfully.',
+        ]);
+    }
+
+    /**
+     * POST /api/manager/paperclip/unblock-issue
+     * Reset blocked issue to 'todo' and unblock execution
+     */
+    public function unblockPaperclipIssue(Request $request)
+    {
+        $v = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'issueId' => 'required|string',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'error' => $v->errors()->first()], 422);
+        }
+        $validated = $v->validated();
+
+        $issueId = $validated['issueId'];
+        $res = $this->paperclipRequest("issues/{$issueId}", 'PATCH', [
+            'status' => 'todo',
+        ]);
+
+        if ($res) {
+            return response()->json([
+                'ok' => true,
+                'issue' => $res,
+                'message' => 'Mission unblocked and queued for autonomous agent execution!',
+            ]);
+        }
+
+        return response()->json([
+            'ok' => false,
+            'error' => 'Failed to unblock mission in Paperclip engine',
+        ], 500);
+    }
+
+    /**
+     * GET /api/manager/paperclip/issue-details/{id}
+     * Full issue metadata, comments, deliverable attachments, and failure telemetry
+     */
+    public function getPaperclipIssueDetails(Request $request, string $id)
+    {
+        $issue = $this->paperclipRequest("issues/{$id}");
+        if (!$issue) {
+            return response()->json(['ok' => false, 'error' => 'Issue not found'], 404);
+        }
+
+        $comments = $this->paperclipRequest("issues/{$id}/comments") ?? [];
+        $attachments = $this->paperclipRequest("issues/{$id}/attachments") ?? [];
+
+        // Check for blocker diagnostics
+        $blockerReason = null;
+        if (($issue['status'] ?? '') === 'blocked') {
+            $blockerReason = $issue['executionState']['error'] ?? $issue['latestRunErrorCode'] ?? 'Agent run encountered an execution error or context limit.';
+        }
+
+        return response()->json([
+            'ok' => true,
+            'issue' => $issue,
+            'comments' => $comments,
+            'attachments' => $attachments,
+            'blockerReason' => $blockerReason,
+        ]);
+    }
+
+    /**
+     * GET /api/manager/paperclip/attachment/{id}
+     * Proxy attachment content
+     */
+    public function getPaperclipAttachmentContent(Request $request, string $id)
+    {
+        $content = $this->paperclipRequest("attachments/{$id}/content");
+        if ($content !== null) {
+            return response($content, 200)->header('Content-Type', 'text/markdown; charset=utf-8');
+        }
+
+        return response()->json(['ok' => false, 'error' => 'Attachment not found'], 404);
+    }
+
+    /**
+     * POST /api/manager/paperclip/agent-chat
+     * Direct 1-on-1 strategic conversation with any Paperclip agent
+     */
+    public function agentDirectChat(Request $request)
+    {
+        $v = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'agentId' => 'required|string',
+            'agentName' => 'nullable|string',
+            'message' => 'required|string',
+            'history' => 'nullable|array',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'error' => $v->errors()->first()], 422);
+        }
+        $validated = $v->validated();
+
+        $agentName = $validated['agentName'] ?? 'Vedic Growth Agent';
+        $userMsg = $validated['message'];
+        $history = $validated['history'] ?? [];
+
+        $systemPrompt = "You are {$agentName}, an autonomous executive agent for OnlinePuja.live - India's sacred digital Vedic puja and astrology platform. You assist the Executive Management team with Vedic strategies, temple logistics, Gotra Sankalp marketing, devotee engagement, and B2B growth. Provide concise, actionable, and devotional yet data-driven responses.";
+
+        $messages = [
+            ['role' => 'system', 'content' => $systemPrompt],
+        ];
+
+        foreach ($history as $h) {
+            if (!empty($h['role']) && !empty($h['content'])) {
+                $messages[] = [
+                    'role' => $h['role'] === 'user' ? 'user' : 'assistant',
+                    'content' => (string) $h['content'],
+                ];
+            }
+        }
+
+        $messages[] = ['role' => 'user', 'content' => $userMsg];
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(45)
+                ->withHeaders([
+                    'Authorization' => 'Bearer sk-fdcfc87a62a78521-a3cc2b-917e354e',
+                    'Content-Type' => 'application/json',
+                ])
+                ->post('http://127.0.0.1:20128/v1/chat/completions', [
+                    'model' => 'auto/best-coding-fast',
+                    'messages' => $messages,
+                ]);
+
+            if ($response->successful()) {
+                $resData = $response->json();
+                $reply = $resData['choices'][0]['message']['content'] ?? 'Agent is analyzing telemetry...';
+                return response()->json([
+                    'ok' => true,
+                    'reply' => $reply,
+                    'agent' => $agentName,
+                ]);
+            }
+
+            return response()->json([
+                'ok' => false,
+                'error' => 'OmniRoute agent routing returned ' . $response->status(),
+            ], 502);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'ok' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /api/manager/paperclip/sync-deliverable
+     * Push agent deliverable straight to MariaDB Content/Growth feeds
+     */
+    public function syncPaperclipDeliverable(Request $request)
+    {
+        $v = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'title' => 'required|string',
+            'content' => 'required|string',
+            'type' => 'required|string|in:blog,reel,campaign',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'error' => $v->errors()->first()], 422);
+        }
+        $validated = $v->validated();
+
+        $title = $validated['title'];
+        $content = $validated['content'];
+        $type = $validated['type'];
+
+        try {
+            if ($type === 'blog') {
+                $slug = Str::slug($title) . '-' . time();
+                $blogId = DB::table('blogs')->insertGetId([
+                    'title' => $title,
+                    'slug' => $slug,
+                    'description' => $content,
+                    'isActive' => 1,
+                    'isDelete' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                return response()->json([
+                    'ok' => true,
+                    'message' => 'Agent deliverable published to OnlinePuja live Blogs!',
+                    'blog_id' => $blogId,
+                    'slug' => $slug,
+                ]);
+            }
+
+            $planId = DB::table('content_plans')->insertGetId([
+                'title' => $title,
+                'notes' => $content,
+                'status' => 'approved',
+                'format' => $type === 'reel' ? 'reels' : 'whatsapp_story',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'ok' => true,
+                'message' => 'Agent deliverable synced to OnlinePuja Editorial Board!',
+                'plan_id' => $planId,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
 }

@@ -41,7 +41,7 @@ class HomeController extends Controller
         $session = new Session();
         $token = $session->get('token');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         $session = new Session();
         $token = $session->get('token');
 
@@ -245,17 +245,26 @@ class HomeController extends Controller
 
         // If the session does not exist or has expired, fetch new data from the API
         if (!$session->has($sessionKey)) {
-            $Todayspanchang = Http::get('https://api.vedicastroapi.com/v3-json/panchang/panchang', [
-                'date' => $date,
-                'time' => $time,
-                'tz' => $this->getTimezoneOffset($timezone),
-                'lat' => $latitude,
-                'lon' => $longitude,
-                'api_key' => $api_key->value,
-                'lang' => 'en'
-            ]);
-
-            $Tpanchangs = $Todayspanchang->json();
+            $Tpanchangs = [];
+            $apiKeyVal = $api_key ? $api_key->value : '';
+            if (!empty($apiKeyVal) && $apiKeyVal !== 'vedicastro') {
+                try {
+                    $Todayspanchang = Http::timeout(4)->get('https://api.vedicastroapi.com/v3-json/panchang/panchang', [
+                        'date' => $date,
+                        'time' => $time,
+                        'tz' => $this->getTimezoneOffset($timezone),
+                        'lat' => $latitude,
+                        'lon' => $longitude,
+                        'api_key' => $apiKeyVal,
+                        'lang' => 'en'
+                    ]);
+                    if ($Todayspanchang->successful()) {
+                        $Tpanchangs = $Todayspanchang->json();
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning("Home Panchang API timeout/error: " . $e->getMessage());
+                }
+            }
 
             // Store the panchang data in the session with a 24-hour expiry
             $session->set($sessionKey, [
@@ -272,9 +281,13 @@ class HomeController extends Controller
         $astrologerCategoryId = (int) $request->astrologerCategoryId;
         $searchTerm = $request->input('s');
 
-        $getIntakeForm = Http::withoutVerifying()->post(url('/') . '/api/chatRequest/getIntakeForm', [
-            'token' => $token,
-        ])->json();
+        try {
+            $intakeData = DB::table('intakeform')->where('userId', '=', $userId)->get();
+            $default_time = DB::table('systemflag')->where('name', '=', 'defaultcalltime')->value('value');
+            $getIntakeForm = ['status' => 200, 'recordList' => $intakeData, 'default_time' => $default_time];
+        } catch (\Throwable $e) {
+            $getIntakeForm = ['status' => 200, 'recordList' => [], 'default_time' => null];
+        }
 
         $isFreeChat = DB::table('systemflag')->where('name', 'FirstFreeChat')->select('value')->first();
         $isFreeAvailable = true;
@@ -833,27 +846,17 @@ class HomeController extends Controller
         $session = new Session();
         $token = $session->get('token');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
 
-        $getAstrologer = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerById', [
-            'astrologerId' => $request->astrologerId,
-        ])->json();
-        // dd($getAstrologer);
-
-        $getSystemFlag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag', [
-            'token' => $token,
-        ])->json();
-        // Convert the response JSON array to a collection
-        $recordList = $getSystemFlag['recordList'];
-
-        $agoraAppIdObject = null;
-        foreach ($recordList as $item) {
-            if ($item['name'] === 'AgoraAppId') {
-                $agoraAppIdObject = $item;
-                break;
-            }
+        try {
+            $apiReq = new Request(['astrologerId' => $request->astrologerId]);
+            $res = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getAstrologerById($apiReq);
+            $getAstrologer = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getAstrologer = ['status' => 200, 'recordList' => []];
         }
-        $agoraAppIdValue = $agoraAppIdObject['value'];
+
+        $agoraAppIdValue = DB::table('systemflag')->where('name', 'AgoraAppId')->value('value');
 
         return view('frontend.pages.callpage', [
             'getAstrologer' => $getAstrologer,
@@ -864,30 +867,32 @@ class HomeController extends Controller
 
     public function randomgetMyCall(Request $request)
     {
-        Artisan::call('cache:clear');
-
         if (!authcheck())
             return redirect()->route('front.home');
 
-        $session = new Session();
-        $token = $session->get('token');
+        $userId = authcheck()['id'];
 
-        $getUserById = Http::withoutVerifying()->post(url('/') . '/api/getUserById', [
-            'userId' => authcheck()['id'],
-            'token' => $token,
-        ])->json();
+        try {
+            $res = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getUserById(new Request(['userId' => $userId]));
+            $getUserById = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getUserById = ['status' => 200, 'recordList' => []];
+        }
 
-        // dd($getUserById);
+        $userWalletAmount = \App\Models\UserModel\UserWallet::where('userId', $userId)->value('amount') ?? 0;
+        $user = DB::table('users')->where('id', $userId)->first();
+        $getProfile = [
+            'status' => 200,
+            'data' => [
+                'id' => $user->id ?? $userId,
+                'name' => $user->name ?? '',
+                'contactNo' => $user->contactNo ?? '',
+                'email' => $user->email ?? '',
+                'totalWalletAmount' => (float) $userWalletAmount,
+            ]
+        ];
 
-        $getProfile = Http::withoutVerifying()->post(url('/') . '/api/getProfile', [
-            'token' => $token,
-        ])->json();
-
-        $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag', [
-            'token' => $token,
-        ])->json();
-
-        $getsystemflag = collect($getsystemflag['recordList']);
+        $getsystemflag = \App\Models\AdminModel\SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
 
         return view('frontend.pages.my-calls', [

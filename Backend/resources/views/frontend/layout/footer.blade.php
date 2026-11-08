@@ -1,4 +1,4 @@
-<style>
+﻿<style>
     /* ─── Light Mode Footer (Default Theme) ─── */
     #footer {
         background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
@@ -323,6 +323,16 @@ $aiAstrologer = $systemFlags->get('AiAstrologer');
                 </li>
                 @endforeach
             </ul>
+        </div>
+
+        <!-- 🕉️ Footer Language Selection -->
+        <div class="footer-lang-container notranslate my-2 my-md-0 mx-md-3">
+            <div class="footer-lang-row">
+                <span class="text-muted font-12"><i class="fa-solid fa-globe text-warning"></i> भाषा:</span>
+                <button type="button" class="footer-lang-btn active" data-lang="en" onclick="window.switchLanguage('en')">English</button>
+                <span class="text-muted font-12">|</span>
+                <button type="button" class="footer-lang-btn" data-lang="hi" onclick="window.switchLanguage('hi')">🇮🇳 हिन्दी</button>
+            </div>
         </div>
 
         <div class="theme-toggle-container ml-md-auto mt-2 mt-md-0">

@@ -455,18 +455,26 @@
                         <div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span class="ai-step-badge" style="background: #e11d48;">1</span>
-                                <strong style="color: #0f172a; font-size: 12px;">OmniRoute Video</strong>
+                                <strong style="color: #0f172a; font-size: 12px;">Native FFmpeg 9:16 Reel</strong>
                             </div>
                             <div style="margin-top: 4px; font-size: 11px; color: #9f1239; padding-left: 28px;">
-                                Synced: <span id="omni-video-count-badge" style="font-weight: 800; font-family: monospace;">{{ $omniVideoModels->count() }} Models</span>
+                                <span>1080x1920 HQ · HarfBuzz Devanagari · Watermark</span>
                             </div>
                         </div>
-                        <span class="ai-pill" style="background: #ffe4e6; color: #9f1239; border: 1px solid #fda4af;">Primary</span>
+                        <span class="ai-pill" style="background: #ffe4e6; color: #9f1239; border: 1px solid #fda4af;">Primary ($0 Free)</span>
                     </div>
 
                     <div class="ai-cascade-item ai-cascade-fallback">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span class="ai-step-badge" style="background: #64748b;">2</span>
+                            <span style="font-weight: 600; color: #334155;">OmniRoute Video</span>
+                        </div>
+                        <span style="font-size: 11px; color: #64748b; font-family: monospace;">Synced: {{ $omniVideoModels->count() }} Models</span>
+                    </div>
+
+                    <div class="ai-cascade-item ai-cascade-fallback">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="ai-step-badge" style="background: #64748b;">3</span>
                             <span style="font-weight: 600; color: #334155;">Hugging Face Video</span>
                         </div>
                         <span style="font-size: 11px; color: #64748b; font-family: monospace;">Wan2.1-T2V Free</span>
@@ -474,18 +482,10 @@
 
                     <div class="ai-cascade-item ai-cascade-fallback">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="ai-step-badge" style="background: #64748b;">3</span>
+                            <span class="ai-step-badge" style="background: #64748b;">4</span>
                             <span style="font-weight: 600; color: #334155;">Pollinations Motion</span>
                         </div>
                         <span style="font-size: 11px; color: #64748b;">Keyless Motion</span>
-                    </div>
-
-                    <div class="ai-cascade-item ai-cascade-fallback">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="ai-step-badge" style="background: #64748b;">4</span>
-                            <span style="font-weight: 600; color: #334155;">Cinematic Reel Engine</span>
-                        </div>
-                        <span style="font-size: 11px; color: #64748b; font-family: monospace;">2.5D Ken-Burns</span>
                     </div>
                 </div>
             </div>
@@ -625,6 +625,12 @@
                         Default Text Model <span style="color: #64748b; font-weight: normal;">({{ $omniTextModels->count() }} synced)</span>
                     </label>
                     <select name="model_omniroute" class="ai-select">
+                        <option value="auto/gemini" {{ ($creds['model_omniroute'] ?? '') == 'auto/gemini' ? 'selected' : '' }}>
+                            ⭐ auto/gemini (Google Gemini Free Tier Auto)
+                        </option>
+                        <option value="gemini/gemini-3.1-flash-lite" {{ ($creds['model_omniroute'] ?? '') == 'gemini/gemini-3.1-flash-lite' ? 'selected' : '' }}>
+                            ⭐ gemini/gemini-3.1-flash-lite (Ultra-fast 1M token free)
+                        </option>
                         <option value="auto/best-fast" {{ ($creds['model_omniroute'] ?? '') == 'auto/best-fast' ? 'selected' : '' }}>
                             ⭐ auto/best-fast (Fast Multi-Model Router)
                         </option>
@@ -645,6 +651,9 @@
                         Default Image Model <span style="color: #64748b; font-weight: normal;">({{ $omniImageModels->count() }} synced)</span>
                     </label>
                     <select name="model_omniroute_image" class="ai-select">
+                        <option value="gemini-3.1-flash-image" {{ ($creds['model_omniroute_image'] ?? '') == 'gemini-3.1-flash-image' ? 'selected' : '' }}>
+                            ⭐ gemini-3.1-flash-image (Google Gemini 3.1 Flash Image — 100% Free Photorealistic)
+                        </option>
                         <option value="nvidia/black-forest-labs/flux.1-dev" {{ ($creds['model_omniroute_image'] ?? '') == 'nvidia/black-forest-labs/flux.1-dev' ? 'selected' : '' }}>
                             ⭐ nvidia/black-forest-labs/flux.1-dev (NVIDIA Photorealistic FLUX.1)
                         </option>
@@ -662,8 +671,11 @@
                         Default Video Model <span style="color: #64748b; font-weight: normal;">({{ $omniVideoModels->count() }} synced)</span>
                     </label>
                     <select name="model_omniroute_video" class="ai-select">
+                        <option value="ffmpeg-h264-1080x1920-hq" {{ ($creds['model_omniroute_video'] ?? '') == 'ffmpeg-h264-1080x1920-hq' || empty($creds['model_omniroute_video']) ? 'selected' : '' }}>
+                            ⭐ Native FFmpeg 9:16 Sacred Reel (1080x1920 Broadcast Quality — $0 Free)
+                        </option>
                         <option value="fal-ai/xai/grok-imagine-video/text-to-video" {{ ($creds['model_omniroute_video'] ?? '') == 'fal-ai/xai/grok-imagine-video/text-to-video' ? 'selected' : '' }}>
-                            ⭐ grok-imagine-video (Fal.ai High Motion)
+                            grok-imagine-video (Fal.ai High Motion)
                         </option>
                         @foreach($omniVideoModels as $m)
                             <option value="{{ $m->model_id }}" {{ ($creds['model_omniroute_video'] ?? '') == $m->model_id ? 'selected' : '' }}>
@@ -806,11 +818,11 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <div>
                         <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Sender Email</label>
-                        <input type="email" name="brevo_sender_email" value="{{ $creds['brevo_sender_email'] ?? 'no-reply@onlinepuja.live' }}" class="ai-input" style="font-size: 11px;">
+                        <input type="email" name="brevo_sender_email" value="{{ $creds['brevo_sender_email'] ?? 'care@onlinepuja.live' }}" class="ai-input" style="font-size: 11px;">
                     </div>
                     <div>
                         <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Sender Name</label>
-                        <input type="text" name="brevo_sender_name" value="{{ $creds['brevo_sender_name'] ?? 'Online Puja Varanasi' }}" class="ai-input" style="font-size: 11px;">
+                        <input type="text" name="brevo_sender_name" value="{{ $creds['brevo_sender_name'] ?? 'Onlinepuja.live' }}" class="ai-input" style="font-size: 11px;">
                     </div>
                 </div>
                 <div>
@@ -828,6 +840,103 @@
             </div>
         </div>
 
+        {{-- Video Reels Safe Zones & Devotional Branding --}}
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="width: 32px; height: 32px; border-radius: 8px; background: #fff1f2; color: #e11d48; display: flex; align-items: center; justify-content: center; font-size: 16px;">🎬</span>
+                    <div>
+                        <span style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; display: block;">
+                            9:16 Video Reel Devotional Branding & Safe Zones
+                        </span>
+                        <span style="font-size: 11px; color: #64748b;">
+                            Watermark logo overlay, shaped Devanagari Sanskrit typography (HarfBuzz), and WhatsApp CTA on every synthesized 1080x1920 MP4 reel.
+                        </span>
+                    </div>
+                </div>
+                <span class="ai-pill" style="background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">
+                    Instagram, FB & Shorts Safe-Zone Compliant
+                </span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+                {{-- Brand Title --}}
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">
+                        Reel Devotional Title / Brand
+                    </label>
+                    <input type="text" name="video_brand_title" value="{{ $creds['video_brand_title'] ?? 'OnlinePuja.live' }}" class="ai-input" placeholder="e.g. OnlinePuja.live or श्री काशी विश्वनाथ">
+                </div>
+
+                {{-- Tagline / Subtitle --}}
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">
+                        Devotional Subtitle (HarfBuzz Shaped)
+                    </label>
+                    <input type="text" name="video_brand_tagline" value="{{ $creds['video_brand_tagline'] ?? 'वाराणसी से सीधा लाइव संकल्प एवं दर्शन' }}" class="ai-input" placeholder="e.g. वाराणसी से सीधा लाइव संकल्प एवं दर्शन">
+                </div>
+
+                {{-- Phone / WhatsApp CTA --}}
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">
+                        WhatsApp / Booking CTA Line
+                    </label>
+                    <input type="text" name="video_brand_phone" value="{{ $creds['video_brand_phone'] ?? '+91 70071 58014 | Book Online' }}" class="ai-input" placeholder="+91 70071 58014 | Book Online">
+                </div>
+
+                {{-- Logo Toggle & Path --}}
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <label style="font-size: 11px; font-weight: 700; color: #475569; margin: 0;">Watermark Logo Overlay</label>
+                        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: #065f46; cursor: pointer;">
+                            <input type="hidden" name="video_logo_enabled" value="0">
+                            <input type="checkbox" name="video_logo_enabled" value="1" {{ ($creds['video_logo_enabled'] ?? true) ? 'checked' : '' }}>
+                            Enable Logo
+                        </label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="text" name="video_logo_path" value="{{ $creds['video_logo_path'] ?? 'assets-pg/imgs/logo-for-site.png' }}" class="ai-input" style="font-family: monospace; font-size: 11px;" placeholder="assets-pg/imgs/logo-for-site.png">
+                        <div style="width: 38px; height: 38px; border-radius: 8px; background: #0f172a; display: flex; align-items: center; justify-content: center; padding: 4px; flex-shrink: 0;" title="Logo Asset Preview">
+                            <img src="{{ asset('assets-pg/imgs/logo-for-site.png') }}" alt="Logo" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Logo Position Selector --}}
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">
+                        Logo Safe Zone Placement
+                    </label>
+                    <select name="video_logo_position" class="ai-select">
+                        <option value="top-left" {{ ($creds['video_logo_position'] ?? 'top-left') == 'top-left' ? 'selected' : '' }}>
+                            📍 Top-Left Safe Zone (x=50, y=85 — Recommended)
+                        </option>
+                        <option value="top-center" {{ ($creds['video_logo_position'] ?? '') == 'top-center' ? 'selected' : '' }}>
+                            📍 Top-Center Header Badge
+                        </option>
+                        <option value="bottom-left" {{ ($creds['video_logo_position'] ?? '') == 'bottom-left' ? 'selected' : '' }}>
+                            📍 Bottom-Left Above Title Card
+                        </option>
+                    </select>
+                </div>
+
+                {{-- Ambient Audio Track --}}
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">
+                        Ambient Audio Track
+                    </label>
+                    <select name="video_audio_track" class="ai-select">
+                        <option value="sacred_bells" {{ ($creds['video_audio_track'] ?? 'sacred_bells') == 'sacred_bells' ? 'selected' : '' }}>
+                            🔔 Vedic Temple Bell Chimes & Resonance (Verified 192k AAC)
+                        </option>
+                        <option value="silent" {{ ($creds['video_audio_track'] ?? '') == 'silent' ? 'selected' : '' }}>
+                            🔇 Silent Audio Track (For User Music Replacement)
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
         {{-- Fallback Chain Order Configuration --}}
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
             <span style="font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 12px;">
@@ -839,12 +948,12 @@
                     <input type="text" name="ai_text_chain" value="{{ $creds['ai_text_chain'] ?? 'omniroute,gemini,openrouter,pollinations' }}" class="ai-input" style="font-family: monospace;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Image Cascade Chain (Default: OmniRoute)</label>
-                    <input type="text" name="ai_image_chain" value="{{ $creds['ai_image_chain'] ?? 'omniroute,pollinations,cloudflare,huggingface' }}" class="ai-input" style="font-family: monospace;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Image Cascade Chain (Default: OmniRoute Gemini Flash Image)</label>
+                    <input type="text" name="ai_image_chain" value="{{ $creds['ai_image_chain'] ?? 'omniroute,gemini_imagen,cloudflare,pollinations' }}" class="ai-input" style="font-family: monospace;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Video Cascade Chain (Default: OmniRoute)</label>
-                    <input type="text" name="ai_video_chain" value="{{ $creds['ai_video_chain'] ?? 'omniroute,huggingface,pollinations,cinematic_reel' }}" class="ai-input" style="font-family: monospace;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Video Cascade Chain (Default: Native FFmpeg 9:16)</label>
+                    <input type="text" name="ai_video_chain" value="{{ $creds['ai_video_chain'] ?? 'ffmpeg_reel,omniroute,kaggle' }}" class="ai-input" style="font-family: monospace;">
                 </div>
             </div>
         </div>
@@ -884,16 +993,25 @@
             syncText.textContent = 'Syncing from ai.vmstudio.digital…';
             if (syncIcon) syncIcon.style.animation = 'spin 1s linear infinite';
 
+            var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
             fetch('{{ route("growth-os.action") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({ action: 'sync_models' })
             })
-            .then(function(r) { return r.json(); })
+            .then(function(r) {
+                if (!r.ok) {
+                    return r.text().then(function(t) {
+                        try { return JSON.parse(t); } catch(e) { throw new Error('HTTP ' + r.status + ': ' + t.substring(0, 150)); }
+                    });
+                }
+                return r.json();
+            })
             .then(function(res) {
                 btnSync.disabled = false;
                 syncText.textContent = 'Sync Live Models';
@@ -907,22 +1025,24 @@
                         if (imageCountBadge) imageCountBadge.textContent = res.counts.image + ' Models';
                         if (videoCountBadge) videoCountBadge.textContent = res.counts.video + ' Models';
                     }
+                    var msg = res.message || 'Models synced from OmniRoute successfully!';
                     if (window.showGrowthNotification) {
-                        window.showGrowthNotification('success', res.message || 'Models synced from OmniRoute successfully!');
+                        window.showGrowthNotification('success', msg);
                     } else if (typeof toastr !== 'undefined') {
-                        toastr.success(res.message || 'Models synced from OmniRoute successfully!');
+                        toastr.success(msg);
                     } else {
-                        alert(res.message || 'Models synced successfully!');
+                        alert(msg);
                     }
                     refreshIcons();
-                    setTimeout(function() { window.location.reload(); }, 1500);
+                    setTimeout(function() { window.location.reload(); }, 1200);
                 } else {
+                    var err = res.error || 'Sync failed';
                     if (window.showGrowthNotification) {
-                        window.showGrowthNotification('error', res.error || 'Sync failed');
+                        window.showGrowthNotification('error', err);
                     } else if (typeof toastr !== 'undefined') {
-                        toastr.error(res.error || 'Sync failed');
+                        toastr.error(err);
                     } else {
-                        alert('Sync failed: ' + (res.error || 'Unknown error'));
+                        alert('Sync failed: ' + err);
                     }
                 }
             })
@@ -930,12 +1050,13 @@
                 btnSync.disabled = false;
                 syncText.textContent = 'Sync Live Models';
                 if (syncIcon) syncIcon.style.animation = '';
+                var errStr = err.message || err;
                 if (window.showGrowthNotification) {
-                    window.showGrowthNotification('error', 'Sync request failed: ' + err.message);
+                    window.showGrowthNotification('error', 'Sync request failed: ' + errStr);
                 } else if (typeof toastr !== 'undefined') {
-                    toastr.error(err.message);
+                    toastr.error('Sync failed: ' + errStr);
                 } else {
-                    alert('Sync error: ' + err.message);
+                    alert('Sync error: ' + errStr);
                 }
             });
         });
@@ -970,16 +1091,31 @@
         });
     });
 
-    // 4. Select Engine from Top Cards
+    // 4. Select Engine from Top Cards & Automatically Run Live Test
     document.querySelectorAll('.select-test-engine').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var eng = this.getAttribute('data-engine');
             var targetBtn = document.getElementById('tab-mode-' + eng);
             if (targetBtn) targetBtn.click();
+
             var promptBox = document.getElementById('multi-test-prompt');
             if (promptBox) {
-                promptBox.focus();
+                if (eng === 'text') {
+                    promptBox.value = 'Maha Shivratri sacred significance and planetary remedies for peace and prosperity';
+                } else if (eng === 'image') {
+                    promptBox.value = 'Ancient sacred black stone Shiva Lingam adorned with bilva leaves and brass diyas in temple';
+                } else if (eng === 'video') {
+                    promptBox.value = 'Vedic Temple Aarti with golden lamps and sacred dhoop in Varanasi';
+                }
                 promptBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            // Immediately trigger synthesis so the user sees real-time test execution
+            var runBtn = document.getElementById('btn-run-synthesis');
+            if (runBtn) {
+                setTimeout(function() {
+                    runBtn.click();
+                }, 100);
             }
         });
     });
@@ -987,7 +1123,14 @@
     // 5. Quick Suggestion Chips
     document.querySelectorAll('.quick-lab-pill').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            document.getElementById('multi-test-prompt').value = this.getAttribute('data-val');
+            var promptBox = document.getElementById('multi-test-prompt');
+            if (promptBox) {
+                promptBox.value = this.getAttribute('data-val');
+                var runBtn = document.getElementById('btn-run-synthesis');
+                if (runBtn) {
+                    setTimeout(function() { runBtn.click(); }, 100);
+                }
+            }
         });
     });
 
@@ -1015,14 +1158,24 @@
     if (runBtn) {
         runBtn.addEventListener('click', function() {
             var p = promptInp.value.trim();
-            if (!p) return;
+            if (!p) {
+                if (typeof toastr !== 'undefined') toastr.warning('Please enter a prompt to test.');
+                return;
+            }
             resetOutput();
+
+            var origHtml = runBtn.innerHTML;
+            runBtn.disabled = true;
+            runBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin" style="color: #fbbf24;"></i> Synthesizing…';
+            refreshIcons();
+
+            var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
 
             fetch('{{ route("growth-os.action") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
@@ -1031,8 +1184,17 @@
                     prompt: p
                 })
             })
-            .then(function(r) { return r.json(); })
+            .then(function(r) {
+                if (!r.ok) {
+                    return r.text().then(function(t) {
+                        try { return JSON.parse(t); } catch(e) { throw new Error('HTTP ' + r.status + ': ' + t.substring(0, 150)); }
+                    });
+                }
+                return r.json();
+            })
             .then(function(res) {
+                runBtn.disabled = false;
+                runBtn.innerHTML = origHtml;
                 loading.classList.add('hidden');
                 var d = res.data || {};
                 var hasContent = (currentMode === 'text' && d.text) || 
@@ -1063,6 +1225,7 @@
                             imgResult.classList.remove('hidden');
                         }
                     }
+                    if (typeof toastr !== 'undefined') toastr.success('Synthesized successfully via ' + (d.provider || 'AI Engine'));
                     refreshIcons();
                 } else {
                     if (placeholder) placeholder.classList.remove('hidden');
@@ -1075,9 +1238,14 @@
                 }
             })
             .catch(function(err) {
+                runBtn.disabled = false;
+                runBtn.innerHTML = origHtml;
                 loading.classList.add('hidden');
                 if (placeholder) placeholder.classList.remove('hidden');
-                if (typeof toastr !== 'undefined') toastr.error(err.message);
+                var errStr = err.message || err;
+                if (typeof toastr !== 'undefined') toastr.error(errStr);
+                else alert('Error: ' + errStr);
+                refreshIcons();
             });
         });
     }

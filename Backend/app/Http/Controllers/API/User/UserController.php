@@ -642,11 +642,21 @@ class UserController extends Controller
     {
         try {
             $isFreeChat = DB::table('systemflag')->where('name', 'FirstFreeChat')->select('value')->first();
-            $isFreeAvailable=true;
-            if ($isFreeChat->value == 1) {
-                if ($id) {
-                    $isChatRequest = DB::table('chatrequest')->where('userId', $id[0]->id)->where('chatStatus', '=', 'Completed')->first();
-                    $isCallRequest = DB::table('callrequest')->where('userId', $id[0]->id)->where('callStatus', '=', 'Completed')->first();
+            $isFreeAvailable = true;
+            $userId = null;
+            if ($id instanceof \Illuminate\Support\Collection) {
+                $userId = $id->first()->id ?? null;
+            } elseif (is_array($id)) {
+                $userId = isset($id[0]->id) ? $id[0]->id : ($id['id'] ?? null);
+            } elseif (is_object($id)) {
+                $userId = $id->id ?? null;
+            } elseif (is_numeric($id)) {
+                $userId = (int)$id;
+            }
+            if ($isFreeChat && $isFreeChat->value == 1) {
+                if ($userId) {
+                    $isChatRequest = DB::table('chatrequest')->where('userId', $userId)->where('chatStatus', '=', 'Completed')->first();
+                    $isCallRequest = DB::table('callrequest')->where('userId', $userId)->where('callStatus', '=', 'Completed')->first();
                     if ($isChatRequest || $isCallRequest) {
                         $isFreeAvailable = false;
                     } else {
@@ -656,13 +666,27 @@ class UserController extends Controller
             } else {
                 $isFreeAvailable = false;
             }
+
+            // Hydrate full user details and wallet
+            $userRow = null;
+            if ($userId) {
+                $userRow = DB::table('users')->where('id', $userId)->first();
+                if ($userRow) {
+                    unset($userRow->password);
+                    $walletRow = DB::table('user_wallets')->where('userId', $userId)->first();
+                    $userRow->walletAmount = $walletRow ? (float)$walletRow->amount : 0.0;
+                    $userRow->totalWalletAmount = $userRow->walletAmount;
+                    $userRow->wallet_amount = $userRow->walletAmount;
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'status' => 200,
                 'is_freechat' => $isFreeAvailable,
-                'recordList' => $id[0],
+                'recordList' => $userRow ? [$userRow] : ($id && isset($id[0]) ? $id : [['id' => $userId]]),
             ], 200);
         } catch (\Exception$e) {
             return response()->json([
@@ -692,7 +716,12 @@ class UserController extends Controller
             $user = DB::table('users')
                 ->where('id', '=', $req->userId)
                 ->get();
-            if ($user) {
+            if ($user && count($user) > 0) {
+                unset($user[0]->password);
+                $walletRow = DB::table('user_wallets')->where('userId', $req->userId)->first();
+                $user[0]->walletAmount = $walletRow ? (float)$walletRow->amount : 0.0;
+                $user[0]->totalWalletAmount = $user[0]->walletAmount;
+                $user[0]->wallet_amount = $user[0]->walletAmount;
                 $follower = DB::table('astrologer_followers')
                     ->join('astrologers', 'astrologer_followers.astrologerId', '=', 'astrologers.id')
                     ->where('astrologer_followers.userId', '=', $req->userId)
@@ -1019,6 +1048,7 @@ class UserController extends Controller
                     DB::table('user_wallets')->insert($wallets);
                 }
 
+                $convRateVal = ($inr_usd_conv_rate && !empty($inr_usd_conv_rate->value)) ? $inr_usd_conv_rate->value : 83.5;
                 DB::table('wallettransaction')->insert([
                     'userId' => $referrer->id,
                     'amount' => $referral_setting->amount,
@@ -1026,7 +1056,7 @@ class UserController extends Controller
                     'transactionType' => 'Referral',
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
-                    'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                    'inr_usd_conversion_rate' => $convRateVal,
                 ]);
             }
 
@@ -1050,13 +1080,22 @@ class UserController extends Controller
 
             DB::commit();
 
+            $userRow = DB::table('users')->where('id', $user->id)->first();
+            if ($userRow) {
+                unset($userRow->password);
+                $walletRow = DB::table('user_wallets')->where('userId', $user->id)->first();
+                $userRow->walletAmount = $walletRow ? (float)$walletRow->amount : 0.0;
+                $userRow->totalWalletAmount = $userRow->walletAmount;
+                $userRow->wallet_amount = $userRow->walletAmount;
+            }
+
             return response()->json([
                 'success' => true,
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'status' => 200,
                 'message' => 'User added successfully',
-                'recordList' => ['id' => $user->id],
+                'recordList' => $userRow ? [$userRow] : [['id' => $user->id]],
                 'is_freechat' => true,
             ], 200);
 

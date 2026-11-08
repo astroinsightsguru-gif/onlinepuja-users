@@ -13,8 +13,10 @@ class ManagerTheme {
 
   // Backgrounds & Surfaces
   static const Color bgDark = Color(0xFF0F172A);
+  static const Color backgroundDark = Color(0xFF0F172A);
   static const Color surfaceDark = Color(0xFF1E293B);
   static const Color cardDark = Color(0xFF334155);
+  static const Color surfaceBorder = Color(0xFF334155);
 
   static const LinearGradient executiveGold = LinearGradient(
     colors: [Color(0xFFF59E0B), Color(0xFFD97706)],

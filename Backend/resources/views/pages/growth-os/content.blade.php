@@ -1,6 +1,13 @@
 @extends('pages.growth-os.layout')
 
 @section('growth_content')
+@php
+    $ideas = $ideas ?? collect([]);
+    $drafted = $drafted ?? collect([]);
+    $criticFailed = $criticFailed ?? collect([]);
+    $approved = $approved ?? collect([]);
+    $published = $published ?? collect([]);
+@endphp
 <div class="space-y-4">
 
     {{-- Top Action & Info Bar --}}
@@ -24,34 +31,67 @@
             </div>
         </div>
 
-        {{-- Pipeline Overview Metrics --}}
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mt-4 pt-3.5 border-t border-slate-100 text-center">
-            <div class="p-2.5 bg-slate-50/80 rounded-xl border border-slate-200/60">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Planned Ideas</span>
-                <span class="text-base font-black text-slate-800 mt-0.5 block">{{ $ideas->count() }}</span>
+        {{-- Pipeline Overview Metrics (High-Signal Colorful Tiles) --}}
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4 pt-3.5 border-t border-slate-100 text-center">
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 transition hover:shadow-sm">
+                <span class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Planned Ideas</span>
+                <span class="text-xl font-black text-slate-900 mt-1 block font-mono">{{ $ideas->count() }}</span>
             </div>
-            <div class="p-2.5 bg-blue-50/50 rounded-xl border border-blue-100">
-                <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">AI Drafted</span>
-                <span class="text-base font-black text-blue-900 mt-0.5 block">{{ $drafted->count() }}</span>
+            <div class="p-3 bg-blue-50/70 rounded-xl border border-blue-200 transition hover:shadow-sm">
+                <span class="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider block">AI Drafted</span>
+                <span class="text-xl font-black text-blue-900 mt-1 block font-mono">{{ $drafted->count() }}</span>
             </div>
-            <div class="p-2.5 bg-rose-50/50 rounded-xl border border-rose-100">
-                <span class="text-[10px] font-bold text-rose-700 uppercase tracking-wider block">Critic Review</span>
-                <span class="text-base font-black text-rose-900 mt-0.5 block">{{ $criticFailed->count() }}</span>
+            <div class="p-3 bg-rose-50/70 rounded-xl border border-rose-200 transition hover:shadow-sm">
+                <span class="text-[10px] font-extrabold text-rose-700 uppercase tracking-wider block">Critic Review</span>
+                <span class="text-xl font-black text-rose-900 mt-1 block font-mono">{{ $criticFailed->count() }}</span>
             </div>
-            <div class="p-2.5 bg-amber-50/50 rounded-xl border border-amber-100">
-                <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Approved</span>
-                <span class="text-base font-black text-amber-900 mt-0.5 block">{{ $approved->count() }}</span>
+            <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-200 transition hover:shadow-sm">
+                <span class="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider block">Approved</span>
+                <span class="text-xl font-black text-amber-900 mt-1 block font-mono">{{ $approved->count() }}</span>
             </div>
-            <div class="p-2.5 bg-emerald-50/50 rounded-xl border border-emerald-100 col-span-2 sm:col-span-1">
-                <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Live on Blog</span>
-                <span class="text-base font-black text-emerald-900 mt-0.5 block">{{ $published->count() }}</span>
+            <div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 col-span-2 sm:col-span-1 transition hover:shadow-sm">
+                <span class="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider block">Live on Blog</span>
+                <span class="text-xl font-black text-emerald-900 mt-1 block font-mono">{{ $published->count() }}</span>
             </div>
         </div>
     </div>
 
-    {{-- KANBAN LANES (Responsive Horizontal Scroll Container) --}}
-    <div class="overflow-x-auto pb-4 no-scrollbar">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3.5 min-w-[1050px]">
+    <style>
+        #kanban-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        #kanban-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        #kanban-container::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 8px;
+        }
+        #kanban-container::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+
+    {{-- KANBAN CONTROLS & VISIBILITY AID --}}
+    <div class="flex items-center justify-between px-1 mb-2">
+        <span class="text-xs text-slate-500 font-semibold flex items-center gap-1.5">
+            <i data-lucide="move-horizontal" class="w-3.5 h-3.5 text-amber-500"></i>
+            <span>5-Stage Pipeline: <strong class="text-slate-800">Ideas â†’ Drafts â†’ Critic Lint â†’ Approved â†’ Live Blog</strong></span>
+        </span>
+        <div class="flex items-center gap-1.5">
+            <button type="button" onclick="document.getElementById('kanban-container').scrollBy({left: -320, behavior: 'smooth'})" class="p-1.5 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 shadow-2xs text-xs font-bold transition flex items-center gap-1">
+                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Prev Stage
+            </button>
+            <button type="button" onclick="document.getElementById('kanban-container').scrollBy({left: 320, behavior: 'smooth'})" class="p-1.5 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 shadow-2xs text-xs font-bold transition flex items-center gap-1">
+                Next Stage <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </button>
+        </div>
+    </div>
+
+    {{-- KANBAN LANES (Responsive Horizontal Scroll Container with Visible Styled Scrollbar) --}}
+    <div id="kanban-container" class="overflow-x-auto pb-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3.5 min-w-[1100px]">
 
             {{-- Column 1: Ideas --}}
             <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-200/80 flex flex-col min-h-[500px]">

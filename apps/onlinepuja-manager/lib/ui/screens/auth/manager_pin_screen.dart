@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../services/manager_auth_session.dart';
 import '../../../theme/manager_theme.dart';
-import 'manager_login_screen.dart';
 
 class ManagerPinScreen extends StatefulWidget {
   const ManagerPinScreen({super.key});
@@ -204,10 +203,10 @@ class _ManagerPinScreenState extends State<ManagerPinScreen> {
                   // Alternative: Login with Superadmin Password
                   TextButton.icon(
                     onPressed: () {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      }
                       session.logout();
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const ManagerLoginScreen()),
-                      );
                     },
                     icon: const Icon(Icons.password_rounded, color: Colors.white70, size: 16),
                     label: const Text(

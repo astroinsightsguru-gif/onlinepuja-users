@@ -691,105 +691,122 @@ class PaymentController extends Controller
 
     public function payment_Response($paymentResponseData)
     {
-        // $session = new Session();
-        // $pay_id = $session->get('pay_id');
-        $pay_id = $paymentResponseData['data']['pay_id'];
+        $pay_id = $paymentResponseData['data']['pay_id'] ?? null;
+        $order_id = $paymentResponseData['data']['order_id'] ?? null;
 
         // payment status success
         if ($paymentResponseData['status'] === true) {
-            // Show payment success page or do whatever you want, like send email, notify to user etc
-
-            if (empty($pay_id)) {
-                $payment = Payment::where('payment.orderId', $paymentResponseData['data']['order_id'])
-                    ->join('users', 'users.id', 'payment.userId')
-                    ->select('payment.*', 'users.id as userId', 'users.name', 'users.email', 'users.contactNo')
-                    ->where('payment.paymentStatus', 'pending')
-                    ->first();
-            } else {
+            $payment = null;
+            if (!empty($pay_id)) {
                 $payment = Payment::where('payment.id', $pay_id)
                     ->join('users', 'users.id', 'payment.userId')
                     ->select('payment.*', 'users.id as userId', 'users.name', 'users.email', 'users.contactNo')
                     ->where('payment.paymentStatus', 'pending')
                     ->first();
+            } elseif (!empty($order_id)) {
+                $payment = Payment::where('payment.orderId', $order_id)
+                    ->join('users', 'users.id', 'payment.userId')
+                    ->select('payment.*', 'users.id as userId', 'users.name', 'users.email', 'users.contactNo')
+                    ->where('payment.paymentStatus', 'pending')
+                    ->first();
             }
 
-            $user_country = User::where('id', $payment->userId)->where('countryCode', '+91')->first();
-            $inr_usd_conv_rate = DB::table('systemflag')->where('name', 'UsdtoInr')->select('value')->first();
-
-            $user = \App\Models\User::find($payment->userId);
-
-            // Log the user in using JWT
-            $logtoken = \Illuminate\Support\Facades\Auth::guard('api')->login($user);
-            $session = new Session();
-            $token = $session->set('token', $logtoken);
-            $session->remove('phonepe_merchant_order_id');
-
             if ($payment) {
-                $gst_amount = $payment->gst_amount ?? 0;
-                $original_amount = $payment->amount - $gst_amount;
-                $payment->update([
-                    'paymentMode' => $paymentResponseData['data']['payment_gateway'],
-                    'paymentReference' => $paymentResponseData['data']['payment_reference_id'],
-                    'paymentStatus' => 'success',
-                    'amount' => $original_amount,
-                    'orderId' => $paymentResponseData['data']['order_id'],
-                ]);
-
-                $userWallet = [];
-
-                $userWallet = UserWallet::query()
-                    ->where('userId', '=', $payment->userId)
-                    ->get();
-                if ($userWallet && count($userWallet) > 0) {
-                    // Add only principle amount (without GST) + cashback to wallet
-                    $userWallet[0]->amount = $userWallet[0]->amount + $original_amount + $payment->cashback_amount;
-                    $userWallet[0]->update();
-                } else {
-                    $wallet = UserWallet::create([
-                        'userId' => $payment->userId,
-                        'amount' => $original_amount + $payment->cashback_amount,
-                        'createdBy' => $payment->userId,
-                        'modifiedBy' => $payment->userId,
-                    ]);
+                $user = \App\Models\User::find($payment->userId);
+                if ($user) {
+                    try {
+                        $logtoken = \Illuminate\Support\Facades\Auth::guard('api')->login($user);
+                        $session = new Session();
+                        $session->set('token', $logtoken);
+                        $session->remove('phonepe_merchant_order_id');
+                    } catch (\Throwable $e) {}
                 }
 
-                //  if($user_country){
-                //     $payment->cashback_amount=convertinrtousd($payment->cashback_amount);
-                // }
-                $transaction = array(
-                    'userId' => $payment->userId,
-                    'amount' => $payment->cashback_amount,
-                    'isCredit' => true,
-                    'transactionType' => 'Cashback',
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                    'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
-                );
-                if ($payment->cashback_amount != null)
-                    DB::table('wallettransaction')->insert($transaction);
+                $inr_usd_conv_rate = DB::table('systemflag')->where('name', 'UsdtoInr')->select('value')->first();
+                $conv_rate = $inr_usd_conv_rate ? $inr_usd_conv_rate->value : 83.5;
+
+                DB::transaction(function () use ($payment, $paymentResponseData, $conv_rate) {
+                    $gst_amount = $payment->gst_amount ?? 0;
+                    $original_amount = $payment->amount - $gst_amount;
+                    $payment->update([
+                        'paymentMode' => $paymentResponseData['data']['payment_gateway'],
+                        'paymentReference' => $paymentResponseData['data']['payment_reference_id'],
+                        'paymentStatus' => 'success',
+                        'amount' => $original_amount,
+                        'orderId' => $paymentResponseData['data']['order_id'],
+                    ]);
+
+                    $userWallet = UserWallet::where('userId', '=', $payment->userId)->lockForUpdate()->first();
+                    $cashback = $payment->cashback_amount ?? 0;
+
+                    if ($userWallet) {
+                        $userWallet->amount = $userWallet->amount + $original_amount + $cashback;
+                        $userWallet->update();
+                    } else {
+                        UserWallet::create([
+                            'userId' => $payment->userId,
+                            'amount' => $original_amount + $cashback,
+                            'createdBy' => $payment->userId,
+                            'modifiedBy' => $payment->userId,
+                        ]);
+                    }
+
+                    if (!empty($cashback) && $cashback > 0) {
+                        DB::table('wallettransaction')->insert([
+                            'userId' => $payment->userId,
+                            'amount' => $cashback,
+                            'isCredit' => true,
+                            'transactionType' => 'Cashback',
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now(),
+                            'inr_usd_conversion_rate' => $conv_rate,
+                        ]);
+                    }
+
+                    // Auto-execute PlacePujaOrder if this payment was specifically for a Puja
+                    if ($payment->payment_for === 'puja' && !empty($payment->payment_order_info)) {
+                        $orderInfo = is_array($payment->payment_order_info) ? $payment->payment_order_info : json_decode($payment->payment_order_info, true);
+                        if (!empty($orderInfo)) {
+                            try {
+                                if (function_exists('PlacePujaOrder')) {
+                                    PlacePujaOrder($orderInfo, $payment->userId);
+                                }
+                            } catch (\Throwable $ex) {
+                                \Log::error("PlacePujaOrder failed after payment: " . $ex->getMessage());
+                            }
+                        }
+                    }
+                });
 
                 $session = new Session();
                 $session->remove('pay_id');
                 $session->remove('phonepe_merchant_order_id');
+                return getAppUrl('payment-success');
+            } else {
+                // Idempotency guard: If already processed and marked success, redirect to success
+                $alreadySuccess = Payment::where(function ($q) use ($pay_id, $order_id) {
+                    if (!empty($pay_id)) {
+                        $q->where('id', $pay_id);
+                    } elseif (!empty($order_id)) {
+                        $q->where('orderId', $order_id);
+                    }
+                })->where('paymentStatus', 'success')->first();
+
+                if ($alreadySuccess) {
+                    return getAppUrl('payment-success');
+                }
             }
             return getAppUrl('payment-success');
         } elseif ($paymentResponseData['status'] === 'pending') {
-            // Show payment pending page or do whatever you want, like send email, notify to user etc
             return getAppUrl('payment-pending');
         } else {
-            // Show payment error page or do whatever you want, like send email, notify to user etc
-            $payment = Payment::where('payment.id', $pay_id)
-                ->join('users', 'users.id', 'payment.userId')
-                ->select('payment.*', 'users.id as userId', 'users.name', 'users.email', 'users.contactNo')
-                ->where('payment.paymentStatus', 'pending')
-                ->first();
-
-            $user = \App\Models\User::find($payment->userId);
-
-            // Log the user in using JWT
-            $logtoken = \Illuminate\Support\Facades\Auth::guard('api')->login($user);
-            $session = new Session();
-            $token = $session->set('token', $logtoken);
+            // Failed payment branch
+            $payment = null;
+            if (!empty($pay_id)) {
+                $payment = Payment::where('id', $pay_id)->where('paymentStatus', 'pending')->first();
+            } elseif (!empty($order_id)) {
+                $payment = Payment::where('orderId', $order_id)->where('paymentStatus', 'pending')->first();
+            }
 
             if ($payment) {
                 $payment->update([
@@ -798,6 +815,15 @@ class PaymentController extends Controller
                     'paymentStatus' => 'failed',
                     'orderId' => $paymentResponseData['data']['order_id'],
                 ]);
+
+                $user = \App\Models\User::find($payment->userId);
+                if ($user) {
+                    try {
+                        $logtoken = \Illuminate\Support\Facades\Auth::guard('api')->login($user);
+                        $session = new Session();
+                        $session->set('token', $logtoken);
+                    } catch (\Throwable $e) {}
+                }
             }
             $session = new Session();
             $session->remove('pay_id');
@@ -834,43 +860,78 @@ class PaymentController extends Controller
 
     public function paymentfailed()
     {
-        $payment = Payment::where('userId', authcheck()['id'])
+        $user = authcheck();
+        $userId = $user ? ($user['id'] ?? $user->id ?? null) : null;
+
+        $payment = $userId ? Payment::where('userId', $userId)
             ->where('payment_for', 'topupchat')
             ->latest()
-            ->first();
+            ->first() : null;
 
-        $paymentcall = Payment::where('userId', authcheck()['id'])
+        $paymentcall = $userId ? Payment::where('userId', $userId)
             ->where('payment_for', 'topupcall')
             ->latest()
-            ->first();
+            ->first() : null;
 
         return view('payment.payment-failed', compact('payment', 'paymentcall'));
     }
 
     public function paymentsuccess(Request $req)
     {
-        $payment = Payment::where('userId', authcheck()['id'])
+        $user = authcheck();
+        $userId = $user ? ($user['id'] ?? $user->id ?? null) : null;
+
+        $payment = $userId ? Payment::where('userId', $userId)
             ->where('payment_for', 'topupchat')
             ->latest()
-            ->first();
+            ->first() : null;
 
         if ($payment && $payment->chatId) {
-            $addchatminute = Http::withoutVerifying()->post(url('/') . '/api/updatechatMinute', [
-                'chat_duration' => $payment->durationchat,
-                'chatId' => $payment->chatId,
-            ])->json();
+            try {
+                $chatReq = new Request([
+                    'chat_duration' => $payment->durationchat,
+                    'chatId' => $payment->chatId,
+                ]);
+                app(\App\Http\Controllers\API\User\ChatRequestController::class)->updatechatMinute($chatReq);
+            } catch (\Throwable $e) {
+                \Log::error("Failed to update chat minutes after payment: " . $e->getMessage());
+            }
         }
 
-        $paymentcall = Payment::where('userId', authcheck()['id'])
+        $paymentcall = $userId ? Payment::where('userId', $userId)
             ->where('payment_for', 'topupcall')
             ->latest()
-            ->first();
+            ->first() : null;
 
         if ($paymentcall && $paymentcall->callId) {
-            $addchatminute = Http::withoutVerifying()->post(url('/') . '/api/updatecallMinute', [
-                'call_duration' => $paymentcall->durationcall,
-                'callId' => $paymentcall->callId,
-            ])->json();
+            try {
+                $callReq = new Request([
+                    'call_duration' => $paymentcall->durationcall,
+                    'callId' => $paymentcall->callId,
+                ]);
+                app(\App\Http\Controllers\API\User\CallRequestController::class)->updateCallMinute($callReq);
+            } catch (\Throwable $e) {
+                \Log::error("Failed to update call minutes after payment: " . $e->getMessage());
+            }
+        }
+
+                // Meta Conversions API (CAPI) Server-Side Purchase Dispatch
+        try {
+            $paidPayment = $payment ?: $paymentcall;
+            $paidAmount = $paidPayment ? (float)($paidPayment->amount ?? 0) : 0;
+            if ($paidAmount > 0) {
+                $capi = app(\App\Services\MetaCapiService::class);
+                $capi->sendEvent('Purchase', [
+                    'email' => $user['email'] ?? ($user->email ?? null),
+                    'phone' => $user['contactNo'] ?? ($user->contactNo ?? null),
+                ], [
+                    'value'        => $paidAmount,
+                    'currency'     => 'INR',
+                    'content_name' => 'Wallet Recharge / Vedic Service',
+                ], 'pay_' . ($paidPayment->id ?? time()));
+            }
+        } catch (\Throwable $e) {
+            \Log::warning("Meta CAPI paymentSuccess dispatch failed non-fatally: " . $e->getMessage());
         }
 
         return view('payment.payment-success', compact('payment', 'paymentcall'));

@@ -1903,6 +1903,9 @@ class AstrologerController extends Controller
                         $otp = '111111';
                     }
                 }
+
+                $cleanUserContact = preg_replace('/[^0-9]/', '', (string)$req->contactNo);
+                cache()->put("user_otp_{$cleanUserContact}", (string)$otp, now()->addMinutes(10));
             }
 
             // 🔹 Success responses
@@ -2689,7 +2692,12 @@ class AstrologerController extends Controller
             $user = DB::table('users')
                 ->where('id', '=', $req->userId)
                 ->get();
-            if ($user) {
+            if ($user && count($user) > 0) {
+                unset($user[0]->password);
+                $walletRow = DB::table('user_wallets')->where('userId', $req->userId)->first();
+                $user[0]->walletAmount = $walletRow ? (float)$walletRow->amount : 0.0;
+                $user[0]->totalWalletAmount = $user[0]->walletAmount;
+                $user[0]->wallet_amount = $user[0]->walletAmount;
                 $follower = DB::table('astrologer_followers')
                     ->join('astrologers', 'astrologer_followers.astrologerId', '=', 'astrologers.id')
                     ->where('astrologer_followers.userId', '=', $req->userId)
@@ -3013,6 +3021,8 @@ class AstrologerController extends Controller
 
                 $notification = DB::table('user_notifications')
                     ->where('userId', '=', $req->userId)
+                    ->orderBy('id', 'DESC')
+                    ->limit(20)
                     ->get();
 
                 $orderRequests = array(

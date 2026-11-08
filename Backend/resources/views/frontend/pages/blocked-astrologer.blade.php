@@ -29,7 +29,7 @@
                                 <ul class="list-unstyled d-flex mb-0">
                                     <li class="mr-3 position-relative psychic-presence status-618160"
                                         data-status="Available" data-chata="₹0" data-calla="₹ 0"><a
-                                            href="{{ route('front.astrologerDetails', ['id' => $getblockastro['astrologerId']]) }}">
+                                            href="{{ route('front.astrologerDetails', ['slug' => $getblockastro['slug'] ?? ($getblockastro['astrologerId'] ?? 1)]) }}">
                                             <div class="psyich-img position-relative">
                                                 <img class="rounded-full cursor-pointer" src="{{ Str::startsWith($getblockastro['profile'], ['http://','https://']) ? $getblockastro['profile'] : '/' . $getblockastro['profile'] }}" onerror="this.onerror=null;this.src='/build/assets/images/person.png';" alt="Customer image" onclick="openImage('{{ $getblockastro['profile'] }}')" />
                                             </div>
@@ -41,7 +41,7 @@
                                                 id="psychic-618160-badge-txt"></span></div>
                                     </li>
                                     <li class="w-100 overflow-hidden"><a
-                                            href="{{ route('front.astrologerDetails', ['id' => $getblockastro['id']]) }}"
+                                            href="{{ route('front.astrologerDetails', ['slug' => $getblockastro['slug'] ?? ($getblockastro['id'] ?? 1)]) }}"
                                             class="colorblack font-weight-semi font16 mt-0 ml-0 mr-0 mb-0 p-0 text-capitalize d-block"
                                             data-toggle="tooltip">{{ $getblockastro['astrologerName'] }}</a><span
                                             class="font-12 d-block color-red">{{ $getblockastro['allSkill'] }}</span><span

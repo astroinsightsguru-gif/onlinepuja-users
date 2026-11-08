@@ -25,6 +25,29 @@ class AiSyncModelsCommand extends Command
 
         $this->info('TOTAL synced: '.$report['total']);
 
-        return self::SUCCESS;
+        // A provider that is configured but returned nothing is the case that
+        // hid a four-day-stale catalogue: the run "succeeded" with 0 models and
+        // no error, and nothing downstream could tell that apart from a gateway
+        // that genuinely has no models.
+        $empty = array_keys(array_filter($report['providers'], fn ($c) => $c === 0));
+
+        foreach ($empty as $slug) {
+            $this->warn("$slug returned 0 models while configured — its previously synced models are now stale.");
+        }
+
+        \App\Brain\RunLog::record(
+            'ai:sync-models',
+            'ai',
+            ($report['errors'] || $empty) ? 'partial' : 'ok',
+            sprintf('Synced %d model(s) across %d provider(s)%s',
+                $report['total'],
+                count($report['providers']),
+                $report['errors'] ? '; '.count($report['errors']).' failed' : ''),
+            $report,
+            $report['total'],
+            count($report['errors'])
+        );
+
+        return $report['errors'] ? self::FAILURE : self::SUCCESS;
     }
 }

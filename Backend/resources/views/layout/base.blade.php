@@ -335,6 +335,8 @@ License: You must have a valid license purchased only from themeforest(the above
 
     <!-- BEGIN: CSS Assets-->
     @vite('resources/css/app.css')
+    <!-- 🕉️ Universal Vedic Design System -->
+    <link rel="stylesheet" href="{{ asset('public/frontend/css/onlinepuja-design-system.css?v=1.0.0') }}">
     <!-- END: CSS Assets-->
 </head>
    {{-- Start Add Wallet Modal --}}

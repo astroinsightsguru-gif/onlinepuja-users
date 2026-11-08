@@ -121,7 +121,7 @@ $countries = DB::table('countries')
                 @foreach ($getAstrologer as $astrologer)
                 <div id="ATAAIOfferTile" class="psychic-card overflow-hidden expertOnline ask-guruji"
                     data-astrologer-id="{{ $astrologer['id'] }}" data-astrologer-name="{{ $astrologer['name'] }}">
-                    <a href="{{ route('front.astrologerDetails', ['slug' => $astrologer['slug']]) }}" class="text-decoration-none">
+                    <a href="{{ route('front.astrologerDetails', ['slug' => $astrologer['slug'] ?? ($astrologer->slug ?? ($astrologer['id'] ?? 1))]) }}" class="text-decoration-none">
                         {{-- {{ dd($astrologer) }} --}}
                         @if ($astrologer['is_boosted'] == 1)
                         <span class="must-try-badge font-10 position-absolute font-weight-semi text-center align-items-center justify-content-center text-white">Sponsored</span>

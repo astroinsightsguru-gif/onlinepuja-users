@@ -18,10 +18,7 @@ class ProfileBoostController extends Controller
             }
             $session = new Session();
             $token = $session->get('astrotoken');
-            $profileBoostHistory = Http::withoutVerifying()->post(url('/') . '/api/Profileboosthistory', [
-                'token' => $token,
-                'astrologer_id' => astroauthcheck()['astrologerId']
-            ])->json();
+            $profileBoostHistory = app(\App\Http\Controllers\API\User\PujaController::class)->Profileboosthistory(new Request(['token' => $token, 'astrologer_id' => astroauthcheck()['astrologerId']]))->getData(true);
             return view('frontend.astrologers.pages.profile-boost', compact('profileBoostHistory'));
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -36,10 +33,7 @@ class ProfileBoostController extends Controller
             }
             $session = new Session();
             $token = $session->get('astrotoken');
-            $response = Http::withoutVerifying()->post(url('/') . '/api/boostProfile', [
-                'token' => $token,
-                'astrologer_id' => astroauthcheck()['astrologerId']
-            ])->json();
+            $response = app(\App\Http\Controllers\API\User\PujaController::class)->boostProfile(new Request(['token' => $token, 'astrologer_id' => astroauthcheck()['astrologerId']]))->getData(true);
             if($response['status'] == 200){
                 return response()->json([
                     'success' => true,

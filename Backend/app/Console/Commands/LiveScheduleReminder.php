@@ -26,7 +26,9 @@ class LiveScheduleReminder extends Command
      $upcomingLiveSchedule = LiveAstro::whereRaw("CONCAT(schedule_live_date, ' ', schedule_live_time) >= ?", [$lowerBoundFormatted])
         ->whereRaw("CONCAT(schedule_live_date, ' ', schedule_live_time) < ?", [$upperBoundFormatted])
         ->get();
- \Log::info($upcomingLiveSchedule->count());
+        if ($upcomingLiveSchedule->count() > 0) {
+            \Log::info("LiveScheduleReminder: Dispatched reminders for {$upcomingLiveSchedule->count()} upcoming sessions.");
+        }
         foreach ($upcomingLiveSchedule as $live) {
             SendLiveScheduleReminderJob::dispatch($live);
         }

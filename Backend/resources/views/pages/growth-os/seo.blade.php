@@ -1,63 +1,83 @@
 @extends('pages.growth-os.layout')
 
 @section('growth_content')
+@php
+    $openCount = $openCount ?? 0;
+    $fixedCount = $fixedCount ?? 0;
+    $indexedCount = $indexedCount ?? 0;
+    $avgScore = $avgScore ?? 0;
+    $issues = $issues ?? collect([]);
+    $healthChecks = $healthChecks ?? collect([]);
+@endphp
 <div class="grid grid-cols-12 gap-6">
 
-    {{-- Scoreboard Cards --}}
+    {{-- Scoreboard Cards with Vibrant High-Contrast Visuals --}}
     <div class="col-span-12 grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div class="box p-4 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
-            <div class="p-3 bg-rose-50 text-rose-600 rounded-xl text-xl">⚠️</div>
-            <div>
-                <div class="text-xs text-slate-500 font-medium">Open Technical Issues</div>
-                <div class="text-xl font-bold text-rose-600">{{ $openCount }}</div>
+        <div class="ai-stat-card ai-stat-card-rose">
+            <div class="flex items-center gap-3">
+                <div class="ai-icon-bubble ai-icon-bubble-rose">⚠️</div>
+                <div>
+                    <div class="text-[11px] text-slate-600 font-bold uppercase tracking-wider">Open Technical Issues</div>
+                    <div class="text-2xl font-black text-rose-700 font-mono">{{ $openCount }}</div>
+                </div>
             </div>
+            <span class="ai-pill ai-pill-rose">Requires Action</span>
         </div>
-        <div class="box p-4 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
-            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl text-xl">🛡️</div>
-            <div>
-                <div class="text-xs text-slate-500 font-medium">Healed via AI Fixer</div>
-                <div class="text-xl font-bold text-emerald-600">{{ $fixedCount }}</div>
+        <div class="ai-stat-card ai-stat-card-emerald">
+            <div class="flex items-center gap-3">
+                <div class="ai-icon-bubble ai-icon-bubble-emerald">🛡️</div>
+                <div>
+                    <div class="text-[11px] text-slate-600 font-bold uppercase tracking-wider">Healed via AI Fixer</div>
+                    <div class="text-2xl font-black text-emerald-700 font-mono">{{ $fixedCount }}</div>
+                </div>
             </div>
+            <span class="ai-pill ai-pill-emerald">Protected</span>
         </div>
-        <div class="box p-4 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
-            <div class="p-3 bg-amber-50 text-amber-600 rounded-xl text-xl">⚡</div>
-            <div>
-                <div class="text-xs text-slate-500 font-medium">God Mode Healer</div>
-                <div class="text-sm font-bold text-slate-800">Weekly Auto-Fix</div>
+        <div class="ai-stat-card ai-stat-card-gold">
+            <div class="flex items-center gap-3">
+                <div class="ai-icon-bubble ai-icon-bubble-gold">⚡</div>
+                <div>
+                    <div class="text-[11px] text-slate-600 font-bold uppercase tracking-wider">God Mode Healer</div>
+                    <div class="text-sm font-extrabold text-amber-900">Weekly Auto-Fix</div>
+                </div>
             </div>
+            <span class="ai-pill ai-pill-amber">Autonomous</span>
         </div>
-        <div class="box p-4 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
-            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl text-xl">🔄</div>
-            <div>
-                <div class="text-xs text-slate-500 font-medium">Safety Guarantee</div>
-                <div class="text-sm font-bold text-slate-800">100% Revertable</div>
+        <div class="ai-stat-card ai-stat-card-blue">
+            <div class="flex items-center gap-3">
+                <div class="ai-icon-bubble ai-icon-bubble-blue">🔄</div>
+                <div>
+                    <div class="text-[11px] text-slate-600 font-bold uppercase tracking-wider">Safety Guarantee</div>
+                    <div class="text-sm font-extrabold text-blue-900">100% Revertable</div>
+                </div>
             </div>
+            <span class="ai-pill ai-pill-blue">Vault Protected</span>
         </div>
     </div>
 
     {{-- Main Issue Ledger --}}
     <div class="col-span-12">
-        <div class="box p-6 bg-white rounded-xl shadow-sm border border-slate-100">
+        <div class="ai-box">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
                 <div>
-                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
                         <i data-lucide="shield-check" class="w-5 h-5 text-rose-500"></i> Technical SEO Audit Ledger
                     </h3>
                     <div class="text-xs text-slate-500 mt-0.5">Scans sitemaps and pages for titles, meta lengths, H1 tags, alt attributes and accidental noindex.</div>
                 </div>
                 <div class="flex gap-2">
-                    <button id="btn-scan-seo" class="btn btn-sm btn-outline-secondary text-xs py-1.5 px-3">
-                        <i data-lucide="scan" class="w-3.5 h-3.5 mr-1"></i> Scan Sitemap
+                    <button id="btn-scan-seo" class="ai-btn-secondary" style="font-size: 11.5px; padding: 7px 12px;">
+                        <i data-lucide="scan" style="width: 13px; height: 13px; margin-right: 4px;"></i> Scan Sitemap
                     </button>
-                    <button id="btn-fix-godmode" class="btn btn-sm bg-slate-900 hover:bg-slate-800 border-0 text-white font-semibold text-xs py-1.5 px-3.5 rounded-lg shadow-2xs flex items-center gap-1.5">
-                        <i data-lucide="wand" class="w-3.5 h-3.5 text-amber-400"></i> Run AI Auto-Fix (God Mode)
+                    <button id="btn-fix-godmode" class="ai-btn-gold" style="font-size: 11.5px; padding: 7px 16px;">
+                        <i data-lucide="wand" style="width: 13px; height: 13px; margin-right: 4px; color: #020617;"></i> Run AI Auto-Fix (God Mode)
                     </button>
                 </div>
             </div>
 
             {{-- Issues Table --}}
             <div class="overflow-x-auto mt-4">
-                <table class="table table-report w-full text-xs">
+                <table class="ai-table">
                     <thead>
                         <tr class="bg-slate-50 text-slate-600">
                             <th class="py-2.5">Issue Type</th>
@@ -128,7 +148,7 @@
             </div>
 
             <div class="mt-4">
-                {{ $issues->links() }}
+                {{ method_exists($issues, 'links') ? $issues->links() : '' }}
             </div>
         </div>
     </div>

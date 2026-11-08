@@ -13,7 +13,7 @@ class RunAiAgentCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'agent:run {agent? : Specific agent key (panchang, rashifal, seo_blog, festival, b2b, retention) or empty for all active}';
+    protected $signature = 'agent:run {agent? : Specific agent key (panchang, rashifal, seo_blog, festival, b2b, retention) or empty for all active} {--agent= : Specific agent key}';
 
     /**
      * The console command description.
@@ -27,7 +27,7 @@ class RunAiAgentCommand extends Command
      */
     public function handle()
     {
-        $target = $this->argument('agent');
+        $target = $this->argument('agent') ?: $this->option('agent');
 
         if ($target) {
             $this->info("🤖 Triggering agent: {$target}...");

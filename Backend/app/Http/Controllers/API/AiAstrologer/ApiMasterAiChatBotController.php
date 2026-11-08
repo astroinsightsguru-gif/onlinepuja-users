@@ -65,14 +65,8 @@ class ApiMasterAiChatBotController extends Controller
         
         if (Auth::guard('api')->user()) {
             $userId=Auth::guard('api')->user()->id;
-            $session        = new Session();
-            $token          = $session->get('token');
-            $getsystemflag  = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag',[
-                'token' => $token,
-                ])->json();
-                
-                $getsystemflag  = collect($getsystemflag['recordList']);
-                $currency       = $getsystemflag->where('name', 'currencySymbol')->first();
+            $currencyRow = DB::table('systemflag')->where('name', 'currencySymbol')->first();
+            $currency = $currencyRow ? ['name' => $currencyRow->name, 'value' => $currencyRow->value] : ['name' => 'currencySymbol', 'value' => '₹'];
                 
                 $user_balance   = UserWallet::where('userId', $userId)->value('amount');
                 $astrologer     = AiAstrologer::where('type','master')->first();
@@ -87,7 +81,7 @@ class ApiMasterAiChatBotController extends Controller
                         'recordList' => $userDetails
                     ], 400);
                 }else{
-                    if($astrologer->chat_charge == null){
+                    if(!$astrologer || $astrologer->chat_charge == null){
                         return response()->json([
                             'message'   => 'This chat is free.',
                             'status' => 200,
@@ -124,13 +118,8 @@ class ApiMasterAiChatBotController extends Controller
         {
            if (Auth::guard('api')->user()) {
                 $userId         = Auth::guard('api')->user()->id;
-                $session        = new Session();
-                $token          = $session->get('token');
-                $getsystemflag  = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag',[
-                    'token' => $token,
-                    ])->json();
-                    $getsystemflag  = collect($getsystemflag['recordList']);
-                    $currency       = $getsystemflag->where('name', 'currencySymbol')->first();
+                $currencyRow = DB::table('systemflag')->where('name', 'currencySymbol')->first();
+            $currency = $currencyRow ? ['name' => $currencyRow->name, 'value' => $currencyRow->value] : ['name' => 'currencySymbol', 'value' => '₹'];
                     
                     $user_balance   = UserWallet::where('userId', $userId)->value('amount');
                     $astrologer     = AiAstrologer::where('type','master')->first();

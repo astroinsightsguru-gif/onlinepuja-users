@@ -30,7 +30,13 @@ class OtpService
      */
     public function send(string $contactNo, string $otp, string $countryCode = '91'): array
     {
-        $mobile = ltrim($countryCode, '+').$contactNo;
+        $cleanCode = ltrim($countryCode, "+");
+        $cleanContact = preg_replace("/[^0-9]/", "", $contactNo);
+        if (str_starts_with($cleanContact, $cleanCode) && strlen($cleanContact) > 10) {
+            $mobile = $cleanContact;
+        } else {
+            $mobile = $cleanCode . ltrim($cleanContact, "0");
+        }
         $attempts = [];
 
         foreach ($this->channelChain() as $channel) {
@@ -85,7 +91,10 @@ class OtpService
      */
     protected function sendEvolutionWhatsapp(string $mobile, string $otp): array
     {
-        $url = rtrim($this->flag('evolutionApiUrl') ?: 'https://wa.vmstudio.digital', '/');
+        $url = rtrim($this->flag("evolutionApiUrl") ?: "http://127.0.0.1:18080", "/");
+        if (str_contains($url, "wa.vmstudio.digital") || empty($url)) {
+            $url = "http://127.0.0.1:18080";
+        }
         $key = $this->flag('evolutionApiKey') ?: 'bebf8554b69b4eff665465956069890dadeb84547a964ba0ac129e43e98576a2';
         $instance = $this->flag('evolutionInstance') ?: 'onlinepuja';
 

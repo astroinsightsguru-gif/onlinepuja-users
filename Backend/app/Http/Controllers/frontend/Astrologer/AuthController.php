@@ -39,8 +39,7 @@ class AuthController extends Controller
         if (astroauthcheck())
             return redirect()->route('front.astrologerindex');
 
-        $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag')->json();
-        $getsystemflag = collect($getsystemflag['recordList']);
+        $getsystemflag = collect(DB::table('systemflag')->get()->map(function($f) { return (array)$f; }));
 
         $otplessAppId = $getsystemflag->where('name', 'otplessPartnerAppId')->first();
         $logo = $getsystemflag->where('name', 'AdminLogo')->first();
@@ -62,9 +61,7 @@ class AuthController extends Controller
 
             if (!empty($request->isGoogleLogin)) {
 
-                $login = Http::withoutVerifying()->post(url('/') . '/api/loginAppAstrologer', [
-                    'email' => $request->email,
-                ])->json();
+                $login = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->loginAstrologer(new Request(['email' => $request->email]))->getData(true);
 
                 if($login['status']!=400){
 
@@ -91,9 +88,7 @@ class AuthController extends Controller
                     ], 400);
                 }
 
-                $login = Http::withoutVerifying()->post(url('/') . '/api/loginAppAstrologer', [
-                    'contactNo' => $request->contactNo
-                ])->json();
+                $login = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->loginAstrologer(new Request(['contactNo' => $request->contactNo]))->getData(true);
 
                 if($login['status']!=400){
 
@@ -130,8 +125,7 @@ class AuthController extends Controller
         $qualifications = DegreeOrDiploma::query()->get();
         $jobs = FulltimeJob::query()->get();
         $countryTravel = TravelCountry::query()->get();
-        $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag')->json();
-        $getsystemflag = collect($getsystemflag['recordList']);
+        $getsystemflag = collect(DB::table('systemflag')->get()->map(function($f) { return (array)$f; }));
         $appname = $getsystemflag->where('name', 'AppName')->first();
         $documents = AstrologerDocument::query()->get();
 
@@ -413,9 +407,7 @@ class AuthController extends Controller
             return redirect()->route('front.astrologerindex');
         $session = new Session();
         $token = $session->get('astrotoken');
-        $logout = Http::withoutVerifying()->post(url('/') . '/api/logout', [
-            'token' => $token,
-        ])->json();
+        try { $logout = app(\App\Http\Controllers\API\User\UserController::class)->logout(new Request(['token' => $token]))->getData(true); } catch (\Throwable $e) { $logout = ['status' => 200]; }
         $userDeviceDetail = UserDeviceDetail::where('userId', astroauthcheck()['id'])->first();
         if ($userDeviceDetail) {
             $userDeviceDetail->subscription_id_web = null;
@@ -535,8 +527,7 @@ class AuthController extends Controller
 
     public function registerPage()
     {
-        $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag')->json();
-        $getsystemflag = collect($getsystemflag['recordList']);
+        $getsystemflag = collect(DB::table('systemflag')->get()->map(function($f) { return (array)$f; }));
 
         $otplessAppId = $getsystemflag->where('name', 'otplessPartnerAppId')->first();
         $logo = $getsystemflag->where('name', 'AdminLogo')->first();

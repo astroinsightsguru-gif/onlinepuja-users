@@ -67,6 +67,9 @@ class PujaController extends Controller
             session(['b2b_partner_code' => trim(request('partner'))]);
         }
         $puja = Puja::where('slug',$slug)->first();
+        if (!$puja) {
+            abort(404, 'Puja not found');
+        }
 
         $latestPujalists = Puja::where('slug', '!=', $slug)->latest()->take(5)->get();
 
@@ -84,7 +87,7 @@ class PujaController extends Controller
     #-----------------------------------------------------------------------------------------------------------------------------------
     public function pujacheckout(Request $request,$slug,$id,$package_id=0)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         if (!authcheck())
             return redirect()->route('front.home');
 
@@ -387,6 +390,9 @@ class PujaController extends Controller
             session(['b2b_partner_code' => trim(request('partner'))]);
         }
         $puja = Puja::where('slug',$slug)->first();
+        if (!$puja) {
+            abort(404, 'Puja not found');
+        }
         if ($puja) {
             $puja->packages = $puja->package()->where('id',$package_id)->first();
         }
@@ -405,13 +411,13 @@ class PujaController extends Controller
         $session = new HttpSession();
         $token = $session->get('token');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         $sortBy = $request->sortBy;
         $astrologerCategoryId=(int)$request->astrologerCategoryId;
         $searchTerm = $request->input('s');
 
         // dd( $getAstrologer);
-        $getAstrologerCategory = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerCategory')->json();
+        $getAstrologerCategory = AstrologerCategory::where('isActive', 1)->get();
 
         $boostCutoff = Carbon::now()->subHours(24);
 
@@ -528,7 +534,6 @@ class PujaController extends Controller
             }
     
 
-        $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag')->json();
         $getsystemflag = SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
 

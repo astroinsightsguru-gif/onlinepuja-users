@@ -27,14 +27,18 @@ class AstrologerCallController extends Controller
         $session = new Session();
         $token = $session->get('token');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         $sortBy = $request->sortBy;
         $astrologerCategoryId=(int)$request->astrologerCategoryId;
         $searchTerm = $request->input('s');
 
-        $getIntakeForm = Http::withoutVerifying()->post(url('/') . '/api/chatRequest/getIntakeForm', [
-            'token' => $token,
-        ])->json();
+        try {
+            $intakeData = DB::table('intakeform')->where('userId', '=', $userId)->get();
+            $default_time = DB::table('systemflag')->where('name', '=', 'defaultcalltime')->value('value');
+            $getIntakeForm = ['status' => 200, 'recordList' => $intakeData, 'default_time' => $default_time];
+        } catch (\Throwable $e) {
+            $getIntakeForm = ['status' => 200, 'recordList' => [], 'default_time' => null];
+        }
 
 
 
@@ -212,31 +216,21 @@ class AstrologerCallController extends Controller
             $session = new Session();
             $token = $session->get('token');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
 
 
 
-        $getAstrologer = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerById', [
-            'astrologerId' => $request->astrologerId,
-        ])->json();
-        // dd($getAstrologer);
-
-          $getSystemFlag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag',[
-            'token' => $token,
-        ])->json();
-        // Convert the response JSON array to a collection
-        $recordList = $getSystemFlag['recordList'];
-
-        $agoraAppIdObject = null;
-        foreach ($recordList as $item) {
-            if ($item['name'] === 'AgoraAppId') {
-                $agoraAppIdObject = $item;
-                break;
-            }
+        try {
+            $apiReq = new Request(['astrologerId' => $request->astrologerId]);
+            $res = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getAstrologerById($apiReq);
+            $getAstrologer = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getAstrologer = ['status' => 200, 'recordList' => []];
         }
-        $agoraAppIdValue = $agoraAppIdObject['value'];
 
-       $userWalletAmount = UserWallet::where('userId', authcheck()->id)->value('amount') ?? 0;
+        $agoraAppIdValue = DB::table('systemflag')->where('name', 'AgoraAppId')->value('value');
+
+        $userWalletAmount = UserWallet::where('userId', authcheck()->id)->value('amount') ?? 0;
         return view('frontend.pages.callpage', [
             'getAstrologer' => $getAstrologer,
             'callrequest' => $callrequest,
@@ -248,32 +242,32 @@ class AstrologerCallController extends Controller
 
     public function getMyCall(Request $request)
     {
-        Artisan::call('cache:clear');
-
         if(!authcheck())
             return redirect()->route('front.home');
 
-        $session = new Session();
-        $token = $session->get('token');
+        $userId = authcheck()['id'];
 
-        $getUserById = Http::withoutVerifying()->post(url('/') . '/api/getUserById',[
-            'userId' => authcheck()['id'],
-            'token' => $token,
-        ])->json();
+        try {
+            $res = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getUserById(new Request(['userId' => $userId]));
+            $getUserById = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getUserById = ['status' => 200, 'recordList' => []];
+        }
 
-            // dd($getUserById);
+        $userWalletAmount = UserWallet::where('userId', $userId)->value('amount') ?? 0;
+        $user = DB::table('users')->where('id', $userId)->first();
+        $getProfile = [
+            'status' => 200,
+            'data' => [
+                'id' => $user->id ?? $userId,
+                'name' => $user->name ?? '',
+                'contactNo' => $user->contactNo ?? '',
+                'email' => $user->email ?? '',
+                'totalWalletAmount' => (float) $userWalletAmount,
+            ]
+        ];
 
-        $getProfile = Http::withoutVerifying()->post(url('/') . '/api/getProfile',[
-            'token' => $token,
-
-        ])->json();
-
-
-          $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag',[
-            'token' => $token,
-        ])->json();
-
-        $getsystemflag = collect($getsystemflag['recordList']);
+        $getsystemflag = \App\Models\AdminModel\SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
 
 
@@ -289,4 +283,8 @@ class AstrologerCallController extends Controller
     }
 
 
+    public function audiocall(Request $request)
+    {
+        return $this->call($request);
+    }
 }

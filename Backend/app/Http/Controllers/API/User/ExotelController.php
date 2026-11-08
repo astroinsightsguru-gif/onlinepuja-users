@@ -93,16 +93,16 @@ class ExotelController extends Controller
                     ]
                 );
 
-               if ($callId > 0 && $callData['Status']=='completed') {
-                    $endCall = Http::withoutVerifying()->post(url('/') . '/api/callRequest/end', [
+               if ($callId > 0 && $callData['Status'] == 'completed') {
+                    app(\App\Http\Controllers\API\User\CallRequestController::class)->endCall(new Request([
                         'callId' => $callId,
                         'totalMin' => $callData['ConversationDuration'],
-                    ])->json();
+                    ]));
                 }
-                if ($callId > 0 && $callData['Status']=='failed') {
-                    $rejectCall = Http::withoutVerifying()->post(url('/') . '/api/callRequest/reject', [
+                if ($callId > 0 && $callData['Status'] == 'failed') {
+                    app(\App\Http\Controllers\API\User\CallRequestController::class)->reject(new Request([
                         'callId' => $callId,
-                    ])->json();
+                    ]));
                 }
 
 

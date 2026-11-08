@@ -1,78 +1,104 @@
 @extends('pages.growth-os.layout')
 
 @section('growth_content')
+@php
+    $goal = $goal ?? null;
+    $elapsed = $elapsed ?? 0;
+    $horizon = $horizon ?? 50;
+    $totalTraffic = $totalTraffic ?? 0;
+    $pace = $pace ?? 0;
+    $expected = $expected ?? 0;
+    $dailyAvg = $dailyAvg ?? 0;
+    $requiredDaily = $requiredDaily ?? 0;
+    $pipeline = $pipeline ?? [];
+    $recentEvents = $recentEvents ?? collect([]);
+    $liveExperiments = $liveExperiments ?? collect([]);
+    $snapshots = $snapshots ?? collect([]);
+    $recentChats = $recentChats ?? collect([]);
+    $stats = array_merge([
+        'total_keywords' => 0,
+        'easy_keywords' => 0,
+        'drafted_content' => 0,
+        'approved_content' => 0,
+        'open_seo_issues' => 0,
+        'fixed_seo_issues' => 0,
+        'festivals_seeded' => 0,
+        'festivals_scheduled' => 0,
+        'ai_models_count' => 0,
+    ], $stats ?? []);
+@endphp
 <div class="grid grid-cols-12 gap-6">
 
-    {{-- NORTH STAR GOAL CARD --}}
+    {{-- NORTH STAR GOAL HERO COCKPIT --}}
     <div class="col-span-12 lg:col-span-8">
-        <div class="box p-6 bg-white rounded-xl shadow-sm border border-slate-100">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+        <div class="ai-hero-card" style="flex-direction: column !important; align-items: stretch !important; gap: 20px !important;">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-700/80 gap-3">
                 <div>
-                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-200">🎯 Active North-Star Goal</span>
-                    <h3 class="text-xl font-bold text-slate-800 mt-2">{{ $goal ? $goal->title : '100,000 visitors in 50 days' }}</h3>
-                    <div class="text-xs text-slate-500 mt-1">
-                        Timeline: <span class="font-medium text-slate-700">{{ $goal ? $goal->start_date : '2026-08-26' }}</span> to <span class="font-medium text-slate-700">{{ $goal ? $goal->deadline : '2026-10-15' }}</span> · Day <span class="font-bold text-rose-600">{{ $elapsed }}</span> of <span class="font-bold">{{ $horizon }}</span>
+                    <span class="ai-pill" style="background: rgba(244, 63, 94, 0.2); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.35);">🎯 Active North-Star Goal</span>
+                    <h3 class="text-xl font-black text-white mt-2">{{ $goal ? $goal->title : '100,000 visitors in 50 days' }}</h3>
+                    <div class="text-xs text-slate-300 mt-1">
+                        Timeline: <span class="font-bold text-amber-300">{{ $goal ? $goal->start_date : '2026-08-26' }}</span> to <span class="font-bold text-amber-300">{{ $goal ? $goal->deadline : '2026-10-15' }}</span> · Day <span class="font-bold text-rose-400">{{ $elapsed }}</span> of <span class="font-bold text-white">{{ $horizon }}</span>
                     </div>
                 </div>
-                <div class="text-right">
-                    <div class="text-2xl font-black text-slate-800">{{ number_format($totalTraffic) }} <span class="text-xs font-normal text-slate-400">/ {{ number_format($goal ? $goal->target : 100000) }}</span></div>
-                    <div class="text-xs font-semibold {{ $pace >= 80 ? 'text-emerald-600' : 'text-amber-600' }}">
+                <div class="text-left sm:text-right">
+                    <div class="text-3xl font-black text-amber-400 font-mono">{{ number_format($totalTraffic) }} <span class="text-xs font-normal text-slate-300">/ {{ number_format($goal ? $goal->target : 100000) }}</span></div>
+                    <div class="text-xs font-bold mt-1 {{ $pace >= 80 ? 'text-emerald-400' : 'text-amber-300' }}">
                         Current Pace: {{ $pace }}% (Expected: {{ number_format($expected) }})
                     </div>
                 </div>
             </div>
 
-            {{-- Progress Bar --}}
-            <div class="mt-5">
-                <div class="flex justify-between text-xs text-slate-500 mb-1">
-                    <span>Progress to 100K</span>
-                    <span>{{ round(($totalTraffic / max(1, $goal ? $goal->target : 100000)) * 100, 2) }}%</span>
+            {{-- High-Voltage Glowing Progress Bar --}}
+            <div>
+                <div class="flex justify-between text-xs text-slate-300 mb-1.5 font-semibold">
+                    <span>Progress to 100K Devotees</span>
+                    <span class="text-amber-400 font-mono">{{ round(($totalTraffic / max(1, $goal ? $goal->target : 100000)) * 100, 2) }}%</span>
                 </div>
-                <div class="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden">
-                    <div class="bg-gradient-to-r from-amber-500 to-rose-600 h-3.5 rounded-full transition-all duration-500" style="width: {{ min(100, max(2, ($totalTraffic / max(1, $goal ? $goal->target : 100000)) * 100)) }}%"></div>
+                <div class="w-full bg-slate-800 rounded-full h-4 overflow-hidden p-0.5 border border-slate-700">
+                    <div class="bg-gradient-to-r from-amber-400 via-rose-500 to-purple-600 h-full rounded-full transition-all duration-500 shadow-lg" style="width: {{ min(100, max(3, ($totalTraffic / max(1, $goal ? $goal->target : 100000)) * 100)) }}%"></div>
                 </div>
             </div>
 
-            {{-- Honest Arithmetic Levers --}}
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-5 border-t border-slate-100 text-center">
-                <div class="p-3 bg-slate-50 rounded-lg">
-                    <div class="text-xs text-slate-500 font-medium">Daily Required Traffic</div>
-                    <div class="text-lg font-bold text-slate-800 mt-1">~{{ number_format(round(($goal ? $goal->target : 100000) / max(1, $horizon))) }} / day</div>
+            {{-- Honest Arithmetic Levers in Glowing Vibrant Tiles --}}
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2">
+                <div class="p-3.5 bg-slate-900/80 rounded-xl border border-slate-700 text-center">
+                    <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Daily Required Traffic</div>
+                    <div class="text-lg font-black text-amber-300 mt-1 font-mono">~{{ number_format(round(($goal ? $goal->target : 100000) / max(1, $horizon))) }} / day</div>
                 </div>
-                <div class="p-3 bg-slate-50 rounded-lg">
-                    <div class="text-xs text-slate-500 font-medium">Implied Content Output</div>
-                    <div class="text-lg font-bold text-slate-800 mt-1">2-4 Articles / day</div>
+                <div class="p-3.5 bg-slate-900/80 rounded-xl border border-slate-700 text-center">
+                    <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Implied Content Output</div>
+                    <div class="text-lg font-black text-cyan-300 mt-1 font-mono">2-4 Articles / day</div>
                 </div>
-                <div class="p-3 bg-slate-50 rounded-lg">
-                    <div class="text-xs text-slate-500 font-medium">Engine Mode</div>
-                    <div class="text-lg font-bold text-emerald-600 mt-1">Autonomous Compound</div>
+                <div class="p-3.5 bg-slate-900/80 rounded-xl border border-slate-700 text-center">
+                    <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Engine Mode</div>
+                    <div class="text-lg font-black text-emerald-400 mt-1">Autonomous Compound</div>
                 </div>
             </div>
         </div>
 
         {{-- Traffic Snapshots Table --}}
-        <div class="box p-6 bg-white rounded-xl shadow-sm border border-slate-100 mt-6">
-            <h4 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-                <i data-lucide="bar-chart-2" class="w-4 h-4 text-primary"></i> Nightly Traffic Snapshots
+        <div class="ai-box mt-6">
+            <h4 class="text-sm font-extrabold text-slate-900 mb-3 flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-600"></i> Nightly Traffic Snapshots
             </h4>
             <div class="overflow-x-auto">
-                <table class="table table-report w-full text-xs">
+                <table class="ai-table">
                     <thead>
-                        <tr class="bg-slate-50 text-slate-600">
-                            <th class="py-2.5">Date</th>
-                            <th class="py-2.5">Actual Traffic</th>
-                            <th class="py-2.5">Target Traffic</th>
-                            <th class="py-2.5">Pace Status</th>
+                        <tr>
+                            <th>Date</th>
+                            <th>Actual Traffic</th>
+                            <th>Target Traffic</th>
+                            <th>Pace Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($snapshots as $snap)
-                            <tr class="border-b border-slate-100">
-                                <td class="py-2.5 font-medium">{{ $snap->date }}</td>
-                                <td class="py-2.5">{{ number_format($snap->value) }}</td>
-                                <td class="py-2.5 text-slate-500">{{ number_format($expected) }}</td>
-                                <td class="py-2.5">
-                                    <span class="px-2 py-0.5 rounded text-xs {{ $snap->value >= $expected ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
+                            <tr>
+                                <td class="font-bold text-slate-900">{{ $snap->date }}</td>
+                                <td class="font-mono font-bold text-blue-600">{{ number_format($snap->value) }}</td>
+                                <td class="font-mono text-slate-500">{{ number_format($expected) }}</td>
+                                <td>
+                                    <span class="ai-pill {{ $snap->value >= $expected ? 'ai-pill-emerald' : 'ai-pill-amber' }}">
                                         {{ $expected > 0 ? round(($snap->value / $expected) * 100) : 0 }}% pace
                                     </span>
                                 </td>
@@ -93,50 +119,86 @@
     {{-- QUICK STATS & RECENT MASTER BRAIN CHATS --}}
     <div class="col-span-12 lg:col-span-4 space-y-6">
 
-        {{-- Metrics Summary --}}
-        <div class="box p-5 bg-white rounded-xl shadow-sm border border-slate-100">
-            <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Autonomous Pipeline Stats</h4>
-            <div class="space-y-3 text-xs">
-                <div class="flex justify-between items-center py-1.5 border-b border-slate-50">
-                    <span class="text-slate-500 flex items-center gap-1.5"><i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i> Researched Keywords</span>
-                    <span class="font-bold text-slate-800">{{ $stats['total_keywords'] }} ({{ $stats['easy_keywords'] }} easy win)</span>
+        {{-- Metrics Summary with Colorful Icon Bubbles --}}
+        <div class="ai-box">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span style="color: #f59e0b;">⚡</span> Autonomous Pipeline Stats
+            </h4>
+            <div class="space-y-3.5 text-xs">
+                <div class="ai-stat-card ai-stat-card-gold">
+                    <div class="flex items-center gap-3">
+                        <div class="ai-icon-bubble ai-icon-bubble-gold">🔑</div>
+                        <div>
+                            <span class="text-slate-600 block text-[11px] font-semibold">Researched Keywords</span>
+                            <span class="font-extrabold text-amber-900 text-sm font-mono">{{ $stats['total_keywords'] }}</span>
+                        </div>
+                    </div>
+                    <span class="ai-pill ai-pill-amber">{{ $stats['easy_keywords'] }} easy win</span>
                 </div>
-                <div class="flex justify-between items-center py-1.5 border-b border-slate-50">
-                    <span class="text-slate-500 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-500"></i> Content Drafts</span>
-                    <span class="font-bold text-slate-800">{{ $stats['drafted_content'] }} drafted · {{ $stats['approved_content'] }} approved</span>
+
+                <div class="ai-stat-card ai-stat-card-blue">
+                    <div class="flex items-center gap-3">
+                        <div class="ai-icon-bubble ai-icon-bubble-blue">📝</div>
+                        <div>
+                            <span class="text-slate-600 block text-[11px] font-semibold">Content Drafts</span>
+                            <span class="font-extrabold text-blue-900 text-sm font-mono">{{ $stats['drafted_content'] }}</span>
+                        </div>
+                    </div>
+                    <span class="ai-pill ai-pill-blue">{{ $stats['approved_content'] }} approved</span>
                 </div>
-                <div class="flex justify-between items-center py-1.5 border-b border-slate-50">
-                    <span class="text-slate-500 flex items-center gap-1.5"><i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-500"></i> Open SEO Issues</span>
-                    <span class="font-bold text-rose-600">{{ $stats['open_seo_issues'] }} open · {{ $stats['fixed_seo_issues'] }} fixed</span>
+
+                <div class="ai-stat-card ai-stat-card-rose">
+                    <div class="flex items-center gap-3">
+                        <div class="ai-icon-bubble ai-icon-bubble-rose">🛡️</div>
+                        <div>
+                            <span class="text-slate-600 block text-[11px] font-semibold">Open SEO Issues</span>
+                            <span class="font-extrabold text-rose-900 text-sm font-mono">{{ $stats['open_seo_issues'] }}</span>
+                        </div>
+                    </div>
+                    <span class="ai-pill ai-pill-rose">{{ $stats['fixed_seo_issues'] }} fixed</span>
                 </div>
-                <div class="flex justify-between items-center py-1.5 border-b border-slate-50">
-                    <span class="text-slate-500 flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-purple-500"></i> Hindu Festivals</span>
-                    <span class="font-bold text-slate-800">{{ $stats['festivals_seeded'] }} total · {{ $stats['festivals_scheduled'] }} scheduled</span>
+
+                <div class="ai-stat-card ai-stat-card-purple">
+                    <div class="flex items-center gap-3">
+                        <div class="ai-icon-bubble ai-icon-bubble-purple">🪔</div>
+                        <div>
+                            <span class="text-slate-600 block text-[11px] font-semibold">Hindu Festivals</span>
+                            <span class="font-extrabold text-purple-900 text-sm font-mono">{{ $stats['festivals_seeded'] }}</span>
+                        </div>
+                    </div>
+                    <span class="ai-pill" style="background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe;">{{ $stats['festivals_scheduled'] }} scheduled</span>
                 </div>
-                <div class="flex justify-between items-center py-1.5">
-                    <span class="text-slate-500 flex items-center gap-1.5"><i data-lucide="cpu" class="w-3.5 h-3.5 text-emerald-500"></i> Live AI Models</span>
-                    <span class="font-bold text-emerald-700">{{ $stats['ai_models_count'] }} synced</span>
+
+                <div class="ai-stat-card ai-stat-card-emerald">
+                    <div class="flex items-center gap-3">
+                        <div class="ai-icon-bubble ai-icon-bubble-emerald">🤖</div>
+                        <div>
+                            <span class="text-slate-600 block text-[11px] font-semibold">Live AI Models</span>
+                            <span class="font-extrabold text-emerald-900 text-sm font-mono">{{ $stats['ai_models_count'] }}</span>
+                        </div>
+                    </div>
+                    <span class="ai-pill ai-pill-emerald">Synced OmniRoute</span>
                 </div>
             </div>
         </div>
 
         {{-- Recent Brain Command Log --}}
-        <div class="box p-5 bg-white rounded-xl shadow-sm border border-slate-100">
-            <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center justify-between">
-                <span>Master Brain Log</span>
-                <span class="text-xs font-normal text-slate-400">Recent Chats</span>
+        <div class="ai-box">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider mb-3 flex items-center justify-between">
+                <span class="flex items-center gap-1.5"><span style="color: #6366f1;">🧠</span> Master Brain Log</span>
+                <span class="ai-pill ai-pill-slate">Recent Chats</span>
             </h4>
             <div class="space-y-3 max-h-80 overflow-y-auto pr-1 text-xs">
                 @forelse($recentChats as $chat)
-                    <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                        <div class="font-semibold text-slate-800 flex items-center gap-1">
-                            <span class="text-primary">👤</span> {{ Str::limit($chat->message, 45) }}
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                        <div class="font-bold text-slate-900 flex items-center gap-1.5">
+                            <span class="text-blue-500">👤</span> {{ Str::limit($chat->message, 45) }}
                         </div>
-                        <div class="text-slate-600 mt-1 pl-4 border-l-2 border-amber-400">
+                        <div class="text-slate-700 mt-1 pl-3 border-l-2 border-amber-400 font-medium">
                             {{ Str::limit($chat->response, 90) }}
                         </div>
-                        <div class="text-[10px] text-slate-400 mt-1 text-right">
-                            Provider: <span class="font-medium text-slate-600">{{ $chat->provider ?: 'auto' }}</span> · {{ \Carbon\Carbon::parse($chat->created_at)->diffForHumans() }}
+                        <div class="text-[10px] text-slate-400 mt-1.5 text-right font-mono">
+                            Provider: <span class="font-bold text-slate-700">{{ $chat->provider ?: 'auto' }}</span> · {{ \Carbon\Carbon::parse($chat->created_at)->diffForHumans() }}
                         </div>
                     </div>
                 @empty

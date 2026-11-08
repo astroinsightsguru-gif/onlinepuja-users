@@ -25,11 +25,10 @@ class ChatController extends Controller
             $session = new Session();
             $token = $session->get('astrotoken');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
 
-        $getUser = Http::withoutVerifying()->post(url('/') . '/api/getUserById', [
-            'userId' => $request->partnerId,
-        ])->json();
+        $uRow = DB::table('users')->where('id', $request->partnerId)->first();
+        $getUser = ['status' => 200, 'recordList' => $uRow ? (array) $uRow : []];
 
         $astromallProduct = AstromallProduct::query();
         $astromallProduct->where('isActive', '=', true);

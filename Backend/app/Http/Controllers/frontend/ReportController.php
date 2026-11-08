@@ -26,14 +26,19 @@ class ReportController extends Controller
         $session = new Session();
         $token = $session->get('token');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         $sortBy = $request->sortBy;
         $astrologerCategoryId = (int) $request->astrologerCategoryId;
         $searchTerm = $request->input('s');
 
         // dd( $getAstrologer);
         $getAstrologerCategory = AstrologerCategory::where('isActive', 1)->get();
-        $getReportType = Http::withoutVerifying()->post(url('/') . '/api/getReportType')->json();
+        try {
+            $res = app(\App\Http\Controllers\API\User\ReportTypeController::class)->getReportTypes(new Request());
+            $getReportType = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getReportType = ['status' => 200, 'recordList' => []];
+        }
 
         $boostCutoff = Carbon::now()->subHours(24);
 
@@ -150,7 +155,7 @@ class ReportController extends Controller
             ]);
         }
 
-        $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag')->json();
+        // Removed redundant internal HTTP loopback
         $getsystemflag = SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
         $walletAmount = auth()->check() ? UserWallet::where('userId', auth()->id())->value('amount') ?? 0 : 0;
@@ -170,34 +175,35 @@ class ReportController extends Controller
 
     public function getMyReport(Request $request)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
 
         if (!authcheck())
             return redirect()->route('front.home');
 
-        $session = new Session();
-        $token = $session->get('token');
+        $userId = authcheck()['id'];
 
-        // dd($token);
-        $getUserById = Http::withoutVerifying()->post(url('/') . '/api/getUserById', [
-            'userId' => authcheck()['id'],
-            'token' => $token,
-        ])->json();
+        try {
+            $res = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getUserById(new Request(['userId' => $userId]));
+            $getUserById = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getUserById = ['status' => 200, 'recordList' => []];
+        }
 
-        // dd($getUserById);
+        $userWalletAmount = \App\Models\UserModel\UserWallet::where('userId', $userId)->value('amount') ?? 0;
+        $user = DB::table('users')->where('id', $userId)->first();
+        $getProfile = [
+            'status' => 200,
+            'data' => [
+                'id' => $user->id ?? $userId,
+                'name' => $user->name ?? '',
+                'contactNo' => $user->contactNo ?? '',
+                'email' => $user->email ?? '',
+                'totalWalletAmount' => (float) $userWalletAmount,
+            ]
+        ];
 
-        $getProfile = Http::withoutVerifying()->post(url('/') . '/api/getProfile', [
-            'token' => $token,
-        ])->json();
-
-        $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag', [
-            'token' => $token,
-        ])->json();
-
-        $getsystemflag = collect($getsystemflag['recordList']);
+        $getsystemflag = \App\Models\AdminModel\SystemFlag::all();
         $currency = $getsystemflag->where('name', 'walletType')->first();
-
-        // dd($getUserById,$getProfile,$currency);
 
         return view('frontend.pages.my-report', [
             'getUserById' => $getUserById,

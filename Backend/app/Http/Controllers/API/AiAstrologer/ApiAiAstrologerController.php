@@ -20,18 +20,13 @@ class ApiAiAstrologerController extends Controller
 {
     public function aiAstrologerList(){
         try {
-            $userId='';
-            if(authcheck()){
-                $userId=authcheck()['id'];
+            $userId = '';
+            $user = authcheck();
+            if ($user) {
+                $userId = $user['id'] ?? $user->id ?? '';
             }
-            
-            $session = new Session();
-            $token = $session->get('token');
-            $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag',[
-                'token' => $token,
-                ])->json();
-                $getsystemflag  = collect($getsystemflag['recordList']);
-                $currency       = $getsystemflag->where('name', 'currencySymbol')->first();
+            $currencyRow = DB::table('systemflag')->where('name', 'currencySymbol')->first();
+            $currency = $currencyRow ? ['name' => $currencyRow->name, 'value' => $currencyRow->value] : ['name' => 'currencySymbol', 'value' => '₹'];
                 
                 $aiAstrologers                      = AiAstrologer::whereNull('type')
                 ->orderBy('id','DESC')
@@ -234,6 +229,193 @@ class ApiAiAstrologerController extends Controller
                 'walletAmount'          => $wallet_deduction->amount,
                 'status' => 200,
             ], 200);
+        }
+
+        public function getPrescriptions(Request $request)
+        {
+            try {
+                $userId = $request->input('user_id') ?? $request->input('userId');
+                $astrologerId = $request->input('astrologer_id') ?? $request->input('astrologerId');
+
+                if (!$userId && !$astrologerId) {
+                    $user = Auth::guard('api')->user();
+                    if ($user) {
+                        $userId = $user->id;
+                    }
+                }
+
+                $query = DB::table('astrologer_prescriptions')
+                    ->leftJoin('astrologers', 'astrologers.id', '=', 'astrologer_prescriptions.astrologer_id')
+                    ->leftJoin('pujas', 'pujas.id', '=', 'astrologer_prescriptions.puja_id')
+                    ->select(
+                        'astrologer_prescriptions.*',
+                        'astrologer_prescriptions.title as remedy_title',
+                        'astrologer_prescriptions.prescribed_gemstone as gemstone',
+                        'astrologer_prescriptions.prescribed_mantra as mantra',
+                        'astrologers.name as astrologer_name',
+                        'astrologers.profileImage as astrologer_profile_image',
+                        'pujas.puja_title',
+                        'pujas.puja_place',
+                        'pujas.puja_duration'
+                    );
+
+                if ($userId) {
+                    $query->where('astrologer_prescriptions.user_id', $userId);
+                }
+                if ($astrologerId) {
+                    $query->where('astrologer_prescriptions.astrologer_id', $astrologerId);
+                }
+
+                $list = $query->orderBy('astrologer_prescriptions.id', 'DESC')->get();
+
+                return response()->json([
+                    'status' => 200,
+                    'recordList' => $list,
+                ], 200);
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'status' => 500,
+                    'message' => $e->getMessage(),
+                    'recordList' => [],
+                ], 500);
+            }
+        }
+
+        public function getPrescriptionPujas(Request $request)
+        {
+            try {
+                $pujas = DB::table('pujas')
+                    ->where('puja_status', 1)
+                    ->select('id', 'puja_title', 'puja_place', 'puja_duration', 'puja_images')
+                    ->orderBy('puja_title', 'ASC')
+                    ->get();
+
+                return response()->json([
+                    'status' => 200,
+                    'recordList' => $pujas,
+                ], 200);
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'status' => 500,
+                    'message' => $e->getMessage(),
+                    'recordList' => [],
+                ], 500);
+            }
+        }
+
+        public function prescribeRemedy(Request $request)
+        {
+            try {
+                $validator = Validator::make($request->all(), [
+                    'astrologer_id' => 'required',
+                    'user_id' => 'required',
+                ]);
+
+                if ($validator->fails()) {
+                    return response()->json([
+                        'status' => 400,
+                        'error' => $validator->errors(),
+                    ], 400);
+                }
+
+                $id = DB::table('astrologer_prescriptions')->insertGetId([
+                    'astrologer_id' => $request->input('astrologer_id'),
+                    'user_id' => $request->input('user_id'),
+                    'call_id' => $request->input('call_id'),
+                    'puja_id' => $request->input('puja_id'),
+                    'remedy_type' => $request->input('remedy_type', 'puja'),
+                    'title' => $request->input('title', 'Vedic Remedy Prescription'),
+                    'reason' => $request->input('reason'),
+                    'prescribed_gemstone' => $request->input('prescribed_gemstone'),
+                    'prescribed_mantra' => $request->input('prescribed_mantra'),
+                    'suggested_amount' => $request->input('suggested_amount'),
+                    'status' => 'pending',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $record = DB::table('astrologer_prescriptions')->where('id', $id)->first();
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Prescription created successfully',
+                    'recordList' => $record,
+                ], 200);
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'status' => 500,
+                    'message' => $e->getMessage(),
+                ], 500);
+            }
+        }
+
+        public function getAiTwinStatus(Request $request)
+        {
+            try {
+                $astrologerId = $request->input('astrologer_id');
+                if (!$astrologerId) {
+                    return response()->json(['status' => 400, 'message' => 'astrologer_id required'], 400);
+                }
+
+                $astro = DB::table('astrologers')->where('id', $astrologerId)->first();
+                if (!$astro) {
+                    return response()->json(['status' => 404, 'message' => 'Astrologer not found'], 404);
+                }
+
+                $stats = [
+                    'ai_twin_enabled' => (bool)($astro->ai_twin_enabled ?? 0),
+                    'ai_twin_name' => $astro->ai_twin_name,
+                    'ai_twin_tone' => $astro->ai_twin_tone,
+                    'ai_twin_greeting' => $astro->ai_twin_greeting,
+                    'ai_twin_prompt' => $astro->ai_twin_prompt,
+                    'ai_twin_system' => $astro->ai_twin_system,
+                    'ai_twin_charge' => (float)($astro->ai_twin_charge ?? 5.0),
+                    'ai_twin_auto_offline' => (bool)($astro->ai_twin_auto_offline ?? 1),
+                ];
+
+                return response()->json([
+                    'status' => 200,
+                    'recordList' => $stats,
+                ], 200);
+            } catch (\Throwable $e) {
+                return response()->json(['status' => 500, 'message' => $e->getMessage()], 500);
+            }
+        }
+
+        public function setupAiTwin(Request $request)
+        {
+            try {
+                $astrologerId = $request->input('astrologer_id');
+                if (!$astrologerId) {
+                    return response()->json(['status' => 400, 'message' => 'astrologer_id required'], 400);
+                }
+
+                $updateData = [];
+                foreach (['ai_twin_enabled', 'ai_twin_name', 'ai_twin_tone', 'ai_twin_greeting', 'ai_twin_prompt', 'ai_twin_system', 'ai_twin_charge', 'ai_twin_auto_offline'] as $f) {
+                    if ($request->has($f)) {
+                        $updateData[$f] = $request->input($f);
+                    }
+                }
+                if (!empty($updateData)) {
+                    $updateData['updated_at'] = now();
+                    DB::table('astrologers')->where('id', $astrologerId)->update($updateData);
+                }
+
+                $astro = DB::table('astrologers')->where('id', $astrologerId)->first();
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'AI Twin updated successfully',
+                    'recordList' => [
+                        'ai_twin_enabled' => (bool)($astro->ai_twin_enabled ?? 0),
+                        'ai_twin_name' => $astro->ai_twin_name,
+                        'ai_twin_tone' => $astro->ai_twin_tone,
+                        'ai_twin_charge' => (float)($astro->ai_twin_charge ?? 5.0),
+                    ],
+                ], 200);
+            } catch (\Throwable $e) {
+                return response()->json(['status' => 500, 'message' => $e->getMessage()], 500);
+            }
         }
     }
     

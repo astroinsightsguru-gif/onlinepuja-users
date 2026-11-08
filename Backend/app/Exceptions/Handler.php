@@ -54,34 +54,34 @@ class Handler extends ExceptionHandler
             return redirect('/login')->withCookie(\Illuminate\Support\Facades\Cookie::forget(config('session.cookie')));
         }
         if ($this->isHttpException($e)) {
-            switch ($e->getStatusCode()) {
+            $status = (int) $e->getStatusCode();
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'status' => $status,
+                    'message' => $e->getMessage() ?: ($status === 404 ? 'Resource not found.' : 'HTTP Error ' . $status),
+                ], $status);
+            }
 
-                // not authorized
-                case '403':
-                    return redirect('404');
-                    break;
-
-                // not found
-                case '404':
-                    return redirect('404');
-                    break;
-
-                // internal error
-                case '500':
-                    return redirect('404');
-                    break;
-
+            $layout = $request->is('admin/*') ? 'side-menu' : 'login';
+            switch ($status) {
+                case 403:
+                    return response()->view('pages.404', ['layout' => $layout], 403);
+                case 404:
+                    return response()->view('pages.404', ['layout' => $layout], 404);
+                case 500:
+                    return response()->view('pages.500', ['layout' => $layout], 500);
                 default:
                     return $this->renderHttpException($e);
-                    break;
             }
         } else {
             if (!env('APP_DEBUG', false)) {
-                return response()->view("pages.500");
+                if ($request->expectsJson() || $request->is('api/*')) {
+                    return response()->json(['status' => 500, 'message' => 'Internal server error.'], 500);
+                }
+                return response()->view("pages.500", ['layout' => 'side-menu'], 500);
             } else {
                 return parent::render($request, $e);
             }
-            // return parent::render($request, $e);
         }
     }
 }

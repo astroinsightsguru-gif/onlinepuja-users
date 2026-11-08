@@ -272,6 +272,25 @@
 }
 </style>
 
+@php
+    $brevoConfigured = $brevoConfigured ?? (!empty(config('services.brevo.key')));
+    $waState = $waState ?? [];
+    $campaigns = $campaigns ?? collect([]);
+    $templates = $templates ?? collect([]);
+    $subscribersCount = $subscribersCount ?? 0;
+    $activeCampaignsCount = $activeCampaignsCount ?? 0;
+    $totalDevotees = $totalDevotees ?? 0;
+    $devoteesWithPhone = $devoteesWithPhone ?? 0;
+    $devoteesWithEmail = $devoteesWithEmail ?? 0;
+    $totalOrders = $totalOrders ?? 0;
+    $totalB2bPartners = $totalB2bPartners ?? 0;
+    $pujas = $pujas ?? collect([]);
+    $leadPujas = $leadPujas ?? collect([]);
+    $b2bCities = $b2bCities ?? collect([]);
+    $b2bLeads = $b2bLeads ?? collect([]);
+    $festivalsRadar = $festivalsRadar ?? collect([]);
+@endphp
+
 <div class="ai-scope">
 
     {{-- TOP: Autonomous Marketing Hub Header Ribbon --}}
@@ -458,6 +477,198 @@
         </div>
     </div>
 
+        {{-- WORKFLOW NAVIGATION TABS: Declutters the 1900-line screen into focused cockpit views --}}
+    <div class="flex items-center justify-between border-b border-slate-200/80 pb-3 mb-5 mt-2">
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+            <button type="button" id="tab-btn-broadcast" onclick="switchMarketingTab('broadcast')" class="mkt-tab-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-900 text-white shadow-2xs cursor-pointer">
+                <i data-lucide="send" class="w-4 h-4 text-indigo-400"></i> Broadcast Studio & Smartphone Preview
+            </button>
+            <button type="button" id="tab-btn-festival" onclick="switchMarketingTab('festival')" class="mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer">
+                <i data-lucide="calendar" class="w-4 h-4 text-amber-500"></i> Sacred Festival Multi-Radar
+            </button>
+            <button type="button" id="tab-btn-b2b" onclick="switchMarketingTab('b2b')" class="mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer">
+                <i data-lucide="briefcase" class="w-4 h-4 text-blue-500"></i> B2B Partner Distribution
+            </button>
+            <button type="button" id="tab-btn-tracking" onclick="switchMarketingTab('tracking')" class="mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer">
+                <i data-lucide="target" class="w-4 h-4 text-rose-500"></i> Pixel, Ads & Tag Manager Control
+            </button>
+            <button type="button" id="tab-btn-triggers" onclick="switchMarketingTab('triggers')" class="mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer">
+                <i data-lucide="zap" class="w-4 h-4 text-emerald-500"></i> Lifecycle Automated Triggers
+            </button>
+        </div>
+    </div>
+
+        {{-- PANE 5: AD TRACKING, PIXEL & MARKETING CONTROL CENTER --}}
+    <div id="pane-tracking" class="mkt-pane" style="display: none;">
+        <div class="ai-box">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <span>🎯</span>
+                        <span>Ad Tracking, Meta Pixel & Marketing Control Center</span>
+                    </h3>
+                    <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">
+                        Centrally control Meta (Facebook/Instagram) Pixel, Conversions API (CAPI), Google Analytics 4, Tag Manager (GTM), and Google Ads.
+                    </p>
+                </div>
+                <button type="button" onclick="saveTrackingSettings(event)" id="btn-save-tracking" class="ai-btn-gold" style="font-size: 13px; padding: 10px 22px;">
+                    <i data-lucide="save" style="width: 15px; height: 15px;"></i> Save All Ad & Tracking Settings
+                </button>
+            </div>
+
+            <form id="form-tracking-settings" onsubmit="saveTrackingSettings(event)">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px;">
+                    
+                    {{-- Card 1: Meta (Facebook & Instagram) Pixel & CAPI --}}
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 18px;">🔵</span>
+                                <h4 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0;">Meta (Facebook & Instagram) Ads</h4>
+                            </div>
+                            <span class="ai-pill" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+                                Site-Wide Active
+                            </span>
+                        </div>
+
+                        <div style="margin-bottom: 14px;">
+                            <label style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                                Meta Pixel ID <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" name="meta_pixel_id" id="track-meta-pixel-id" value="{{ $trackingSettings['meta_pixel_id'] ?? '1738490804042986' }}" placeholder="1738490804042986" class="ai-input" style="width: 100%; font-family: monospace;">
+                            <span style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">Injected across all pages in &lt;head&gt; firing PageView, ViewContent, InitiateCheckout & Purchase.</span>
+                        </div>
+
+                        <div style="margin-bottom: 14px;">
+                            <label style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                                Meta Conversions API (CAPI) Access Token
+                            </label>
+                            <input type="password" name="meta_capi_token" id="track-meta-capi-token" value="{{ $trackingSettings['meta_capi_token'] ?? '' }}" placeholder="EAAG... (from Meta Events Manager > Settings > Generate Access Token)" class="ai-input" style="width: 100%; font-family: monospace;">
+                            <span style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">Server-to-server purchase backup that bypasses iOS 14.5+ and browser ad-blockers.</span>
+                        </div>
+
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                                Social Media Dispatch Webhook URL
+                            </label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="url" name="social_webhook_url" id="track-social-webhook-url" value="{{ $trackingSettings['social_webhook_url'] ?? '' }}" placeholder="https://hook.eu1.make.com/... or Zapier/Publer" class="ai-input" style="flex: 1; font-family: monospace; font-size: 11px;">
+                                <button type="button" onclick="testSocialWebhookFromPanel()" class="ai-btn-dark" style="font-size: 11px; padding: 6px 12px; white-space: nowrap;">
+                                    Ping
+                                </button>
+                            </div>
+                            <span style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">Dispatches generated daily reels & posts to Instagram, Facebook & X.</span>
+                        </div>
+                    </div>
+
+                    {{-- Card 2: Google Ecosystem (GA4, GTM, Google Ads) --}}
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 18px;">🔴</span>
+                                <h4 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0;">Google Ecosystem (Analytics, Ads & GTM)</h4>
+                            </div>
+                            <span class="ai-pill" style="background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;">
+                                Active in Layout
+                            </span>
+                        </div>
+
+                        <div style="margin-bottom: 14px;">
+                            <label style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                                Google Analytics 4 (GA4) Measurement ID
+                            </label>
+                            <input type="text" name="ga4_measurement_id" id="track-ga4-id" value="{{ $trackingSettings['ga4_measurement_id'] ?? 'G-7T63JY1D93' }}" placeholder="G-7T63JY1D93" class="ai-input" style="width: 100%; font-family: monospace;">
+                            <span style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">Fires standard pageviews and purchase events to GA4.</span>
+                        </div>
+
+                        <div style="margin-bottom: 14px;">
+                            <label style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                                Google Tag Manager (GTM) Container ID
+                            </label>
+                            <input type="text" name="gtm_container_id" id="track-gtm-id" value="{{ $trackingSettings['gtm_container_id'] ?? '' }}" placeholder="GTM-XXXXXXX" class="ai-input" style="width: 100%; font-family: monospace;">
+                            <span style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">If provided, GTM container &lt;script&gt; and &lt;noscript&gt; iframe will load automatically.</span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                                    Google Ads Conversion ID
+                                </label>
+                                <input type="text" name="google_ads_id" id="track-gads-id" value="{{ $trackingSettings['google_ads_id'] ?? '' }}" placeholder="AW-123456789" class="ai-input" style="width: 100%; font-family: monospace;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                                    Conversion Label
+                                </label>
+                                <input type="text" name="google_ads_label" id="track-gads-label" value="{{ $trackingSettings['google_ads_label'] ?? '' }}" placeholder="AbC-D_eFgHiJkLm" class="ai-input" style="width: 100%; font-family: monospace;">
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Card 3: Brevo Email Marketing API Gateway --}}
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 18px;">✉️</span>
+                                <h4 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0;">Brevo Email Marketing Gateway</h4>
+                            </div>
+                            <span id="brevo-live-badge" class="ai-pill" style="{{ $brevoConfigured ? 'background: rgba(59, 130, 246, 0.2); color: #93c5fd;' : 'background: rgba(244, 63, 94, 0.2); color: #fecdd3;' }}">
+                                {{ $brevoConfigured ? 'Key Saved' : 'Key Needed' }}
+                            </span>
+                        </div>
+
+                        <div style="margin-bottom: 14px;">
+                            <label style="display: block; font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                                Brevo API v3 Key <span style="color: #ef4444;">*</span>
+                            </label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="password" name="brevo_api_key" id="track-brevo-api-key" placeholder="xkeysib-..." class="ai-input" style="flex: 1; font-family: monospace;">
+                                <button type="button" onclick="testBrevoKeyFromPanel()" id="btn-test-brevo" class="ai-btn-gold" style="font-size: 11.5px; padding: 6px 14px; white-space: nowrap;">
+                                    ⚡ Test & Save
+                                </button>
+                            </div>
+                            <div id="brevo-test-result" style="font-size: 11px; margin-top: 5px; font-weight: 600;"></div>
+                            <span style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">Powers devotional HTML email newsletters, SANKALP101 voucher onboarding, and tithi updates.</span>
+                        </div>
+
+                        <div style="padding: 10px 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; font-size: 11.5px; color: #1e40af; line-height: 1.45;">
+                            <strong>Sender Address:</strong> no-reply@onlinepuja.live | <strong>List ID:</strong> 2
+                        </div>
+                    </div>
+
+                    {{-- Card 4: Evolution WhatsApp Device Status --}}
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 18px;">💬</span>
+                                <h4 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0;">Evolution WhatsApp Session</h4>
+                            </div>
+                            <span class="ai-pill" style="{{ ($waState['state'] ?? '') === 'open' ? 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;' : 'background: #fffbeb; color: #b45309; border: 1px solid #fde68a;' }}">
+                                {{ ucfirst($waState['state'] ?? 'close') }}
+                            </span>
+                        </div>
+
+                        <p style="font-size: 12px; color: #475569; margin-bottom: 12px;">
+                            Gateway: <code style="font-size: 11px; color: #0f172a;">https://wa.vmstudio.digital</code> | Instance: <strong style="color: #0f172a;">onlinepuja</strong>
+                        </p>
+
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" onclick="openWaQrModal()" class="ai-btn-gold" style="flex: 1; font-size: 12px; padding: 9px 14px;">
+                                📲 Scan WhatsApp QR Code
+                            </button>
+                            <button type="button" onclick="fetchWaQr()" class="ai-btn-dark" style="font-size: 12px; padding: 9px 14px;">
+                                Refresh Session
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- PANE 2: SACRED FESTIVAL MULTI-RADAR --}}
+    <div id="pane-festival" class="mkt-pane" style="display: none;">
     {{-- SECTION: Sacred Festival Calendar (Parallel Multi-Campaign Engine) --}}
     <div class="ai-box">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; gap: 10px;">
@@ -525,6 +736,10 @@
         </div>
     </div>
 
+        </div>
+
+    {{-- PANE 3: B2B PARTNER NETWORK HUB --}}
+    <div id="pane-b2b" class="mkt-pane" style="display: none;">
     {{-- SECTION: B2B Partner Network Hub --}}
     <div class="ai-hero-card" style="padding: 26px !important; margin-bottom: 24px !important;">
         <div style="display: flex; flex-direction: column; md:flex-row; justify-content: space-between; align-items: flex-start; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid #334155;">
@@ -797,6 +1012,10 @@
         </div>
     </div>
 
+        </div>
+
+    {{-- PANE 1: OMNICHANNEL BROADCAST STUDIO & PHONE PREVIEW (DEFAULT ACTIVE) --}}
+    <div id="pane-broadcast" class="mkt-pane">
     {{-- SECTION: Omnichannel Campaign Studio & Devotee Smartphone Preview --}}
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px;">
 
@@ -981,6 +1200,10 @@ Participate in the auspicious Vedic ritual performed by certified Varanasi pandi
 
     </div>
 
+        </div>
+
+    {{-- PANE 4: DEVOTEE LIFECYCLE AUTOMATED TRIGGERS --}}
+    <div id="pane-triggers" class="mkt-pane" style="display: none;">
     {{-- SECTION: Devotee Lifecycle Automated Triggers --}}
     <div class="ai-box">
         <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; margin-bottom: 16px;">
@@ -1037,6 +1260,8 @@ Participate in the auspicious Vedic ritual performed by certified Varanasi pandi
     </div>
 
 </div>
+
+    </div>
 
 {{-- MODAL: WhatsApp QR Modal --}}
 <div id="modal-wa-qr" style="position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.7); display: none; align-items: center; justify-content: center; padding: 16px;">
@@ -1194,6 +1419,25 @@ function applyPujaPreset(sel) {
     document.getElementById('camp-cta-url').value = 'https://onlinepuja.live/pujas/' + (slug || '');
 
     updateLivePreview();
+    function switchMarketingTab(targetTab) {
+    var tabs = ['broadcast', 'festival', 'b2b', 'triggers', 'tracking'];
+    tabs.forEach(function(t) {
+        var pane = document.getElementById('pane-' + t);
+        var btn = document.getElementById('tab-btn-' + t);
+        if (pane) pane.style.display = (t === targetTab) ? 'block' : 'none';
+        if (btn) {
+            if (t === targetTab) {
+                btn.className = 'mkt-tab-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-900 text-white shadow-2xs cursor-pointer';
+                var icon = btn.querySelector('i');
+                if (icon) icon.className.baseVal = icon.className.baseVal.replace('text-slate-400', 'text-amber-400');
+            } else {
+                btn.className = 'mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer';
+            }
+        }
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    window.scrollTo({ top: 180, behavior: 'smooth' });
+}
 }
 
 function loadFestivalCampaign(festivalName) {
@@ -1218,6 +1462,25 @@ function loadFestivalCampaign(festivalName) {
             document.getElementById('camp-channel').value = 'both';
 
             updateLivePreview();
+    function switchMarketingTab(targetTab) {
+    var tabs = ['broadcast', 'festival', 'b2b', 'triggers', 'tracking'];
+    tabs.forEach(function(t) {
+        var pane = document.getElementById('pane-' + t);
+        var btn = document.getElementById('tab-btn-' + t);
+        if (pane) pane.style.display = (t === targetTab) ? 'block' : 'none';
+        if (btn) {
+            if (t === targetTab) {
+                btn.className = 'mkt-tab-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-900 text-white shadow-2xs cursor-pointer';
+                var icon = btn.querySelector('i');
+                if (icon) icon.className.baseVal = icon.className.baseVal.replace('text-slate-400', 'text-amber-400');
+            } else {
+                btn.className = 'mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer';
+            }
+        }
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    window.scrollTo({ top: 180, behavior: 'smooth' });
+}
             var comp = document.getElementById('form-broadcast');
             if (comp) comp.scrollIntoView({ behavior: 'smooth' });
         } else {
@@ -1256,6 +1519,25 @@ function generateFestivalReel(festivalName) {
             document.getElementById('camp-media-url').value = res.video_url;
             document.getElementById('camp-media-type').value = 'video';
             updateLivePreview();
+    function switchMarketingTab(targetTab) {
+    var tabs = ['broadcast', 'festival', 'b2b', 'triggers', 'tracking'];
+    tabs.forEach(function(t) {
+        var pane = document.getElementById('pane-' + t);
+        var btn = document.getElementById('tab-btn-' + t);
+        if (pane) pane.style.display = (t === targetTab) ? 'block' : 'none';
+        if (btn) {
+            if (t === targetTab) {
+                btn.className = 'mkt-tab-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-900 text-white shadow-2xs cursor-pointer';
+                var icon = btn.querySelector('i');
+                if (icon) icon.className.baseVal = icon.className.baseVal.replace('text-slate-400', 'text-amber-400');
+            } else {
+                btn.className = 'mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer';
+            }
+        }
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    window.scrollTo({ top: 180, behavior: 'smooth' });
+}
             alert('🎉 Video Reel Synthesized Successfully!\n\nURL: ' + res.video_url);
         } else {
             alert('Video generation note: ' + (res.message || 'Check logs for status'));
@@ -1305,6 +1587,25 @@ function orchestrateMasterCampaign(festivalName) {
                 document.getElementById('camp-media-type').value = pkg.video_reel_url ? 'video' : 'image';
                 document.getElementById('camp-channel').value = 'both';
                 updateLivePreview();
+    function switchMarketingTab(targetTab) {
+    var tabs = ['broadcast', 'festival', 'b2b', 'triggers', 'tracking'];
+    tabs.forEach(function(t) {
+        var pane = document.getElementById('pane-' + t);
+        var btn = document.getElementById('tab-btn-' + t);
+        if (pane) pane.style.display = (t === targetTab) ? 'block' : 'none';
+        if (btn) {
+            if (t === targetTab) {
+                btn.className = 'mkt-tab-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-900 text-white shadow-2xs cursor-pointer';
+                var icon = btn.querySelector('i');
+                if (icon) icon.className.baseVal = icon.className.baseVal.replace('text-slate-400', 'text-amber-400');
+            } else {
+                btn.className = 'mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer';
+            }
+        }
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    window.scrollTo({ top: 180, behavior: 'smooth' });
+}
             }
 
             var dock = document.getElementById('master-asset-dock');
@@ -1362,6 +1663,25 @@ function generateFestivalBanners(festivalName) {
             document.getElementById('camp-media-url').value = res.landscape;
             document.getElementById('camp-media-type').value = 'image';
             updateLivePreview();
+    function switchMarketingTab(targetTab) {
+    var tabs = ['broadcast', 'festival', 'b2b', 'triggers', 'tracking'];
+    tabs.forEach(function(t) {
+        var pane = document.getElementById('pane-' + t);
+        var btn = document.getElementById('tab-btn-' + t);
+        if (pane) pane.style.display = (t === targetTab) ? 'block' : 'none';
+        if (btn) {
+            if (t === targetTab) {
+                btn.className = 'mkt-tab-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-900 text-white shadow-2xs cursor-pointer';
+                var icon = btn.querySelector('i');
+                if (icon) icon.className.baseVal = icon.className.baseVal.replace('text-slate-400', 'text-amber-400');
+            } else {
+                btn.className = 'mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer';
+            }
+        }
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    window.scrollTo({ top: 180, behavior: 'smooth' });
+}
             alert('🎉 Landscape & Square Banners Generated!\n\nLandscape: ' + res.landscape + '\nSquare: ' + res.square);
         } else {
             alert('Banner generation note: ' + (res.message || 'Error'));
@@ -1878,6 +2198,168 @@ document.addEventListener('DOMContentLoaded', function() {
         lucide.createIcons();
     }
     updateLivePreview();
+    function switchMarketingTab(targetTab) {
+    var tabs = ['broadcast', 'festival', 'b2b', 'triggers', 'tracking'];
+    tabs.forEach(function(t) {
+        var pane = document.getElementById('pane-' + t);
+        var btn = document.getElementById('tab-btn-' + t);
+        if (pane) pane.style.display = (t === targetTab) ? 'block' : 'none';
+        if (btn) {
+            if (t === targetTab) {
+                btn.className = 'mkt-tab-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-900 text-white shadow-2xs cursor-pointer';
+                var icon = btn.querySelector('i');
+                if (icon) icon.className.baseVal = icon.className.baseVal.replace('text-slate-400', 'text-amber-400');
+            } else {
+                btn.className = 'mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer';
+            }
+        }
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    window.scrollTo({ top: 180, behavior: 'smooth' });
+}
 });
+</script>
+<script>
+window.switchMarketingTab = function(targetTab) {
+    var tabs = ['broadcast', 'festival', 'b2b', 'triggers', 'tracking'];
+    tabs.forEach(function(t) {
+        var pane = document.getElementById('pane-' + t);
+        var btn = document.getElementById('tab-btn-' + t);
+        if (pane) pane.style.display = (t === targetTab) ? 'block' : 'none';
+        if (btn) {
+            if (t === targetTab) {
+                btn.className = 'mkt-tab-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-900 text-white shadow-2xs cursor-pointer';
+            } else {
+                btn.className = 'mkt-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 cursor-pointer';
+            }
+        }
+    });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    window.scrollTo({ top: 180, behavior: 'smooth' });
+};
+
+window.saveTrackingSettings = function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var btn = document.getElementById('btn-save-tracking');
+    var oldText = btn.innerHTML;
+    btn.innerHTML = 'Saving...';
+    btn.disabled = true;
+
+    var payload = {
+        action: 'save_tracking_settings',
+        meta_pixel_id: document.getElementById('track-meta-pixel-id').value,
+        meta_capi_token: document.getElementById('track-meta-capi-token').value,
+        social_webhook_url: document.getElementById('track-social-webhook-url').value,
+        ga4_measurement_id: document.getElementById('track-ga4-id').value,
+        gtm_container_id: document.getElementById('track-gtm-id').value,
+        google_ads_id: document.getElementById('track-gads-id').value,
+        google_ads_label: document.getElementById('track-gads-label').value
+    };
+
+    var brevoVal = document.getElementById('track-brevo-api-key').value;
+    if (brevoVal && brevoVal.trim().length > 0) {
+        payload.brevo_api_key = brevoVal.trim();
+    }
+
+    fetch('{{ route("growth-os.action") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+        if (res && res.ok) {
+            toastr.success(res.message || 'Ad tracking & Pixel settings updated site-wide!');
+        } else {
+            toastr.error((res && res.error) || 'Failed to save settings.');
+        }
+    })
+    .catch(function(err){
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+        toastr.error('Network error: ' + err.message);
+    });
+};
+
+window.testBrevoKeyFromPanel = function() {
+    var key = document.getElementById('track-brevo-api-key').value;
+    var resBox = document.getElementById('brevo-test-result');
+    var btn = document.getElementById('btn-test-brevo');
+    if (!key || key.trim() === '') {
+        alert('Please enter a Brevo API key to test.');
+        return;
+    }
+    btn.disabled = true;
+    btn.innerText = 'Testing...';
+    resBox.innerHTML = '<span style="color: #64748b;">Validating key with Brevo API...</span>';
+
+    fetch('{{ route("growth-os.action") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ action: 'test_brevo_key', brevo_api_key: key.trim() })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+        btn.disabled = false;
+        btn.innerText = '⚡ Test & Save';
+        if (res && res.ok) {
+            resBox.innerHTML = '<span style="color: #16a34a;">✓ ' + res.message + '</span>';
+            toastr.success(res.message);
+            var badge = document.getElementById('brevo-live-badge');
+            if (badge) {
+                badge.innerText = 'Connected';
+                badge.style.background = 'rgba(59, 130, 246, 0.2)';
+                badge.style.color = '#93c5fd';
+            }
+        } else {
+            resBox.innerHTML = '<span style="color: #dc2626;">✕ ' + (res.error || 'Invalid API Key') + '</span>';
+            toastr.error(res.error || 'Brevo connection failed');
+        }
+    })
+    .catch(function(err){
+        btn.disabled = false;
+        btn.innerText = '⚡ Test & Save';
+        resBox.innerHTML = '<span style="color: #dc2626;">Error: ' + err.message + '</span>';
+    });
+};
+
+window.testSocialWebhookFromPanel = function() {
+    var url = document.getElementById('track-social-webhook-url').value;
+    if (!url || url.trim() === '') {
+        alert('Please enter a social webhook URL.');
+        return;
+    }
+    toastr.info('Sending test ping to webhook...');
+    fetch('{{ route("growth-os.action") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ action: 'test_social_webhook', webhook_url: url.trim() })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+        if (res && res.ok) {
+            toastr.success(res.message || 'Webhook ping received 200 OK!');
+        } else {
+            toastr.error(res.error || 'Webhook test failed');
+        }
+    })
+    .catch(function(err){
+        toastr.error('Ping error: ' + err.message);
+    });
+};
 </script>
 @endsection

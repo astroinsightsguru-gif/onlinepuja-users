@@ -35,6 +35,10 @@ class GenerateYearlyHoroscopeJob implements ShouldQueue
     public function handle(): void
     {
         $apiKey = $this->getApiKey();
+        if (empty($apiKey) || $apiKey === 'vedicastro') {
+            \Illuminate\Support\Facades\Log::info('Horoscope Job skipped: Vedic Astro API key not configured or placeholder.');
+            return;
+        }
         $currDate = date('Y-m-d');
 
         // ── Guard: skip if this year's data already exists (1 COUNT query) ──

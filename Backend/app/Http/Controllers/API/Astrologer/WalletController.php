@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\API\Astrologer;
+namespace App\Http\Controllers\API\Astrologer;
 
 use App\Http\Controllers\Controller;
 use App\Models\AstrologerModel\WithDrawRequest;

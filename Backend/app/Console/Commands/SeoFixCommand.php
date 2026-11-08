@@ -50,7 +50,7 @@ class SeoFixCommand extends Command
 
         // Discover blogs schema once.
         $cols = collect(DB::select('SHOW COLUMNS FROM blogs'))->pluck('Field')->flip();
-        $descCol = ['meta_description', 'seo_description', 'excerpt']
+        $descCol = collect(['meta_description', 'seo_description', 'excerpt'])
             ->first(fn ($c) => isset($cols[$c]));
         $titleCol = isset($cols['title']) ? 'title' : null;
 
@@ -100,6 +100,11 @@ class SeoFixCommand extends Command
 
             DB::table('blogs')->where('id', $blog->id)->update([$col => $generated]);
 
+            // Healed the DB row, but a CLI process has no HTTP response to
+            // carry a purge header — without this, the fix stays invisible
+            // behind the page cache until its TTL happens to lapse.
+            \App\Support\LiteSpeedCache::purgeFromCli('/blog/'.$slug, '/blog');
+
             DB::table('seo_issues')->where('id', $issue->id)->update([
                 'status' => 'fixed',
                 'fixed_at' => now(),
@@ -130,7 +135,7 @@ class SeoFixCommand extends Command
             return null;
         }
 
-        $j = json_decode(preg_replace('/^```(json)?|```$/m', '', trim($res['text'])), true);
+        $j = $this->decodeJson($res['text']);
         $val = trim((string) ($j[$isTitle ? 'title' : 'description'] ?? ''));
 
         if ($val === '') {
@@ -148,5 +153,37 @@ class SeoFixCommand extends Command
         }
 
         return $val;
+    }
+
+    /**
+     * Auto-routed models (auto/pro-chat etc.) answer through a different
+     * upstream each call — some fence the JSON, some emit a reasoning
+     * preamble first. Take the outermost object rather than assuming the
+     * whole reply is bare JSON. Mirrors ContentPipeline::decodeJson().
+     */
+    protected function decodeJson(string $text): ?array
+    {
+        $text = trim($text);
+
+        if ($text === '') {
+            return null;
+        }
+
+        $clean = trim(preg_replace('/```(?:json)?|```/i', '', $text));
+
+        if (is_array($j = json_decode($clean, true))) {
+            return $j;
+        }
+
+        $start = strpos($clean, '{');
+        $end = strrpos($clean, '}');
+
+        if ($start === false || $end === false || $end <= $start) {
+            return null;
+        }
+
+        $j = json_decode(substr($clean, $start, $end - $start + 1), true);
+
+        return is_array($j) ? $j : null;
     }
 }

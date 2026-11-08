@@ -62,18 +62,24 @@ class UserReportController extends Controller
                 return response()->json(['error' => $validator->messages(), 'status' => 400], 400);
             }
 
-            // $user_country=User::where('id',$id)->where('country','India')->first();  // commented
-            $user_country = User::where('id', $id)->where('countryCode', '+91')->first(); // added
+            $user_country = User::where('id', $id)->where('countryCode', '+91')->first();
             $inr_usd_conv_rate = DB::table('systemflag')->where('name', 'UsdtoInr')->select('value')->first();
-            // $astrologercountry=Astrologer::where('id', $req->astrologerId)->where('country','India')->first();   // commented
-            $astrologercountry = Astrologer::where('id', $req->astrologerId)->where('countryCode', '+91')->first();  // added
+            $convRateVal = ($inr_usd_conv_rate && !empty($inr_usd_conv_rate->value)) ? (float)$inr_usd_conv_rate->value : 83.5;
+            $astrologercountry = Astrologer::where('id', $req->astrologerId)->where('countryCode', '+91')->first();
 
-            $reportCharge = Astrologer::where('id', '=', $req->astrologerId)->get();
+            $reportCharge = Astrologer::where('id', '=', $req->astrologerId)->first();
+            if (!$reportCharge) {
+                return response()->json(['error' => 'Astrologer not found', 'status' => 404], 404);
+            }
 
-            // if($user_country){
-            //     $reportCharge[0]->reportRate=convertinrtousd($reportCharge[0]->reportRate);
-            // }
-            $reportCharge[0]->reportRate = $user_country ? $reportCharge[0]->reportRate : convertusdtoinr($reportCharge[0]->reportRate);
+            $rateValue = $user_country ? (float)$reportCharge->reportRate : convertusdtoinr($reportCharge->reportRate_usd ?? $reportCharge->reportRate);
+
+            // Check wallet balance
+            $userwallet = DB::table('user_wallets')->where('userId', '=', $req->userId)->first();
+            $walletBalance = $userwallet ? (float)$userwallet->amount : 0.0;
+            if ($rateValue > 0 && $walletBalance < $rateValue) {
+                return response()->json(['error' => 'Insufficient wallet balance', 'status' => 400], 400);
+            }
 
             //Create a user report
             $userReport = UserReport::create([
@@ -98,136 +104,142 @@ class UserReportController extends Controller
                 'reportType' => $req->reportType,
                 'astrologerId' => $req->astrologerId,
                 'countryCode' => $req->countryCode,
-                'reportRate' => $reportCharge[0]->reportRate,
-                'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                'reportRate' => $rateValue,
+                'inr_usd_conversion_rate' => $convRateVal,
                 'created_at' => DB::raw('NOW()'),
                 'updated_at' => DB::raw('NOW()'),
             ]);
 
-            if ($reportCharge && $reportCharge[0]->reportRate > 0) {
+            if ($rateValue > 0) {
                 $commission = DB::table('commissions')
                     ->where('commissionTypeId', '=', '3')
                     ->where('astrologerId', '=', $req->astrologerId)
                     ->get();
                 if ($commission && count($commission) > 0) {
-                    $adminCommission = ($commission[0]->commission * $reportCharge[0]->reportRate) / 100;
+                    $adminCommission = ($commission[0]->commission * $rateValue) / 100;
                 } else {
                     $syscommission = DB::table('systemflag')->where('name', 'ReportCommission')->select('value')->get();
-                    $adminCommission = ($syscommission[0]->value * $reportCharge[0]->reportRate) / 100;
+                    $adminCommission = ($syscommission && count($syscommission) > 0) ? ($syscommission[0]->value * $rateValue) / 100 : 0;
                 }
-                $astrologerCommission = $reportCharge[0]->reportRate - $adminCommission;
+                $astrologerCommission = $rateValue - $adminCommission;
 
-                $userwallet = Db::Table('user_wallets')->where('userId', '=', $req->userId)->select('amount')->get();
-                $data = array(
-                    // 'amount' => $userwallet[0]->amount - ($user_country ? ($reportCharge[0]->reportRate * $inr_usd_conv_rate->value) : $reportCharge[0]->reportRate),
-                    'amount' => $userwallet[0]->amount - $reportCharge[0]->reportRate,
-                );
-
-                DB::table('user_wallets')->where('userId', '=', $req->userId)->update($data);
-                $transaction = array(
-                    'userId' => $req->userId,
-                    'amount' => $reportCharge[0]->reportRate,
-                    'isCredit' => false,
-                    "transactionType" => 'Report',
-                    "orderId" => null,
-                    "astrologerId" => $req->astrologerId,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                    'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
-                );
-                DB::table('wallettransaction')->insert($transaction);
-                $astrologerUser = DB::Table('astrologers')->where('id', $req->astrologerId)->select('userId')->get();
-                $astrologerWallet = DB::Table('user_wallets')->where('userId', '=', $astrologerUser[0]->userId)->select('amount')->get();
-                $astrologerWall = array(
-                    'userId' => $astrologerUser[0]->userId,
-                    // 'amount' => $astrologerWallet && count($astrologerWallet) > 0 ? $astrologerWallet[0]->amount + ($astrologercountry ? ($astrologerCommission * $inr_usd_conv_rate->value) : $astrologerCommission) : ($astrologercountry ? ($astrologerCommission * $inr_usd_conv_rate->value) : $astrologerCommission),
-                    'amount' => $astrologerWallet && count($astrologerWallet) > 0 ? $astrologerWallet[0]->amount + $astrologerCommission : $astrologerCommission,
-                    'createdBy' => $id,
-                    'modifiedBy' => $id,
-                );
-
-                if ($astrologerWallet && count($astrologerWallet) > 0) {
-                    DB::table('user_wallets')
-                        ->where('userId', $astrologerUser[0]->userId)
-                        ->update($astrologerWall);
-                } else {
-                    DB::Table('user_wallets')->insert($astrologerWall);
-                }
-                $astrologerTransaction = array(
-                    'userId' => $astrologerUser[0]->userId,
-                    'amount' => $astrologerCommission,
-                    'isCredit' => true,
-                    "transactionType" => 'Report',
-                    "orderId" => null,
-                    "astrologerId" => $req->astrologerId,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                    'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
-                );
-                DB::table('wallettransaction')->insert($astrologerTransaction);
+                // Create order request first to get orderId
                 $orderRequest = array(
                     'userId' => $req->userId,
                     'astrologerId' => $req->astrologerId,
                     'orderType' => 'report',
-                    'totalPayable' => $reportCharge[0]->reportRate,
+                    'totalPayable' => $rateValue,
                     'orderStatus' => 'Complete',
                     'totalMin' => null,
                     'callId' => null,
-                    'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                    'inr_usd_conversion_rate' => $convRateVal,
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
-
                 );
-                DB::Table('order_request')->insert($orderRequest);
-                $id = DB::getPdo()->lastInsertId();
-                if ($adminCommission && $adminCommission > 0) {
+                DB::table('order_request')->insert($orderRequest);
+                $orderId = DB::getPdo()->lastInsertId();
+
+                // Deduct from user wallet
+                DB::table('user_wallets')->where('userId', '=', $req->userId)->update([
+                    'amount' => $walletBalance - $rateValue,
+                    'modifiedBy' => $id,
+                    'updated_at' => Carbon::now(),
+                ]);
+
+                $transaction = array(
+                    'userId' => $req->userId,
+                    'amount' => $rateValue,
+                    'isCredit' => false,
+                    "transactionType" => 'Report',
+                    "orderId" => $orderId,
+                    "astrologerId" => $req->astrologerId,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                    'inr_usd_conversion_rate' => $convRateVal,
+                );
+                DB::table('wallettransaction')->insert($transaction);
+
+                $astrologerUser = DB::table('astrologers')->where('id', $req->astrologerId)->select('userId')->first();
+                $astrologerUserId = $astrologerUser ? $astrologerUser->userId : null;
+
+                if ($astrologerUserId) {
+                    $astrologerWallet = DB::table('user_wallets')->where('userId', '=', $astrologerUserId)->first();
+                    $currentAstroWallet = $astrologerWallet ? (float)$astrologerWallet->amount : 0.0;
+
+                    if ($astrologerWallet) {
+                        DB::table('user_wallets')->where('userId', $astrologerUserId)->update([
+                            'amount' => $currentAstroWallet + $astrologerCommission,
+                            'modifiedBy' => $id,
+                            'updated_at' => Carbon::now(),
+                        ]);
+                    } else {
+                        DB::table('user_wallets')->insert([
+                            'userId' => $astrologerUserId,
+                            'amount' => $astrologerCommission,
+                            'createdBy' => $id,
+                            'modifiedBy' => $id,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now(),
+                        ]);
+                    }
+
+                    $astrologerTransaction = array(
+                        'userId' => $astrologerUserId,
+                        'amount' => $astrologerCommission,
+                        'isCredit' => true,
+                        "transactionType" => 'Report',
+                        "orderId" => $orderId,
+                        "astrologerId" => $req->astrologerId,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                        'inr_usd_conversion_rate' => $convRateVal,
+                    );
+                    DB::table('wallettransaction')->insert($astrologerTransaction);
+                }
+
+                if ($adminCommission && $adminCommission > 0 && $astrologerUserId) {
                     $adminGetCommission = array(
                         'commissionTypeId' => 3,
                         "amount" => $adminCommission,
-                        "commissionId" => $commission && count($commission) > 0 ? $commission[0]->id : null,
-                        "orderId" => $id,
-                        "createdBy" => $astrologerUser[0]->userId,
-                        "modifiedBy" => $astrologerUser[0]->userId,
-                        'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                        "commissionId" => ($commission && count($commission) > 0) ? $commission[0]->id : null,
+                        "orderId" => $orderId,
+                        "createdBy" => $astrologerUserId,
+                        "modifiedBy" => $astrologerUserId,
+                        'inr_usd_conversion_rate' => $convRateVal,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                     );
                     DB::table('admin_get_commissions')->insert($adminGetCommission);
                 }
 
-
                 $userDeviceDetail = DB::table('user_device_details')
-                    ->JOIN('astrologers', 'astrologers.userId', '=', 'user_device_details.userId')
-                    ->WHERE('astrologers.id', '=', $req->astrologerId)
-                    ->SELECT('user_device_details.*', 'astrologers.userId as astrologerUserId', 'astrologers.name')
+                    ->join('astrologers', 'astrologers.userId', '=', 'user_device_details.userId')
+                    ->where('astrologers.id', '=', $req->astrologerId)
+                    ->select('user_device_details.*', 'astrologers.userId as astrologerUserId', 'astrologers.name')
                     ->get();
 
-                $user = DB::table('users')->where('users.id', '=', $req->userId)
-                    ->join('user_device_details', 'user_device_details.userId', 'users.id')
-                    ->select('users.id', 'users.name', 'users.profile', 'user_device_details.fcmToken')
-                    ->get();
+                $customerUser = DB::table('users')->where('id', '=', $req->userId)->first();
+                $customerName = $customerUser ? $customerUser->name : 'User';
 
                 if ($userDeviceDetail && count($userDeviceDetail) > 0) {
-
-                    // One signal FOr notification send
                     $oneSignalService = new OneSignalService();
-                    //  $userPlayerIds = $userDeviceDetail->pluck('subscription_id')->all();
-                    $userPlayerIds = $userDeviceDetail->pluck('subscription_id')->merge($userDeviceDetail->pluck('subscription_id_web'))->values()->toArray();
+                    $userPlayerIds = $userDeviceDetail->pluck('subscription_id')->merge($userDeviceDetail->pluck('subscription_id_web'))->filter()->values()->toArray();
                     $notification = [
-                        'title' => 'Hey ' . $userDeviceDetail[0]->name . ', you received a report request from' . $user[0]->name,
+                        'title' => 'Hey ' . $userDeviceDetail[0]->name . ', you received a report request from ' . $customerName,
                         'body' => [
                             "notificationType" => 9,
                             'call_duration' => 100,
-                            'description' => 'Hey ' . $userDeviceDetail[0]->name . ', you received a report request from ' . $user[0]->name,
+                            'description' => 'Hey ' . $userDeviceDetail[0]->name . ', you received a report request from ' . $customerName,
                         ],
                     ];
-                    // Send the push notification using the OneSignalService
-                    $response = $oneSignalService->sendNotification($userPlayerIds, $notification);
+                    if (!empty($userPlayerIds)) {
+                        $oneSignalService->sendNotification($userPlayerIds, $notification);
+                    }
 
                     $notification = array(
                         'userId' => $userDeviceDetail[0]->astrologerUserId,
-                        'title' => 'Hey ' . $userDeviceDetail[0]->name . ', you received a report request from ' . $user[0]->name,
-                        'description' => 'Hey ' . $userDeviceDetail[0]->name . ', you received a report request from ' . $user[0]->name,
+                        'title' => 'Hey ' . $userDeviceDetail[0]->name . ', you received a report request from ' . $customerName,
+                        'description' => 'Hey ' . $userDeviceDetail[0]->name . ', you received a report request from ' . $customerName,
                         'notificationId' => null,
                         'createdBy' => $userDeviceDetail[0]->astrologerUserId,
                         'modifiedBy' => $userDeviceDetail[0]->astrologerUserId,

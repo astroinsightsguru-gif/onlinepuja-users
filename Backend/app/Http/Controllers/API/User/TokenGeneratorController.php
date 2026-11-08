@@ -13,19 +13,35 @@ use Illuminate\Http\Request;
 class TokenGeneratorController extends Controller
 {
 
+    private function resolveAgoraCredentials($req)
+    {
+        $appID = $req->appID;
+        $appCertificate = $req->appCertificate;
+
+        if (empty($appID)) {
+            $appID = \DB::table('systemflag')->where('name', 'AgoraAppId')->value('value');
+        }
+        if (empty($appCertificate)) {
+            $appCertificate = \DB::table('systemflag')->where('name', 'AgoraAppCertificate')->value('value');
+        }
+
+        return [$appID, $appCertificate];
+    }
+
     #Old Way Of Rtm Token
     public function generateToken(Request $req)
     {
         try {
+            [$appID, $appCertificate] = $this->resolveAgoraCredentials($req);
             $privilegeExpiredTs = Carbon::now()->timestamp + 7200;
             $rtmTokenController = new RtmTokenBuilder;
-            $rtmToken = $rtmTokenController->buildToken($req->appID, $req->appCertificate, $req->user, $privilegeExpiredTs);
+            $rtmToken = $rtmTokenController->buildToken($appID, $appCertificate, $req->user, $privilegeExpiredTs);
 
             return response()->json([
                 'rtmToken' => $rtmToken,
                 'status' => 200,
             ], 200);
-        } catch (\Exception$e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
                 'status' => 500,
@@ -33,21 +49,20 @@ class TokenGeneratorController extends Controller
         }
     }
 
-
     #New Way Of Rtm Token
-
     public function generateRtmToken(Request $req)
     {
         try {
+            [$appID, $appCertificate] = $this->resolveAgoraCredentials($req);
             $privilegeExpiredTs = Carbon::now()->timestamp + 7200;
             $rtmTokenController = new RtmTokenBuilder2;
-            $rtmToken = $rtmTokenController->buildToken($req->appID, $req->appCertificate, $req->user, $privilegeExpiredTs);
-                // dd($rtmToken);
+            $rtmToken = $rtmTokenController->buildToken($appID, $appCertificate, $req->user, $privilegeExpiredTs);
+
             return response()->json([
                 'rtmToken' => $rtmToken,
                 'status' => 200,
             ], 200);
-        } catch (\Exception$e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
                 'status' => 500,
@@ -58,14 +73,15 @@ class TokenGeneratorController extends Controller
     public function generateRtcToken(Request $req)
     {
         try {
+            [$appID, $appCertificate] = $this->resolveAgoraCredentials($req);
             $privilegeExpiredTs = Carbon::now()->timestamp + 7200;
             $rtcTokenController = new RtcTokenBuilder;
-            $rtcToken = $rtcTokenController->buildTokenWithUid($req->appID, $req->appCertificate, $req->channelName, $req->user, 1, $privilegeExpiredTs);
+            $rtcToken = $rtcTokenController->buildTokenWithUid($appID, $appCertificate, $req->channelName, $req->user, 1, $privilegeExpiredTs);
             return response()->json([
                 'rtcToken' => $rtcToken,
                 'status' => 200,
             ], 200);
-        } catch (\Exception$e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
                 'status' => 500,

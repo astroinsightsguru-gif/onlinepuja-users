@@ -20,6 +20,13 @@ class _GrowthBroadcastScreenState extends State<GrowthBroadcastScreen> {
     text: 'Sacred Ganga Ghat Deepdaan on Kartik Purnima. Book your personal Sankalp with sanctum video & prasad delivery.',
   );
 
+  @override
+  void dispose() {
+    _notifTitleCtrl.dispose();
+    _notifBodyCtrl.dispose();
+    super.dispose();
+  }
+
   bool _isBrainExecuting = false;
   String _brainResponse = 'Autonomous Master Brain running in self-growth mode. 2 blog articles scheduled daily at 05:00 AM; social dispatch at 06:30 AM.';
 

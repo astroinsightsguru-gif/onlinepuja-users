@@ -15,8 +15,12 @@ class ProductController extends Controller
 {
     public function getproducts(Request $request)
     {
-        Artisan::call('cache:clear');
-        $getproductCategory = Http::withoutVerifying()->post(url('/') . '/api/getproductCategory')->json();
+        try {
+            $categories = \App\Models\AdminModel\ProductCategory::where('isActive', 1)->get();
+            $getproductCategory = ['status' => 200, 'recordList' => $categories];
+        } catch (\Throwable $e) {
+            $getproductCategory = ['status' => 200, 'recordList' => []];
+        }
 
         // Determine the current page from the request
         $productCategoryId = (int) $request->productCategoryId;
@@ -46,8 +50,12 @@ class ProductController extends Controller
     // -----------------------------------------------------------------------------------------------------------------------------------
     public function getproductDetails(Request $request)
     {
-        Artisan::call('cache:clear');
-        $getAstromallProduct = Http::withoutVerifying()->post(url('/') . '/api/getAstromallProduct')->json();
+        try {
+            $res = app(\App\Http\Controllers\API\User\AstromallProductController::class)->getAstromallProduct(new Request());
+            $getAstromallProduct = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getAstromallProduct = ['status' => 200, 'recordList' => []];
+        }
 
         // if(isset($request->ref))
         //     $cookie = cookie('productref_'.$request->id, $request->ref, 1440);
@@ -56,8 +64,6 @@ class ProductController extends Controller
             setcookie('productref_' . $productdet->id, $request->ref, time() + (1440 * 60), '/');
         }
 
-        // $getproductdetails = Http::withoutVerifying()->post(url('/') . '/api/getAstromallProductById', [
-        //     'id' => $request->id,])->json();
         $getproductdetails = Product::join('product_categories', 'product_categories.id', '=', 'astromall_products.productCategoryId')
             ->where('astromall_products.slug', '=', $request->slug)
             ->select('astromall_products.*', 'product_categories.name as productCategory')
@@ -80,16 +86,24 @@ class ProductController extends Controller
 
     public function checkout(Request $request)
     {
-        Artisan::call('cache:clear');
         if (!authcheck())
             return redirect()->route('front.home');
 
         $userId = authcheck()['id'];
 
-        $getAstromallProduct = Http::withoutVerifying()->post(url('/') . '/api/getAstromallProduct')->json();
-        $getOrderAddress = Http::withoutVerifying()->post(url('/') . '/api/getOrderAddress', [
-            'userId' => $userId,
-        ])->json();
+        try {
+            $res = app(\App\Http\Controllers\API\User\AstromallProductController::class)->getAstromallProduct(new Request());
+            $getAstromallProduct = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getAstromallProduct = ['status' => 200, 'recordList' => []];
+        }
+
+        try {
+            $res = app(\App\Http\Controllers\API\User\OrderController::class)->getOrderAddress(new Request(['userId' => $userId]));
+            $getOrderAddress = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getOrderAddress = ['status' => 200, 'recordList' => []];
+        }
 
         $getproductdetails = Product::join('product_categories', 'product_categories.id', '=', 'astromall_products.productCategoryId')
             ->where('astromall_products.id', '=', $request->id)
@@ -112,18 +126,17 @@ class ProductController extends Controller
 
     public function myOrders()
     {
-        Artisan::call('cache:clear');
-
         if (!authcheck())
             return redirect()->route('front.home');
 
-        $session = new Session();
-        $token = $session->get('token');
+        $userId = authcheck()['id'];
 
-        $getUserById = Http::withoutVerifying()->post(url('/') . '/api/getUserById', [
-            'userId' => authcheck()['id'],
-            'token' => $token,
-        ])->json();
+        try {
+            $res = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getUserById(new Request(['userId' => $userId]));
+            $getUserById = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getUserById = ['status' => 200, 'recordList' => []];
+        }
 
         $currency = SystemFlag::where('name', 'currencySymbol')->first();
 

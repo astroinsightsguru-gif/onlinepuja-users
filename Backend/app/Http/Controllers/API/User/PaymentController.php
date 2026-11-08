@@ -22,9 +22,7 @@ class PaymentController extends Controller
             if (!$user && $req->userId) {
                 $user = \App\Models\UserModel\User::find($req->userId);
             }
-            if (!$user) {
-                $user = \App\Models\UserModel\User::first();
-            }
+            if (!$user) { return response()->json(['error' => 'Unauthenticated or user not found', 'status' => 401], 401); }
 
             $id = $user ? $user->id : 1;
 
@@ -58,7 +56,7 @@ class PaymentController extends Controller
                 // 'cashback_amount' => $req->cashback_amount,
                 'cashback_amount' => $cashbackAmount,
                 'gst_amount' => $gstAmount,
-                'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate' => $inr_usd_conv_rate ? $inr_usd_conv_rate->value : 83.5,
                 'userId' => $id,
                 'paymentStatus' => 'pending',
                 'createdBy' => $id,

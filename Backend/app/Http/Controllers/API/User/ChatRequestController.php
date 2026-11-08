@@ -567,17 +567,8 @@ class ChatRequestController extends Controller
                 ], 400);
             }
 
-            $addCallStatus = Http::withoutVerifying()->post(url('/') . '/api/addCallStatus', [
-                'token' => $req->token,
-                'status'=>'Busy',
-                'astrologerId'=>$chatRequest->astrologerId
-            ])->json();
-
-            $addChatStatus = Http::withoutVerifying()->post(url('/') . '/api/addStatus', [
-                'token' => $req->token,
-                'status'=>'Busy',
-                'astrologerId'=>$chatRequest->astrologerId
-                ])->json();
+            app(\App\Http\Controllers\API\User\CallRequestController::class)->addCallStatus(new Request(['token' => $req->token, 'status' => 'Busy', 'astrologerId' => $chatRequest->astrologerId]));
+            $this->addChatStatus(new Request(['token' => $req->token, 'status' => 'Busy', 'astrologerId' => $chatRequest->astrologerId]));
 
             $user_wallet=DB::table('user_wallets')->where('userId',$chatRequest->userId)->first();
             if($user_wallet){
@@ -833,6 +824,7 @@ class ChatRequestController extends Controller
             $user_country=User::where('id',$id)->where('countryCode','+91')->first(); // new added by bhushan borse on 03, june 25
 
             $inr_usd_conv_rate = DB::table('systemflag')->where('name','UsdtoInr')->select('value')->first();
+            $convRateVal = ($inr_usd_conv_rate && !empty($inr_usd_conv_rate->value)) ? (float)$inr_usd_conv_rate->value : 83.5;
             // dd($user_country);
 
             $chatData = DB::table('chatrequest')
@@ -845,17 +837,8 @@ class ChatRequestController extends Controller
             // $astrologercountry=Astrologer::where('id', $chatData[0]->astrologerId)->where('country','India')->first();
             $astrologercountry=Astrologer::where('id', $chatData[0]->astrologerId)->where('countryCode', '+91')->first();
 
-                $addCallStatus = Http::withoutVerifying()->post(url('/') . '/api/addCallStatus', [
-                'token' => $req->token,
-                'status'=>'Online',
-                'astrologerId'=>$chatData[0]->astrologerId
-            ])->json();
-
-            $addChatStatus = Http::withoutVerifying()->post(url('/') . '/api/addStatus', [
-                'token' => $req->token,
-                'status'=>'Online',
-                'astrologerId'=>$chatData[0]->astrologerId
-                ])->json();
+                app(\App\Http\Controllers\API\User\CallRequestController::class)->addCallStatus(new Request(['token' => $req->token, 'status' => 'Online', 'astrologerId' => $chatData[0]->astrologerId]));
+            $this->addChatStatus(new Request(['token' => $req->token, 'status' => 'Online', 'astrologerId' => $chatData[0]->astrologerId]));
 
                $updatedAt = Carbon::parse($chatData[0]->updated_at);
                $totalSeconds = $updatedAt->diffInSeconds(Carbon::now());
@@ -932,7 +915,7 @@ class ChatRequestController extends Controller
                 'deductionFromAstrologer' => $astrologerCommission,
                 'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
-                'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate'=>$convRateVal,
             );
             DB::Table('chatrequest')
                 ->where('id', '=', $req->chatId)
@@ -998,7 +981,7 @@ class ChatRequestController extends Controller
                 'orderStatus' => 'Complete',
                 'totalMin' => $totalMin,
                 'chatId' => $req->chatId,
-                'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate'=>$convRateVal,
                 'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
 
@@ -1014,7 +997,7 @@ class ChatRequestController extends Controller
                 "astrologerId" => $chatData[0]->astrologerId,
 				'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
-                'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate'=>$convRateVal,
             );
             $astrologerTransaction = array(
                 'userId' => $chatData[0]->astrologerUserId,
@@ -1025,7 +1008,7 @@ class ChatRequestController extends Controller
                 "astrologerId" => $chatData[0]->astrologerId,
 				'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
-                'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate'=>$convRateVal,
             );
             if (!$chatData[0]->isFreeSession || $charge[0]->emergencyChatStatus) {
 
@@ -1037,7 +1020,7 @@ class ChatRequestController extends Controller
                         "orderId" => $Orderid,
                         "createdBy" => $charge[0]->userId,
                         "modifiedBy" => $charge[0]->userId,
-                        'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                        'inr_usd_conversion_rate'=>$convRateVal,
                         'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
                     );
@@ -1050,7 +1033,7 @@ class ChatRequestController extends Controller
                         "orderId" => $Orderid,
                         "createdBy" => $charge[0]->userId,
                         "modifiedBy" => $charge[0]->userId,
-                        'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                        'inr_usd_conversion_rate'=>$convRateVal,
                         'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
                     );
@@ -1063,14 +1046,15 @@ class ChatRequestController extends Controller
           }
 
             $firebaseProjectId = DB::table('systemflag')->where('name','firebaseprojectId')->select('value')->first();
-            $apiEndpoint = "https://firestore.googleapis.com/v1/projects/". $firebaseProjectId->value . "/databases/(default)/documents/";
+            if ($firebaseProjectId && !empty($firebaseProjectId->value)) {
+                $apiEndpoint = "https://firestore.googleapis.com/v1/projects/". $firebaseProjectId->value . "/databases/(default)/documents/";
                 $client = new Client();
 
-            try {
-                $response = $client->delete($apiEndpoint . "updatechat/{$req->chatId}");
-
-            } catch (\Exception $e) {
-                return response()->json(['error' => $e->getMessage()], 500);
+                try {
+                    $response = $client->delete($apiEndpoint . "updatechat/{$req->chatId}");
+                } catch (\Exception $e) {
+                    \Log::warning('Firestore cleanup failed in endChatRequest: ' . $e->getMessage());
+                }
             }
 
             return response()->json([
@@ -1120,17 +1104,8 @@ class ChatRequestController extends Controller
                 ],
 
             );
-            $addCallStatus = Http::withoutVerifying()->post(url('/') . '/api/addCallStatus', [
-                'token' => $req->token,
-                'status'=>'Online',
-                'astrologerId'=>$chatData->astrologerId
-            ])->json();
-
-            $addChatStatus = Http::withoutVerifying()->post(url('/') . '/api/addStatus', [
-                'token' => $req->token,
-                'status'=>'Online',
-                'astrologerId'=>$chatData->astrologerId
-                ])->json();
+            app(\App\Http\Controllers\API\User\CallRequestController::class)->addCallStatus(new Request(['token' => $req->token, 'status' => 'Online', 'astrologerId' => $chatData->astrologerId]));
+            $this->addChatStatus(new Request(['token' => $req->token, 'status' => 'Online', 'astrologerId' => $chatData->astrologerId]));
             if ($chatData) {
                 $chatData->delete();
             }
@@ -1242,6 +1217,7 @@ class ChatRequestController extends Controller
             // $user_country=User::where('id',$id)->where('country','India')->first();
             $user_country=User::where('id',$id)->where('countryCode','+91')->first();
             $inr_usd_conv_rate = DB::table('systemflag')->where('name','UsdtoInr')->select('value')->first();
+            $convRateVal = ($inr_usd_conv_rate && !empty($inr_usd_conv_rate->value)) ? (float)$inr_usd_conv_rate->value : 83.5;
             // $astrologercountry=Astrologer::where('id', $req->astrologerId)->where('country','India')->first();
             $astrologercountry=Astrologer::where('id', $req->astrologerId)->where('countryCode','+91')->first();
 
@@ -1287,7 +1263,7 @@ class ChatRequestController extends Controller
                     'sId' => $req->sId,
                     'sId1' => $req->sId1,
                     'channelName' => $req->channelName,
-                    'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                    'inr_usd_conversion_rate'=>$convRateVal,
                     'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
                 ]);
@@ -1345,7 +1321,7 @@ class ChatRequestController extends Controller
                     'orderStatus' => 'Complete',
                     'totalMin' => $totalMin,
                     'callId' => $chatData->id,
-                    'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                    'inr_usd_conversion_rate'=>$convRateVal,
                     'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
 
@@ -1361,7 +1337,7 @@ class ChatRequestController extends Controller
                     "astrologerId" => $req->astrologerId,
 					'created_at' => Carbon::now(),
 					'updated_at' => Carbon::now(),
-                    'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                    'inr_usd_conversion_rate'=>$convRateVal,
                 );
                 $astrologerTransaction = array(
                     'userId' => $astrologerUserId[0]->userId,
@@ -1372,7 +1348,7 @@ class ChatRequestController extends Controller
                     "astrologerId" => $req->astrologerId,
 					'created_at' => Carbon::now(),
 					'updated_at' => Carbon::now(),
-                    'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                    'inr_usd_conversion_rate'=>$convRateVal,
                 );
                 if ($adminCommission > 0) {
                     $adminGetCommission = array(
@@ -1383,7 +1359,7 @@ class ChatRequestController extends Controller
                         // "description"=>"Commission for chat between ".$charge[0]->name ." and ".$chatData[0]->name ." for ".$totalMin . " Minutes",
                         "createdBy" => $charge[0]->userId,
                         "modifiedBy" => $charge[0]->userId,
-                        'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                        'inr_usd_conversion_rate'=>$convRateVal,
                         'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
                     );
@@ -1396,7 +1372,7 @@ class ChatRequestController extends Controller
                         "orderId" => $id,
                         "createdBy" => $charge[0]->userId,
                         "modifiedBy" => $charge[0]->userId,
-                        'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                        'inr_usd_conversion_rate'=>$convRateVal,
                         'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
                     );
@@ -1681,22 +1657,13 @@ class ChatRequestController extends Controller
              ->where('updated_at', '<', $oneMinuteAgo)
              ->get();
 
-           foreach ($acceptedchatrequest as $acceptedchat) {
-             $rejectchatfromcustomer = Http::withoutVerifying()->post(url('/') . '/api/chatRequest/rejectChatRequest',[
-                 'chatId' => $acceptedchat->id,
-             ])->json();
-           }
+           foreach ($acceptedchatrequest as $acceptedchat) { try { $this->rejectChatRequest(new Request(['chatId' => $acceptedchat->id])); } catch (\Throwable $e) {} }
 
           $acceptedcallrequest=CallRequest::where('callStatus', 'Accepted')
          ->where('updated_at', '<', $oneMinuteAgo)
          ->get();
 
-          foreach ($acceptedcallrequest as $acceptedcall) {
-             $rejectcallfromcustomer = Http::withoutVerifying()->post(url('/') . '/api/callRequest/rejectCallRequest',[
-                 'callId' => $acceptedcall->id,
-             ])->json();
-
-           }
+          foreach ($acceptedcallrequest as $acceptedcall) { try { app(\App\Http\Controllers\API\User\CallRequestController::class)->rejectCallRequest(new Request(['callId' => $acceptedcall->id])); } catch (\Throwable $e) {} }
 
 
 
@@ -1705,24 +1672,14 @@ class ChatRequestController extends Controller
              ->where('updated_at', '<', $oneMinuteAgo)
              ->get();
 
-         foreach ($pendingChatRequests as $chatRequest) {
-             $rejectchatrequest = Http::withoutVerifying()->post(url('/') . '/api/chatRequest/reject',[
-                 'chatId' => $chatRequest->id,
-             ])->json();
-         //  dd($chatRequest->id);
-         }
+         foreach ($pendingChatRequests as $chatRequest) { try { $this->reject(new Request(['chatId' => $chatRequest->id])); } catch (\Throwable $e) {} }
 
          //     // Handle Call Requests
          $pendingCallRequests = CallRequest::where('callStatus', 'Pending')
              ->where('updated_at', '<', $oneMinuteAgo)
              ->get();
 
-         foreach ($pendingCallRequests as $callRequest) {
-             $rejectcallRequest = Http::withoutVerifying()->post(url('/') . '/api/callRequest/reject',[
-                 'callId' => $callRequest->id,
-             ])->json();
-
-         }
+         foreach ($pendingCallRequests as $callRequest) { try { app(\App\Http\Controllers\API\User\CallRequestController::class)->reject(new Request(['callId' => $callRequest->id])); } catch (\Throwable $e) {} }
 
 
          return response()->json(['message' => 'Old chat and call requests deleted successfully.']);
@@ -1744,9 +1701,7 @@ class ChatRequestController extends Controller
            $user_wallet=DB::table('user_wallets')->where('userId',$chat->userId)->first();
            $astrologerCharge=DB::table("astrologers")->where('id',$chat->astrologerId)->first();
 
-           $getcurrentDuration = Http::withoutVerifying()->post(url('/') . '/api/getcurrentDuration', [
-           'chatId' => $request->chatId,
-           ])->json();
+           $getcurrentDuration = $this->getcurrentDuration(new Request(['chatId' => $request->chatId]))->getData(true);
 
            $chatDurationMinutes = $getcurrentDuration['chatDuration'] / 60;
 

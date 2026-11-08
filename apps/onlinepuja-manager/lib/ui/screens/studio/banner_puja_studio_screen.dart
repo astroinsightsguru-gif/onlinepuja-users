@@ -35,75 +35,16 @@ class _BannerPujaStudioScreenState extends State<BannerPujaStudioScreen> {
           _liveBanners = bannerPujaData['banners'] as List<Map<String, dynamic>>? ?? [];
           _livePujas = bannerPujaData['pujas'] as List<Map<String, dynamic>>? ?? [];
           _festivals = festList;
-
-          if (_liveBanners.isEmpty) {
-            _liveBanners = _fallbackBanners();
-          }
-          if (_livePujas.isEmpty) {
-            _livePujas = _fallbackPujas();
-          }
           _isLoading = false;
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
-          _liveBanners = _fallbackBanners();
-          _livePujas = _fallbackPujas();
           _isLoading = false;
         });
       }
     }
-  }
-
-  List<Map<String, dynamic>> _fallbackBanners() {
-    return [
-      {
-        'title': 'Kashi Dev Deepawali 108 Deepdaan',
-        'dates': '18 Oct – 30 Nov 2026',
-        'active': true,
-        'image': 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80',
-      },
-      {
-        'title': 'Diwali Maha Lakshmi & Kuber Yagya',
-        'dates': '18 Oct – 15 Nov 2026',
-        'active': true,
-        'image': 'https://images.unsplash.com/photo-1512418490979-92798cec1380?auto=format&fit=crop&w=600&q=80',
-      },
-    ];
-  }
-
-  List<Map<String, dynamic>> _fallbackPujas() {
-    return [
-      {
-        'id': 1,
-        'title': 'Varanasi Dev Deepawali 108 Deepdaan',
-        'place': 'Dashashwamedh Ghat, Kashi',
-        'price': 1500,
-        'slots': '42/108 Booked',
-      },
-      {
-        'id': 2,
-        'title': 'Diwali Maha Lakshmi & Kuber Yagya',
-        'place': 'At Devotee Premises & Live Stream',
-        'price': 2100,
-        'slots': '18/50 Booked',
-      },
-      {
-        'id': 3,
-        'title': 'Karwa Chauth Akhand Saubhagya Vrat Katha',
-        'place': 'Holy Sanctum / Live Online',
-        'price': 851,
-        'slots': '35/100 Booked',
-      },
-      {
-        'id': 4,
-        'title': 'Shri Kashi Vishwanath Somwar Rudrabhishek',
-        'place': 'Kashi Vishwanath Dham, Varanasi',
-        'price': 2100,
-        'slots': 'Every Somwar Active',
-      },
-    ];
   }
 
   void _showAddBannerDialog() {
@@ -188,17 +129,20 @@ class _BannerPujaStudioScreenState extends State<BannerPujaStudioScreen> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      titleCtrl.dispose();
+      imgCtrl.dispose();
+    });
   }
 
   void _editPujaPrice(Map<String, dynamic> p) {
-    final priceCtrl = TextEditingController(text: p['price'].toString());
+    final priceCtrl = TextEditingController(text: (p['price'] ?? 0).toString());
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: ManagerTheme.surfaceDark,
-        title: Text('Edit Price for ${p['title']}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        title: Text('Edit Price for ${p['title'] ?? 'Puja'}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: priceCtrl,
           keyboardType: TextInputType.number,
@@ -208,20 +152,48 @@ class _BannerPujaStudioScreenState extends State<BannerPujaStudioScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: ManagerTheme.brandGold, foregroundColor: Colors.black),
-            onPressed: () {
+            onPressed: () async {
+              final newPrice = double.tryParse(priceCtrl.text) ?? ((p['price'] as num?)?.toDouble() ?? 0.0);
+              final oldPrice = p['price'];
               setState(() {
-                p['price'] = int.tryParse(priceCtrl.text) ?? p['price'];
+                p['price'] = newPrice.toInt();
               });
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('✓ Puja price updated successfully!')),
-              );
+
+              final pujaId = (p['id'] as num?)?.toInt() ?? int.tryParse(p['id']?.toString() ?? '') ?? 0;
+              bool success = false;
+              if (pujaId > 0) {
+                success = await _api.updatePujaPrice(pujaId, newPrice);
+              }
+
+              if (mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✓ Price updated to ₹${newPrice.toInt()} and published live!'),
+                      backgroundColor: ManagerTheme.brandEmerald,
+                    ),
+                  );
+                } else {
+                  setState(() {
+                    p['price'] = oldPrice;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to update puja price on server. Reverted.'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Save Price'),
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      priceCtrl.dispose();
+    });
   }
 
   @override
@@ -269,9 +241,26 @@ class _BannerPujaStudioScreenState extends State<BannerPujaStudioScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    SizedBox(
-                      height: 160,
-                      child: ListView.separated(
+                    if (_liveBanners.isEmpty)
+                      Container(
+                        height: 120,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: ManagerTheme.surfaceDark,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'No hero banners published yet. Tap "+ Banner" to upload one.',
+                            style: TextStyle(color: Colors.white60, fontSize: 12),
+                          ),
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        height: 160,
+                        child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _liveBanners.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 12),
@@ -435,7 +424,24 @@ class _BannerPujaStudioScreenState extends State<BannerPujaStudioScreen> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
                     ),
                     const SizedBox(height: 8),
-                    ListView.separated(
+                    if (_livePujas.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: ManagerTheme.surfaceDark,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'No bookable pujas found in catalogue.',
+                            style: TextStyle(color: Colors.white60, fontSize: 12),
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _livePujas.length,

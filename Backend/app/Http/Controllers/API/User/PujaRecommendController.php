@@ -142,8 +142,9 @@ class PujaRecommendController extends Controller
             ->where('puja_status', 1)
             ->join('puja_recommends', 'puja_recommends.puja_id', '=', 'pujas.id')
             ->join('astrologers', 'astrologers.id', '=', 'puja_recommends.astrologerId')
+            ->where('puja_recommends.userId', '=', $req->userId)
             ->where('puja_recommends.recommDateTime', '>=', Carbon::now()->subDay())
-            ->select('pujas.*', 'puja_recommends.recommDateTime', 'puja_recommends.package_id as puja_package_id','puja_recommends.id as recommend_id', 'astrologers.name as astrologerName','puja_recommends.package_id as isPurchased') // Select recommended package_id
+            ->select('pujas.*', 'puja_recommends.recommDateTime', 'puja_recommends.package_id as puja_package_id','puja_recommends.id as recommend_id', 'astrologers.name as astrologerName','puja_recommends.isPurchased') // Select recommended package_id
             ->get()
             ->map(function ($puja) {
                 $puja->packages = $puja->package();

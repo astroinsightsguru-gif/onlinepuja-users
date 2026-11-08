@@ -1,4 +1,4 @@
-@php
+﻿@php
     use Symfony\Component\HttpFoundation\Session\Session;
 
     $session = new Session();
@@ -352,7 +352,20 @@
                     <!-- Live Astrologer Dropdown -->
 
 
-                    <div id="google_translate_button" class="d-none d-md-block" style="height:38px;width:82px"></div>
+                    <!-- Vedic Dual Language Switcher (Astrologer Portal) -->
+                    <div class="vedic-lang-pill notranslate d-none d-md-flex align-items-center mr-3">
+                        <button type="button" class="lang-pill-btn active" data-lang="en" onclick="window.switchLanguage('en')" title="Switch to English">
+                            <span>EN</span>
+                        </button>
+                        <button type="button" class="lang-pill-btn" data-lang="hi" onclick="window.switchLanguage('hi')" title="हिन्दी में देखें">
+                            <span class="flag-icon">🇮🇳</span> <span>हिन्दी</span>
+                        </button>
+                    </div>
+
+                    <!-- Hidden Host for Google Translate API -->
+                    <div id="google_translate_host" style="display:none;position:absolute;top:-9999px;left:-9999px;">
+                        <div id="google_translate_button"></div>
+                    </div>
 
 
                     @if ($isLoggedIn)

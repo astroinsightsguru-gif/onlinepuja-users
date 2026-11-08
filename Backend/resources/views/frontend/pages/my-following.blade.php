@@ -20,7 +20,7 @@
                         @foreach ($getfollowing['recordList'] as $astrologer)
                     <div id="ATAAIOfferTile" class="psychic-card overflow-hidden expertOnline ask-guruji"
                         data-astrologer-id="{{ $astrologer['id'] }}" data-astrologer-name="{{ $astrologer['name'] }}" >
-                        <a  href="{{ route('front.astrologerDetails',  ['slug' => $astrologer['slug']]) }}" class="text-decoration-none">
+                        <a  href="{{ route('front.astrologerDetails',  ['slug' => $astrologer['slug'] ?? ($astrologer->slug ?? ($astrologer['id'] ?? 1))]) }}" class="text-decoration-none">
                             {{-- {{ dd($astrologer) }} --}}
 
                         <ul class="list-unstyled d-flex mb-0">
@@ -99,14 +99,14 @@
                                     </div>
                                     <div class="col-3 responsiveChatBtn mt-1" >
                                         @if($astrologer['chatStatus'] == 'Busy' || $astrologer['chatStatus'] == 'Offline' || empty($astrologer['chatStatus']))
-                                            <a class="btn-block btn btn-call align-items-center" style="font-size: 14px !important;" href="{{ route('front.astrologerDetails',  ['slug' => $astrologer['slug']]) }}" >
+                                            <a class="btn-block btn btn-call align-items-center" style="font-size: 14px !important;" href="{{ route('front.astrologerDetails',  ['slug' => $astrologer['slug'] ?? ($astrologer->slug ?? ($astrologer['id'] ?? 1))]) }}" >
                                                 <i class="fa-solid fa-circle-info mr-2"></i> <span>View</span></a>
                                         @elseif($astrologer['chat_sections'] == 0 || $Chatsection['value'] == 0)
-                                            <a class="btn-block btn btn-call align-items-center disabled" href="{{ route('front.astrologerDetails',  ['slug' => $astrologer['slug']]) }}" >
+                                            <a class="btn-block btn btn-call align-items-center disabled" href="{{ route('front.astrologerDetails',  ['slug' => $astrologer['slug'] ?? ($astrologer->slug ?? ($astrologer['id'] ?? 1))]) }}" >
                                                 <i class="fa-solid fa-circle-info mr-2"></i> <span>View</span>
                                             </a>
                                         @else
-                                            <a class="btn-block btn btn-call align-items-center"  role="button" href="{{ route('front.astrologerDetails',  ['slug' => $astrologer['slug']]) }}" >
+                                            <a class="btn-block btn btn-call align-items-center"  role="button" href="{{ route('front.astrologerDetails',  ['slug' => $astrologer['slug'] ?? ($astrologer->slug ?? ($astrologer['id'] ?? 1))]) }}" >
                                                 <i class="fa-solid fa-circle-info mr-2"></i> <span>View</span>
                                             </a>
                                         @endif

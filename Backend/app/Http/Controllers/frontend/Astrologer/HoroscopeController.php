@@ -25,15 +25,11 @@ class HoroscopeController extends Controller
         if (!astroauthcheck())
             return redirect()->route('front.astrologerlogin');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         $session = new Session();
         $token = $session->get('astrotoken');
-        $getkundaliprice = Http::withoutVerifying()->post(url('/') . '/api/pdf/price', [
-            'token' => $token,
-        ])->json();
-        $getkundali = Http::withoutVerifying()->post(url('/') . '/api/getkundali', [
-            'token' => $token,
-        ])->json();
+        $getkundaliprice = app(\App\Http\Controllers\API\User\KundaliController::class)->pdfprice(new Request(['token' => $token]))->getData(true);
+        $getkundali = app(\App\Http\Controllers\API\User\KundaliController::class)->getkundali(new Request(['token' => $token]))->getData(true);
         $getsystemflag = SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
         return view('frontend.astrologers.pages.kundali', [
@@ -57,10 +53,7 @@ class HoroscopeController extends Controller
         if (!astroauthcheck())
             return redirect()->route('front.astrologerlogin');
 
-        $KundaliMatching = Http::withoutVerifying()->post(url('/') . '/api/KundaliMatching/report', [
-            'male_kundli_id' => $request->male_kundli_id,
-            'female_kundli_id' => $request->female_kundli_id,
-        ])->json();
+        $KundaliMatching = app(\App\Http\Controllers\API\User\KundaliMatchingController::class)->report(new Request(['male_kundli_id' => $request->male_kundli_id, 'female_kundli_id' => $request->female_kundli_id]))->getData(true);
         $kundalimale = Kundali::where('id', $request->male_kundli_id)->first();
         $kundalifemale = Kundali::where('id', $request->female_kundli_id)->first();
 
@@ -85,10 +78,7 @@ class HoroscopeController extends Controller
             $KundaliReport = $session->get($sessionKey);
         } else {
             // Make API call if not in session
-            $KundaliReport = Http::withoutVerifying()->post(url('/') . '/api/kundali/getKundaliReport', [
-                'kundali_id' => $request->kundali_id,
-                'lang' => $request->lang
-            ])->json();
+            $KundaliReport = app(\App\Http\Controllers\API\User\KundaliController::class)->getKundaliReport(new Request(['kundali_id' => $request->kundali_id, 'lang' => $request->lang]))->getData(true);
 
             // Store in session for subsequent requests
             $session->set($sessionKey, $KundaliReport);
@@ -103,7 +93,7 @@ class HoroscopeController extends Controller
         if (!astroauthcheck())
             return redirect()->route('front.astrologerlogin');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
         $ip = $request->ip();
         if ($ip === '127.0.0.1' || $ip === '::1' || !$ip) {
@@ -141,17 +131,7 @@ class HoroscopeController extends Controller
         }
         $time = now($timezone)->format('h:i');
 
-        $Todayspanchang = Http::get('https://api.vedicastroapi.com/v3-json/panchang/panchang', [
-            'date' => $date,
-            'time' => $time,
-            'tz' => $this->getTimezoneOffset($timezone),
-            'lat' => $latitude,
-            'lon' => $longitude,
-            'api_key' => $api_key->value,
-            'lang' => 'en'
-        ]);
-
-        $getPanchang = $Todayspanchang->json();
+        try { $Todayspanchang = Http::timeout(4)->get('https://api.vedicastroapi.com/v3-json/panchang/panchang', ['date' => $date, 'time' => $time, 'tz' => $this->getTimezoneOffset($timezone), 'lat' => $latitude, 'lon' => $longitude, 'api_key' => $api_key->value, 'lang' => 'en']); $getPanchang = $Todayspanchang->json(); } catch (\Throwable $e) { \Log::warning('Astrologer Panchang API call timed out: ' . $e->getMessage()); $getPanchang = ['status' => 200, 'response' => []]; }
 
         return view('frontend.astrologers.pages.panchang', [
             'getPanchang' => $getPanchang,
@@ -472,10 +452,7 @@ class HoroscopeController extends Controller
         $astrologerId = astroauthcheck()['astrologerId'];
         $session = new Session();
         $token = $session->get('astrotoken');
-        $getastrologerfollower = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerFollower', [
-            'token' => $token,
-            'astrologerId' => $astrologerId,
-        ])->json();
+        $getastrologerfollower = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getAstrologerFollower(new Request(['token' => $token, 'astrologerId' => $astrologerId]))->getData(true);
         // dd($getastrologerfollower);
         return view('frontend.astrologers.pages.followers', compact('getastrologerfollower'));
     }

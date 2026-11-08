@@ -35,6 +35,10 @@ class GenerateDailyHoroscopeJob implements ShouldQueue
     public function handle(): void
     {
         $apiKey = $this->getApiKey();
+        if (empty($apiKey) || $apiKey === 'vedicastro') {
+            \Illuminate\Support\Facades\Log::info('Horoscope Job skipped: Vedic Astro API key not configured or placeholder.');
+            return;
+        }
         $currDate = date('d/m/Y');
         $dbDate = date('Y-m-d');
 

@@ -133,6 +133,8 @@ Route::middleware(['auth'])->prefix('social')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('marketing', [\App\Http\Controllers\Admin\MarketingCockpitController::class, 'index']);
     Route::get('marketing-cockpit', [\App\Http\Controllers\Admin\MarketingCockpitController::class, 'index']);
+    Route::get('marketing/whatsapp/qr', [\App\Http\Controllers\Admin\MarketingCockpitController::class, 'getWhatsAppQr']);
+    Route::get('marketing/whatsapp/pair', [\App\Http\Controllers\Admin\MarketingCockpitController::class, 'getWhatsAppPairingCode']);
     Route::get('growth/marketing-hub', [GrowthOsController::class, 'marketingHub']);
     Route::get('growth/marketing_hub', [GrowthOsController::class, 'marketingHub']);
     Route::get('growth/marketing', [GrowthOsController::class, 'marketingHub']);

@@ -49,7 +49,7 @@ class GrowthEngineController extends Controller
      */
     public function getGotraVault(Request $request)
     {
-        $userId = $request->input('userId') ?? $request->json('userId') ?? $request->get('userId') ?? auth()->id() ?? 0;
+        $userId = $request->input('userId') ?? $request->input('user_id') ?? auth()->id() ?? 0;
         if ($userId <= 0) {
             return response()->json([
                 'status' => 400,
@@ -84,7 +84,7 @@ class GrowthEngineController extends Controller
      */
     public function saveGotraVault(Request $request)
     {
-        $userId = $request->input('userId') ?? $request->json('userId') ?? $request->get('userId') ?? auth()->id() ?? 0;
+        $userId = $request->input('userId') ?? $request->input('user_id') ?? auth()->id() ?? 0;
         if ($userId <= 0) {
             return response()->json([
                 'status' => 400,
@@ -533,20 +533,25 @@ class GrowthEngineController extends Controller
                 ->get();
 
             foreach ($outputs as $out) {
-                $media = json_decode($out->media_urls, true) ?? [];
-                $videoUrl = $media['video_reel_url'] ?? $media['video_url'] ?? null;
-                $thumbUrl = $media['reel_cover_url'] ?? $media['graphic_1080'] ?? $media['banner_1200x630'] ?? 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1080&q=80';
+                $mediaUrl = $out->media_url ?? null;
+                $mediaType = $out->media_type ?? 'image';
+                $payloadText = is_string($out->content_payload ?? null) ? $out->content_payload : json_encode($out->content_payload ?? '');
+
+                $videoUrl = ($mediaType === 'video') ? $mediaUrl : null;
+                $thumbUrl = ($mediaType === 'image' && !empty($mediaUrl))
+                    ? $mediaUrl
+                    : 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1080&q=80';
 
                 $shorts[] = [
                     'id' => 'agent_' . $out->id,
-                    'title' => $out->title,
-                    'category' => $out->agent_name,
-                    'icon' => $out->agent_icon,
+                    'title' => $out->title ?? 'Vedic Spiritual Insight',
+                    'category' => $out->agent_name ?? 'Spiritual Update',
+                    'icon' => $out->agent_icon ?? '🕉️',
                     'thumbnail_url' => $thumbUrl,
                     'video_url' => $videoUrl ?? 'https://assets.mixkit.co/videos/preview/mixkit-oil-lamps-floating-in-the-sacred-ganges-river-42861-large.mp4',
-                    'caption' => mb_substr(strip_tags($out->summary_text ?? $out->content_body ?? ''), 0, 160) . '...',
+                    'caption' => mb_substr(strip_tags($payloadText), 0, 160) . '...',
                     'cta_label' => 'Book Sacred Puja',
-                    'cta_route' => '/puja-list',
+                    'cta_route' => '/pujas',
                     'likes_count' => 1240 + ($out->id * 37),
                     'views_count' => 5400 + ($out->id * 142),
                     'shares_count' => 312 + ($out->id * 19),
@@ -559,13 +564,13 @@ class GrowthEngineController extends Controller
         $defaults = [
             [
                 'id' => 'kashi_deepdaan_2026',
-                'title' => 'ðŸª” Dev Deepawali 108 Deepdaan at Dashashwamedh Ghat',
+                'title' => '🪔 Dev Deepawali 108 Deepdaan at Dashashwamedh Ghat',
                 'category' => 'Dev Deepawali 2026',
-                'icon' => 'ðŸª”',
+                'icon' => '🪔',
                 'thumbnail_url' => 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1080&q=80',
                 'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-oil-lamps-floating-in-the-sacred-ganges-river-42861-large.mp4',
                 'caption' => 'Witness 10 Lakh sacred lamps illuminating the holy ghats of Varanasi on Kartik Purnima. Offer your family gotra sankalp with sanctum video proof.',
-                'cta_label' => 'Offer 108 Deepdaan â‚¹1,500',
+                'cta_label' => 'Offer 108 Deepdaan ₹1,500',
                 'cta_route' => '/puja-details/dev-deepawali-maha-deepdaan-kashi-vishwanath-sankalp',
                 'likes_count' => 4820,
                 'views_count' => 18400,
@@ -574,9 +579,9 @@ class GrowthEngineController extends Controller
             ],
             [
                 'id' => 'panchang_daily_reel',
-                'title' => 'â˜€ï¸ Dainik Vedic Panchang & Shubh Muhurat',
+                'title' => '☀️ Dainik Vedic Panchang & Shubh Muhurat',
                 'category' => 'Dainik Panchang',
-                'icon' => 'ðŸ•‰ï¸',
+                'icon' => '🕉️',
                 'thumbnail_url' => 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=1080&q=80',
                 'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-priest-performing-a-puja-with-fire-in-india-42858-large.mp4',
                 'caption' => 'Today Tithi, Nakshatra, Abhijit Muhurat & Rahu Kaal. Discover the most auspicious hour for sacred deeds and gotra sankalp.',
@@ -589,13 +594,13 @@ class GrowthEngineController extends Controller
             ],
             [
                 'id' => 'rudrabhishek_kashi',
-                'title' => 'ðŸ”± Shri Kashi Vishwanath Somwar Rudrabhishek',
+                'title' => '🔱 Shri Kashi Vishwanath Somwar Rudrabhishek',
                 'category' => 'Jyotirlinga Seva',
-                'icon' => 'ðŸ”±',
+                'icon' => '🔱',
                 'thumbnail_url' => 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1080&q=80',
                 'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-smoke-and-fire-from-a-burning-incense-during-a-ritual-42862-large.mp4',
                 'caption' => 'Panchamrit Abhishek with sacred Ganga Jal and sacred Bhasma. Individual Gotra recitation for removal of planetary doshas and health.',
-                'cta_label' => 'Book Rudrabhishek â‚¹1,501',
+                'cta_label' => 'Book Rudrabhishek ₹1,501',
                 'cta_route' => '/puja-details/rudrabhishek-puja-in-varanasi',
                 'likes_count' => 6100,
                 'views_count' => 24500,
@@ -604,13 +609,13 @@ class GrowthEngineController extends Controller
             ],
             [
                 'id' => 'lakshmi_kubera_yagya',
-                'title' => 'ðŸ’° Diwali Maha Lakshmi & Kubera Dhan Labh Havan',
+                'title' => '💰 Diwali Maha Lakshmi & Kubera Dhan Labh Havan',
                 'category' => 'Festive Lakshmi Havan',
-                'icon' => 'ðŸª·',
+                'icon' => '🪷',
                 'thumbnail_url' => 'https://images.unsplash.com/photo-1512418490979-92798cec1380?auto=format&fit=crop&w=1080&q=80',
                 'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-oil-lamps-floating-in-the-sacred-ganges-river-42861-large.mp4',
                 'caption' => 'Invoke Ashta Lakshmi for enduring wealth, debt freedom, and business prosperity with 108 lotus seed oblations and Kanakadhara Stotra.',
-                'cta_label' => 'Book Lakshmi Havan â‚¹2,100',
+                'cta_label' => 'Book Lakshmi Havan ₹2,100',
                 'cta_route' => '/puja-details/shree-lakshmi-kubera-maha-dhan-labh-puja',
                 'likes_count' => 5230,
                 'views_count' => 19800,

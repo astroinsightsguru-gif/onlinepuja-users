@@ -26,20 +26,24 @@ class AstrologerChatController extends Controller
         $session = new Session();
         $token = $session->get('token');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
 
         $sortBy = $request->sortBy;
         $astrologerCategoryId = (int) $request->astrologerCategoryId;
         $searchTerm = $request->input('s');
 
 
-        // $getAstrologerCategory = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerCategory')->json();
+        // getAstrologerCategory inlined
 
         $getAstrologerCategory = AstrologerCategory::where('isActive', 1)->get();
 
-        $getIntakeForm = Http::withoutVerifying()->post(url('/') . '/api/chatRequest/getIntakeForm', [
-            'token' => $token,
-        ])->json();
+        try {
+            $intakeData = DB::table('intakeform')->where('userId', '=', $userId)->get();
+            $default_time = DB::table('systemflag')->where('name', '=', 'defaultcalltime')->value('value');
+            $getIntakeForm = ['status' => 200, 'recordList' => $intakeData, 'default_time' => $default_time];
+        } catch (\Throwable $e) {
+            $getIntakeForm = ['status' => 200, 'recordList' => [], 'default_time' => null];
+        }
 
 
         // Check if user is eligible for free chat
@@ -215,11 +219,16 @@ class AstrologerChatController extends Controller
         $session = new Session();
         $token = $session->get('token');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
 
-        $getAstrologer = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerById', [
-            'astrologerId' => $request->astrologerId,
-        ])->json();
+        try {
+            $apiReq = new Request(['astrologerId' => $request->astrologerId]);
+            $res = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getAstrologerById($apiReq);
+            $getAstrologer = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getAstrologer = ['status' => 200, 'recordList' => []];
+        }
+
         $userWalletAmount = 0;
         if (authcheck()) {
             $userWalletAmount = UserWallet::where('userId', authcheck()->id)->value('amount') ?? 0;
@@ -234,72 +243,69 @@ class AstrologerChatController extends Controller
 
     public function getMyChat(Request $request)
     {
-        Artisan::call('cache:clear');
-
         if (!authcheck())
             return redirect()->route('front.home');
 
-        $session = new Session();
-        $token = $session->get('token');
+        $userId = authcheck()['id'];
 
-        $getUserById = Http::withoutVerifying()->post(url('/') . '/api/getUserById', [
-            'userId' => authcheck()['id'],
-            'token' => $token,
-        ])->json();
+        try {
+            $res = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getUserById(new Request(['userId' => $userId]));
+            $getUserById = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getUserById = ['status' => 200, 'recordList' => []];
+        }
 
+        $userWalletAmount = UserWallet::where('userId', $userId)->value('amount') ?? 0;
+        $user = DB::table('users')->where('id', $userId)->first();
+        $getProfile = [
+            'status' => 200,
+            'data' => [
+                'id' => $user->id ?? $userId,
+                'name' => $user->name ?? '',
+                'contactNo' => $user->contactNo ?? '',
+                'email' => $user->email ?? '',
+                'totalWalletAmount' => (float) $userWalletAmount,
+            ]
+        ];
 
-
-        $getProfile = Http::withoutVerifying()->post(url('/') . '/api/getProfile', [
-            'token' => $token,
-        ])->json();
-
-
-        $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag', [
-            'token' => $token,
-        ])->json();
-
-        $getsystemflag = collect($getsystemflag['recordList']);
+        $getsystemflag = \App\Models\AdminModel\SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
-
-
 
         return view('frontend.pages.my-chats', [
             'getUserById' => $getUserById,
             'getProfile' => $getProfile,
             'currency' => $currency,
-
         ]);
     }
 
 
     public function getChatHistory(Request $request)
     {
-
         if (!authcheck())
             return redirect()->route('front.home');
 
+        $userId = authcheck()['id'];
 
-        $session = new Session();
-        $token = $session->get('token');
+        try {
+            $notifications = DB::table('user_notifications')->where('userId', $userId)->get();
+            $getUserNotification = ['status' => 200, 'recordList' => $notifications];
+        } catch (\Throwable $e) {
+            $getUserNotification = ['status' => 200, 'recordList' => []];
+        }
 
-        Artisan::call('cache:clear');
+        try {
+            $res = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getAstrologerById(new Request(['astrologerId' => $request->astrologerId]));
+            $getAstrologer = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getAstrologer = ['status' => 200, 'recordList' => []];
+        }
 
-
-        $getUserNotification = Http::withoutVerifying()->post(url('/') . '/api/getUserNotification', [
-            'token' => $token,
-        ])->json();
-
-        $getAstrologer = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerById', [
-            'astrologerId' => $request->astrologerId,
-        ])->json();
-
-        $getUserHistoryReview = Http::withoutVerifying()->post(url('/') . '/api/getUserHistoryReview', [
-            'userId' => authcheck()['id'],
-            'astrologerId' => $request->astrologerId,
-        ])->json();
-
-
-
+        try {
+            $res = app(\App\Http\Controllers\API\User\UserReviewController::class)->getUserHistoryReview(new Request(['userId' => $userId, 'astrologerId' => $request->astrologerId]));
+            $getUserHistoryReview = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getUserHistoryReview = ['status' => 200, 'recordList' => []];
+        }
 
         return view('frontend.pages.chat-history', [
             'getAstrologer' => $getAstrologer,
@@ -316,40 +322,38 @@ class AstrologerChatController extends Controller
 
     public function getMyAiChat(Request $request)
     {
-        Artisan::call('cache:clear');
-
         if (!authcheck())
             return redirect()->route('front.home');
 
-        $session = new Session();
-        $token = $session->get('token');
+        $userId = authcheck()['id'];
 
-        $getUserById = Http::withoutVerifying()->post(url('/') . '/api/getUserById', [
-            'userId' => authcheck()['id'],
-            'token' => $token,
-        ])->json();
+        try {
+            $res = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getUserById(new Request(['userId' => $userId]));
+            $getUserById = $res->getData(true);
+        } catch (\Throwable $e) {
+            $getUserById = ['status' => 200, 'recordList' => []];
+        }
 
-        // dd($getUserById);
+        $userWalletAmount = UserWallet::where('userId', $userId)->value('amount') ?? 0;
+        $user = DB::table('users')->where('id', $userId)->first();
+        $getProfile = [
+            'status' => 200,
+            'data' => [
+                'id' => $user->id ?? $userId,
+                'name' => $user->name ?? '',
+                'contactNo' => $user->contactNo ?? '',
+                'email' => $user->email ?? '',
+                'totalWalletAmount' => (float) $userWalletAmount,
+            ]
+        ];
 
-        $getProfile = Http::withoutVerifying()->post(url('/') . '/api/getProfile', [
-            'token' => $token,
-
-        ])->json();
-
-
-        $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag', [
-            'token' => $token,
-        ])->json();
-
-        $getsystemflag = collect($getsystemflag['recordList']);
+        $getsystemflag = \App\Models\AdminModel\SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
-
 
         return view('frontend.pages.my-aichats', [
             'getUserById' => $getUserById,
             'getProfile' => $getProfile,
             'currency' => $currency,
-
         ]);
     }
 }

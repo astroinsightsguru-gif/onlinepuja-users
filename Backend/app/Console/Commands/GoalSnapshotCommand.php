@@ -12,10 +12,29 @@ class GoalSnapshotCommand extends Command
 
     protected $description = 'Persist yesterday’s real traffic into every active goal and report pace';
 
-    public function handle(): int
+    public function handle(\App\services\SearchConsoleService $gsc): int
     {
         $date = now()->subDay()->toDateString();
-        $value = TrafficTracker::take($date);
+
+        // Prefer real Search Console clicks when connected; otherwise fall back
+        // to the first-party pageview counter. Either way one number is stored.
+        $value = null;
+        $source = 'first-party';
+
+        if ($gsc->isConfigured()) {
+            $clicks = $gsc->clicksForDate($date);
+
+            if ($clicks !== null) {
+                $value = $clicks;
+                $source = 'search-console';
+            }
+        }
+
+        if ($value === null) {
+            $value = TrafficTracker::take($date);
+        }
+
+        $this->line("Traffic source: {$source}");
 
         $goals = DB::table('goals')->where('status', 'active')->get();
 

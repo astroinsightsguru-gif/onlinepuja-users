@@ -1,26 +1,92 @@
 <?php
-// include header file
-// include 'header.php';
 define('PAY_PAGE_CONFIG', config('paypage-payment'));
-// Get config data
 $configData = configItem();
 ?>
 <!DOCTYPE html>
-<!-- Html Start -->
 <html>
-<!-- Head Start -->
-
 <head>
-    <!-- Page Title -->
-    <title>Pay Page</title>
-    <!-- /Page Title -->
-    <!-- Load load bootstrap and fontawesome -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - OnlinePuja.live</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <!-- /Load load bootstrap and fontawesome -->
+
+@php
+    $gtmId = \App\Brain\Vault::get('gtm_container_id');
+    $ga4Id = \App\Brain\Vault::get('ga4_measurement_id', 'G-7T63JY1D93');
+    $metaPixelId = \App\Brain\Vault::get('meta_pixel_id') ?: (\App\Brain\Vault::get('fb_app_id') ?: '1738490804042986');
+    $gAdsId = \App\Brain\Vault::get('google_ads_id');
+    $activePayment = $payment ?? ($paymentcall ?? null);
+    $paidValue = $activePayment ? (float)($activePayment->amount ?? 1500) : 1500.0;
+    $orderId = 'OP_' . ($activePayment->id ?? time());
+@endphp
+
+@if(!empty($gtmId))
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','{{ $gtmId }}');</script>
+<!-- End Google Tag Manager -->
+@endif
+
+@if(!empty($ga4Id) || !empty($gAdsId))
+<!-- Global site tag (gtag.js) - Google Analytics 4 & Google Ads -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ $ga4Id ?: $gAdsId }}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  @if(!empty($ga4Id))
+  gtag('config', '{{ $ga4Id }}');
+  @endif
+  @if(!empty($gAdsId))
+  gtag('config', '{{ $gAdsId }}');
+  @endif
+
+  // Google Analytics & Google Ads Purchase Event
+  gtag('event', 'purchase', {
+    transaction_id: '{{ $orderId }}',
+    value: {{ $paidValue }},
+    currency: 'INR',
+    items: [{
+      item_id: '{{ $orderId }}',
+      item_name: 'Vedic Consultation / Puja Service',
+      price: {{ $paidValue }},
+      quantity: 1
+    }]
+  });
+</script>
+@endif
+
+@if(!empty($metaPixelId))
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '{{ $metaPixelId }}');
+fbq('track', 'PageView');
+fbq('track', 'Purchase', {
+    content_name: 'Vedic Consultation / Puja Service',
+    content_ids: ['{{ $orderId }}'],
+    value: {{ $paidValue }},
+    currency: 'INR'
+});
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id={{ $metaPixelId }}&ev=Purchase&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+@endif
 </head>
-<!-- /Head End -->
-<!-- Body Start -->
+
 @php
     if(astroauthcheck()){
         $redirect_url = route('front.getAstrologerWallet');
@@ -30,47 +96,38 @@ $configData = configItem();
 @endphp
 
 <body>
-    <div class="text-center mt-5">
-        <div class="col-lg-12 text-center">
-            <!-- Thanks message -->
-            <h3>Thanks for your payment</h3>
-            <!-- Success Icon -->
-            <i class="fa fa-check-square-o fa-5x text-success"></i>
-            <!-- /Success Icon -->
-            <h1>Payment succeed</h1>
-            <!-- /Thanks message -->
-            <p>You will be redirected in <span id="countdown">5</span> seconds...</p>
-            <!-- URL for back to checkout form -->
-            <a href="<?= $redirect_url ?>" title="Back to Checkout Form">Back to Checkout Form</a>
-            <!-- /URL for back to checkout form -->
+@if(!empty($gtmId))
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ $gtmId }}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+@endif
+
+    <div class="container text-center mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 p-5 shadow-sm rounded bg-white">
+                <i class="fa fa-check-circle fa-5x text-success mb-3"></i>
+                <h2 class="font-weight-bold text-dark">Payment Successful! 🙏</h2>
+                <p class="text-muted">Your transaction of <strong>₹{{ number_format($paidValue, 2) }}</strong> has been verified. Divine blessings are on the way.</p>
+                <div class="alert alert-success py-2 mt-3 font-weight-bold">
+                    Redirecting in <span id="countdown">4</span> seconds...
+                </div>
+                <a href="<?= $redirect_url ?>" class="btn btn-warning btn-block font-weight-bold py-2 mt-3" style="background:#f59e0b; border:none; color:#020617;">
+                    Return to Wallet & Services
+                </a>
+            </div>
         </div>
     </div>
 
     <script>
-        let countdown = 5;
-        const countdownElement = document.getElementById("countdown");
-
-        const timer = setInterval(() => {
-            countdown--;
-            countdownElement.textContent = countdown;
-            if (countdown <= 0) {
-                clearInterval(timer);
+        var count = 4;
+        var countdown = setInterval(function(){
+            count--;
+            var el = document.getElementById('countdown');
+            if(el) el.innerText = count;
+            if (count <= 0) {
+                clearInterval(countdown);
                 window.location.href = "<?= $redirect_url ?>";
             }
         }, 1000);
     </script>
 </body>
-
-<!-- /Body Start -->
-
-<script>
-      setTimeout(function() {
-        if (window.opener) {
-            window.close();
-        }
-    }, 3000);  // Close after 5 seconds
-</script>
-
-
 </html>
-<!-- /Html End -->

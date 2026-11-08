@@ -44,7 +44,7 @@ class UserOrderController extends Controller
             ]);
 
             if ($validator->fails()) {
-                DB::rollback();
+                if (DB::transactionLevel() > 0) { DB::rollback(); }
                 return response()->json([
                     'error' => $validator->messages(),
                     'status' => 400,
@@ -54,6 +54,7 @@ class UserOrderController extends Controller
             // $user_country=User::where('id',$id)->where('country','India')->first();
             $user_country=User::where('id',$id)->where('countryCode','+91')->first();
             $inr_usd_conv_rate = DB::table('systemflag')->where('name','UsdtoInr')->select('value')->first();
+            $convRateVal = ($inr_usd_conv_rate && !empty($inr_usd_conv_rate->value)) ? $inr_usd_conv_rate->value : 83.5;
 
             // if($user_country){
             //     $req->payableAmount=convertinrtousd($req->payableAmount);
@@ -88,7 +89,7 @@ class UserOrderController extends Controller
                 'totalPayable' => $req->totalPayable,
                 'payamentMethod' => $req->payamentMethod,
                 'orderStatus' => 'Pending',
-                'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate'=>$convRateVal,
                 // 'created_at'=>Carbon::now(),
                 // 'updated_at'=>Carbon::now(),
             ]);
@@ -115,7 +116,7 @@ class UserOrderController extends Controller
                 "transactionType" => 'astromallOrder',
 				'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
-                'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate'=>$convRateVal,
             );
             DB::table('wallettransaction')->insert($transaction);
             return response()->json([
@@ -143,8 +144,9 @@ class UserOrderController extends Controller
             }
 
             // $user_country=User::where('id',$id)->where('country','India')->first();  // commented
-            $user_country=User::where('id',$id)->where('country','+91')->first();   // added
+            $user_country=User::where('id',$id)->where('countryCode','+91')->first();   // added
             $inr_usd_conv_rate = DB::table('systemflag')->where('name','UsdtoInr')->select('value')->first();
+            $convRateVal = ($inr_usd_conv_rate && !empty($inr_usd_conv_rate->value)) ? $inr_usd_conv_rate->value : 83.5;
 
             $order = DB::table('order_request')->where('id', '=', $req->id)->get();
             $data = array(
@@ -169,7 +171,7 @@ class UserOrderController extends Controller
                 "transactionType" => 'astromallOrder',
 				'created_at' => Carbon::now(),
 				'updated_at' => Carbon::now(),
-                'inr_usd_conversion_rate'=>$inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate'=>$convRateVal,
             );
             $res = array('totalPayable' => $order[0]->totalPayable);
             DB::table('wallettransaction')->insert($transaction);

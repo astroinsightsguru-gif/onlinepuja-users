@@ -19,21 +19,15 @@ class HomeController extends Controller
 
         //  dd(astroauthcheck()['astrologerId']);
         $astrologerId = astroauthcheck()['astrologerId'];
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
 
-        $getChatRequest = Http::withoutVerifying()->post(url('/') . '/api/chatRequest/get', [
-            'astrologerId' => $astrologerId,
-        ])->json();
+        $getChatRequest = app(\App\Http\Controllers\API\User\ChatRequestController::class)->getChatRequest(new Request(['astrologerId' => $astrologerId]))->getData(true);
 
-        $getCallRequest = Http::withoutVerifying()->post(url('/') . '/api/callRequest/get', [
-            'astrologerId' => $astrologerId,
-        ])->json();
+        $getCallRequest = app(\App\Http\Controllers\API\User\CallRequestController::class)->getCallRequest(new Request(['astrologerId' => $astrologerId]))->getData(true);
         // return $getCallRequest;
 
         // dd($getCallRequest);
-        $getUserReport = Http::withoutVerifying()->post(url('/') . '/api/getUserReport', [
-            'astrologerId' => $astrologerId,
-        ])->json();
+        $getUserReport = app(\App\Http\Controllers\API\User\UserReportController::class)->getUserReportRequest(new Request(['astrologerId' => $astrologerId]))->getData(true);
 
         $agoraAppIdValue = DB::table('systemflag')
             ->where('name', 'AgoraAppId')
@@ -47,57 +41,35 @@ class HomeController extends Controller
 
         $channel_name = 'onlinepujaGuruLive_' . astroauthcheck()['astrologerId'] . '';
 
-        $getUserReportRequestById = Http::withoutVerifying()->post(url('/') . '/api/getUserReportRequestById', [
-            'id' => $request->id,
-        ])->json();
+        $getUserReportRequestById = app(\App\Http\Controllers\API\User\UserReportController::class)->getUserReportRequestById($request->id ?? 0)->getData(true);
 
         return view('frontend.astrologers.pages.index', compact('getChatRequest', 'getCallRequest', 'getUserReport', 'agoraAppIdValue', 'agorcertificateValue', 'channel_name', 'getUserReportRequestById'));
     }
 
     public function getChatRequests(Request $request)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         $astrologerId = astroauthcheck()['astrologerId'];
 
-        $response = Http::withoutVerifying()->post(url('/') . '/api/chatRequest/get', [
-            'astrologerId' => $astrologerId,
-        ]);
-
-        if ($response->successful()) {
-            $getChatRequest = $response->json();
-        } else {
-            \Log::error('Chat request API failed', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-
-            $getChatRequest = [
-                'error' => true,
-                'message' => 'Unable to fetch chat requests from API.',
-            ];
-        }
+        $getChatRequest = app(\App\Http\Controllers\API\User\ChatRequestController::class)->getChatRequest(new Request(['astrologerId' => $astrologerId]))->getData(true);
 
         return response()->json($getChatRequest);
     }
 
     public function getCallRequests(Request $request)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         $astrologerId = astroauthcheck()['astrologerId'];
-        $getCallRequest = Http::withoutVerifying()->post(url('/') . '/api/callRequest/get', [
-            'astrologerId' => $astrologerId,
-        ])->json();
+        $getCallRequest = app(\App\Http\Controllers\API\User\CallRequestController::class)->getCallRequest(new Request(['astrologerId' => $astrologerId]))->getData(true);
 
         return response()->json($getCallRequest);
     }
 
     public function getReportRequests(Request $request)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         $astrologerId = astroauthcheck()['astrologerId'];
-        $getUserReport = Http::withoutVerifying()->post(url('/') . '/api/getUserReport', [
-            'astrologerId' => $astrologerId,
-        ])->json();
+        $getUserReport = app(\App\Http\Controllers\API\User\UserReportController::class)->getUserReportRequest(new Request(['astrologerId' => $astrologerId]))->getData(true);
 
         return response()->json($getUserReport);
     }

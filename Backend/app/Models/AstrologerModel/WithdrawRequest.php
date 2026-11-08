@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
-class WithDrawRequest extends Model
+class WithdrawRequest extends Model
 {
     use HasFactory;
     protected $table = 'withdrawrequest';
@@ -57,3 +57,5 @@ class WithDrawRequest extends Model
     }
 
 }
+
+class_alias(WithdrawRequest::class, 'App\Models\AstrologerModel\WithDrawRequest');

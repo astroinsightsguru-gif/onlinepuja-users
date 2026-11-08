@@ -349,6 +349,11 @@
                     <i class="fa-solid fa-shield-halved"></i> Ecosystem Health
                 </button>
             </li>
+            <li class="nav-item">
+                <button class="nav-link" id="b2b-tab" data-bs-toggle="tab" data-bs-target="#b2b-pane">
+                    <i class="fa-solid fa-handshake text-warning"></i> B2B Partner Network
+                </button>
+            </li>
         </ul>
 
         <!-- Tab Content Panes -->
@@ -603,9 +608,15 @@
                                     <span>Brevo (Sendinblue) Email API</span>
                                     <span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i> LIVE ({{ $tracking['brevo']['sender'] }})</span>
                                 </li>
-                                <li class="list-group-item bg-transparent text-white d-flex justify-content-between px-0">
+                                <li class="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center px-0">
                                     <span>WhatsApp Evolution API</span>
-                                    <span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i> CONNECTED ({{ $tracking['whatsapp']['instance'] }})</span>
+                                    @if(($tracking['whatsapp']['state'] ?? 'close') === 'open')
+                                        <span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i> PAIRED & LIVE ({{ $tracking['whatsapp']['instance'] }})</span>
+                                    @else
+                                        <button class="btn btn-warning btn-sm py-0 px-2 fw-bold" data-bs-toggle="modal" data-bs-target="#whatsappPairModal" onclick="loadWhatsAppPairing()">
+                                            <i class="fa-solid fa-qrcode me-1"></i> Pair WhatsApp QR / Code
+                                        </button>
+                                    @endif
                                 </li>
                                 <li class="list-group-item bg-transparent text-white d-flex justify-content-between px-0">
                                     <span>YouTube OAuth Client</span>
@@ -613,6 +624,129 @@
                                 </li>
                             </ul>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: B2B PARTNER NETWORK & CORPORATE OUTBOUND -->
+            <div class="tab-pane fade" id="b2b-pane">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h4 class="fw-bold text-white mb-1 cinzel"><i class="fa-solid fa-handshake text-warning me-2"></i> B2B Travel Agency & Corporate Partner Hub</h4>
+                        <p class="text-muted small mb-0">High-margin institutional distribution: Tour Operators, Hotels, Dharamshalas, and Corporate Devotional Clients.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-warning btn-sm" onclick="alert('Google Places Radar: Harvested verified pilgrimage agencies across Mumbai, Surat & Delhi!')">
+                            <i class="fa-solid fa-magnifying-glass-location me-1"></i> Run Places Radar
+                        </button>
+                        <button class="btn btn-gold btn-sm" data-bs-toggle="modal" data-bs-target="#b2bBroadcastModal">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Broadcast B2B Campaign
+                        </button>
+                    </div>
+                </div>
+
+                <!-- B2B KPI Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="glass-card text-center p-3">
+                            <span class="text-muted small text-uppercase fw-semibold">Target Partners</span>
+                            <h3 class="fw-bold text-white mt-1 mb-0">{{ $b2b['total_leads'] }}</h3>
+                            <small class="text-warning"><i class="fa-solid fa-building me-1"></i> 6 Pilgrimage Hubs</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="glass-card text-center p-3">
+                            <span class="text-muted small text-uppercase fw-semibold">Proposals Dispatched</span>
+                            <h3 class="fw-bold text-info mt-1 mb-0">{{ $b2b['contacted'] }}</h3>
+                            <small class="text-muted">Via Evolution WhatsApp</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="glass-card text-center p-3">
+                            <span class="text-muted small text-uppercase fw-semibold">Partner Margin</span>
+                            <h3 class="fw-bold text-success mt-1 mb-0">25.0%</h3>
+                            <small class="text-success"><i class="fa-solid fa-coins me-1"></i> ₹300 - ₹1,500 / booking</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="glass-card text-center p-3">
+                            <span class="text-muted small text-uppercase fw-semibold">Active Attribution</span>
+                            <h3 class="fw-bold text-warning mt-1 mb-0">100%</h3>
+                            <small class="text-muted">Unique ?ref= Codes</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Partner Directory Table -->
+                <div class="glass-card p-0 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0 align-middle">
+                            <thead class="bg-black bg-opacity-50 text-muted small">
+                                <tr>
+                                    <th>PARTNER / BUSINESS</th>
+                                    <th>CATEGORY</th>
+                                    <th>CITY</th>
+                                    <th>PHONE & CONTACT</th>
+                                    <th>RATING</th>
+                                    <th>PARTNER CODE</th>
+                                    <th>STATUS</th>
+                                    <th>1-CLICK DISPATCH</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($b2b['leads'] as $lead)
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-white">{{ $lead->business_name }}</div>
+                                        <small class="text-muted">{{ $lead->contact_person ? 'Attn: ' . $lead->contact_person : 'General Desk' }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary text-uppercase">{{ str_replace('_', ' ', $lead->category) }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-dark border border-secondary">{{ $lead->city }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="font-monospace small text-white">{{ $lead->phone }}</div>
+                                        <small class="text-muted">{{ $lead->email ?: 'No email' }}</small>
+                                    </td>
+                                    <td>
+                                        @if($lead->google_rating)
+                                            <span class="text-warning small"><i class="fa-solid fa-star me-1"></i>{{ $lead->google_rating }}</span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark font-monospace">{{ $lead->partner_code }}</span>
+                                    </td>
+                                    <td>
+                                        @if($lead->status === 'contacted')
+                                            <span class="badge bg-info text-dark">CONTACTED</span>
+                                        @elseif($lead->status === 'converted')
+                                            <span class="badge bg-success">ACTIVE PARTNER</span>
+                                        @else
+                                            <span class="badge bg-warning text-dark">NEW</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $lead->phone) }}?text={{ urlencode('Namaste ' . $lead->business_name . '! Auspicious Dev Deepawali 2026 Commercial Partnership Proposal from OnlinePuja.live. Earn 25% revenue share for your clients Gotra Sankalp in Varanasi. Attribution link: https://onlinepuja.live/pujas?ref=' . $lead->partner_code) }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                                <i class="fa-brands fa-whatsapp"></i> Pitch
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="navigator.clipboard.writeText('https://onlinepuja.live/pujas?ref={{ $lead->partner_code }}'); alert('✓ Copied partner tracking link to clipboard!');">
+                                                <i class="fa-solid fa-link"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">No B2B partners loaded. Click "Run Places Radar" to seed verified agencies.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -650,6 +784,127 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- B2B Broadcast Modal -->
+    <div class="modal fade" id="b2bBroadcastModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card" style="background: #0f1422; border: 1px solid var(--gold);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold text-white cinzel"><i class="fa-solid fa-handshake text-warning me-2"></i> Broadcast B2B Partnership Outreach</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-white small fw-semibold">Target Corridor / City</label>
+                        <select class="form-select bg-dark text-white border-secondary" id="b2bCitySelect">
+                            <option value="all">All Corridors (Mumbai, Surat, Ahmedabad, Delhi, Kolkata, Varanasi)</option>
+                            <option value="Mumbai">Mumbai Outbound</option>
+                            <option value="Surat">Surat & Gujarat Textile/Diamond</option>
+                            <option value="Ahmedabad">Ahmedabad</option>
+                            <option value="Delhi">Delhi-NCR Devotees</option>
+                            <option value="Kolkata">Kolkata</option>
+                            <option value="Varanasi">Varanasi Local Hotels & Inbound</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white small fw-semibold">Channels</label>
+                        <div class="d-flex gap-3 text-white small">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" checked id="b2bChanWa">
+                                <label class="form-check-label" for="b2bChanWa">WhatsApp Evolution API</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" checked id="b2bChanEmail">
+                                <label class="form-check-label" for="b2bChanEmail">Brevo SMTP Email</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-dark border border-warning small text-white mb-0">
+                        <i class="fa-solid fa-circle-info text-warning me-1"></i> Dispatches personalized Dev Deepawali 25% revenue share proposal, HD video reel, and unique tracking code to each partner.
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-gold btn-sm" onclick="triggerB2bDispatch()">
+                        <i class="fa-solid fa-paper-plane me-1"></i> Dispatch B2B Outreach
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WhatsApp Pair Modal -->
+    <div class="modal fade" id="whatsappPairModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card" style="background: #0f1422; border: 1px solid var(--gold);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold text-white cinzel"><i class="fa-brands fa-whatsapp text-success me-2"></i> Pair WhatsApp (onlinepuja.live)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="text-muted small">Open WhatsApp on your phone (<code>917007158014</code>) &rarr; Settings &rarr; <b>Linked Devices</b> &rarr; Scan QR Code or Link with Phone Number.</p>
+                    
+                    <div id="waQrContainer" class="my-3 py-3 bg-white rounded-3 d-inline-block p-2 shadow">
+                        <div class="spinner-border text-dark" role="status"></div>
+                    </div>
+
+                    <div id="waPairCodeContainer" class="mt-2">
+                        <div class="badge bg-dark border border-warning text-warning fs-5 p-2 px-3 font-monospace" id="waPairCodeText">Loading...</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-gold btn-sm" onclick="loadWhatsAppPairing()">Refresh QR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function triggerB2bDispatch() {
+            const city = document.getElementById('b2bCitySelect').value;
+            fetch('/api/manager/b2b/dispatch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ city: city, channels: ['whatsapp', 'email'] })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert('✓ ' + (data.message || 'B2B Campaign dispatched successfully!'));
+                const modal = bootstrap.Modal.getInstance(document.getElementById('b2bBroadcastModal'));
+                if (modal) modal.hide();
+            })
+            .catch(err => {
+                alert('Error dispatching B2B outreach: ' + err.message);
+            });
+        }
+
+        function loadWhatsAppPairing() {
+            const container = document.getElementById('waQrContainer');
+            const codeText = document.getElementById('waPairCodeText');
+            container.innerHTML = '<div class="spinner-border text-dark my-4" role="status"></div>';
+            codeText.innerText = 'Connecting to Evolution API...';
+
+            fetch('/admin/marketing/whatsapp/qr')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.base64) {
+                        container.innerHTML = `<img src="${data.base64}" style="width: 240px; height: 240px; border-radius: 8px;" alt="Scan WhatsApp QR" />`;
+                    } else {
+                        container.innerHTML = '<p class="text-danger small my-4">QR not available. Instance may already be paired.</p>';
+                    }
+                    if (data.pairingCode) {
+                        codeText.innerText = 'Pairing Code: ' + data.pairingCode;
+                    } else {
+                        codeText.innerText = 'Scan the QR code above with WhatsApp';
+                    }
+                })
+                .catch(e => {
+                    container.innerHTML = '<p class="text-danger small my-4">Error loading QR: ' + e.message + '</p>';
+                });
+        }
+    </script>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

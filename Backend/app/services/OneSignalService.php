@@ -12,10 +12,10 @@ class OneSignalService
 
     public function __construct()
     {
-        $systemflag=SystemFlag::whereIn('name',['OneSignalAppId','OneSignalRestApiKey','OneSignalAndroidChannelId'])->get()->pluck('value','name');
-        $this->appId = $systemflag['OneSignalAppId'];
-        $this->apiKey = $systemflag['OneSignalRestApiKey'];
-        $this->androidId = $systemflag['OneSignalAndroidChannelId'];
+        $systemflag = SystemFlag::whereIn('name', ['OneSignalAppId', 'OneSignalRestApiKey', 'OneSignalAndroidChannelId'])->get()->pluck('value', 'name');
+        $this->appId = $systemflag['OneSignalAppId'] ?? '';
+        $this->apiKey = $systemflag['OneSignalRestApiKey'] ?? '';
+        $this->androidId = $systemflag['OneSignalAndroidChannelId'] ?? '';
     }
 
 public function sendNotification(array $userIds, array $notification)

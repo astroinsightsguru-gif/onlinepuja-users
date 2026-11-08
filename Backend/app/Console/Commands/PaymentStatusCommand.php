@@ -33,14 +33,14 @@ class PaymentStatusCommand extends Command
                     'paymentStatus' => 'failed'
                 ]);
     
-            return true;
+            return self::SUCCESS;
         } catch (\Exception $e) {
             Log::error('Payment status update cron failed: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
     
-            return false;
+            return self::FAILURE;
         }
     }
 }

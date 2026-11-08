@@ -88,30 +88,40 @@ class KundaliMatchingController extends Controller
                 'female_kundli_id'
             );
 
-            $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
-
             $maleKundliId = $req->male_kundli_id;
             $femaleKundliId = $req->female_kundli_id;
             $maleRcd = Kundali::where('id', $maleKundliId)->first();
             $femaleRcd = Kundali::where('id', $femaleKundliId)->first();
-            $responses = Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($maleRcd, $femaleRcd, $api_key) {
+
+            if (!$maleRcd || !$femaleRcd) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Kundali records not found for matching',
+                    'status' => 404,
+                ], 404);
+            }
+
+            $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
+            $apiKeyValue = ($api_key && !empty($api_key->value)) ? $api_key->value : '';
+
+            $responses = Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($maleRcd, $femaleRcd, $apiKeyValue) {
                 $poolArray = [
-                    $pool->as('girlMangalikRpt')->get('https://api.vedicastroapi.com/v3-json/dosha/manglik-dosh', [
+                    $pool->as('boyManaglikRpt')->get('https://api.vedicastroapi.com/v3-json/dosha/manglik-dosh', [
                         'dob' => date('d/m/Y', strtotime($maleRcd->birthDate)),
                         'tob' => date('H:i', strtotime($maleRcd->birthTime)),
                         'tz' => $maleRcd->timezone,
                         'lat' => $maleRcd->latitude,
                         'lon' => $maleRcd->longitude,
-                        'api_key' => $api_key->value,
+                        'api_key' => $apiKeyValue,
                         'lang' => 'en'
                     ]),
-                    $pool->as('boyManaglikRpt')->get('https://api.vedicastroapi.com/v3-json/dosha/manglik-dosh', [
+                    $pool->as('girlMangalikRpt')->get('https://api.vedicastroapi.com/v3-json/dosha/manglik-dosh', [
                         'dob' => date('d/m/Y', strtotime($femaleRcd->birthDate)),
                         'tob' => date('H:i', strtotime($femaleRcd->birthTime)),
                         'tz' => $femaleRcd->timezone,
                         'lat' => $femaleRcd->latitude,
                         'lon' => $femaleRcd->longitude,
-                        'api_key' => $api_key->value,
+                        'api_key' => $apiKeyValue,
                         'lang' => 'en'
                     ])
                 ];
@@ -128,7 +138,7 @@ class KundaliMatchingController extends Controller
                         'girl_tz' => $femaleRcd->timezone,
                         'girl_lat' => $femaleRcd->latitude,
                         'girl_lon' => $femaleRcd->longitude,
-                        'api_key' => $api_key->value,
+                        'api_key' => $apiKeyValue,
                         'lang' => 'en'
                     ]);
                 } else {
@@ -143,7 +153,7 @@ class KundaliMatchingController extends Controller
                         'girl_tz' => $femaleRcd->timezone,
                         'girl_lat' => $femaleRcd->latitude,
                         'girl_lon' => $femaleRcd->longitude,
-                        'api_key' => $api_key->value,
+                        'api_key' => $apiKeyValue,
                         'lang' => 'en'
                     ]);
                 }
@@ -186,6 +196,7 @@ class KundaliMatchingController extends Controller
 
             // Fetching API key from the database
             $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
+            $apiKeyValue = ($api_key && !empty($api_key->value)) ? $api_key->value : '';
 
             // Fetching the user's kundali details
             $maleRcd = Kundali::where('id', $req->kundali_id)->first();
@@ -205,13 +216,21 @@ class KundaliMatchingController extends Controller
                 ];
             }
 
+            if (!$maleRcd || empty($maleRcd->birthDate)) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Kundali details not found',
+                    'status' => 404,
+                ], 404);
+            }
+
             // List of divisional charts to retrieve
             $divs = [
                 'D1', 'D2', 'D3', 'D4', 'D5', 'D7', 'D8', 'D9', 'D10',
                 'D12', 'D16', 'D20', 'D24', 'D27', 'D40', 'D45', 'D60', 'D30',
                 'chalit', 'sun', 'moon', 'kp_chalit'
             ];
-            $chartsPool = Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($divs, $maleRcd, $api_key, $req) {
+            $chartsPool = Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($divs, $maleRcd, $apiKeyValue, $req) {
                 $requests = [];
                 foreach ($divs as $div) {
                     $requests[] = $pool->as($div)->get('https://api.vedicastroapi.com/v3-json/horoscope/chart-image', [
@@ -222,7 +241,7 @@ class KundaliMatchingController extends Controller
                         'lon' => $maleRcd->longitude,
                         'tz' => $maleRcd->timezone,
                         'div' => $div,
-                        'api_key' => $api_key->value,
+                        'api_key' => $apiKeyValue,
                         'lang' => $req->lang ?? 'en',
                         'font_size' => 14,
                         'font_style' => 'roboto',
@@ -251,7 +270,7 @@ class KundaliMatchingController extends Controller
             }
 
             // Fetch other horoscope details
-            $reportPool = Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($maleRcd, $api_key, $req) {
+            $reportPool = Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($maleRcd, $apiKeyValue, $req) {
                 $dob = date('d/m/Y', strtotime($maleRcd->birthDate));
                 $tob = date('H:i', strtotime($maleRcd->birthTime));
                 $tobCarbon = \Carbon\Carbon::parse($maleRcd->birthTime)->format('H:i');
@@ -259,7 +278,7 @@ class KundaliMatchingController extends Controller
                 $baseParams = [
                     'dob' => $dob, 'tob' => $tob, 'tz' => $maleRcd->timezone,
                     'lat' => $maleRcd->latitude, 'lon' => $maleRcd->longitude,
-                    'api_key' => $api_key->value, 'lang' => $req->lang ?? 'en'
+                    'api_key' => $apiKeyValue, 'lang' => $req->lang ?? 'en'
                 ];
                 $baseParamsCarbon = array_merge($baseParams, ['tob' => $tobCarbon]);
 
@@ -286,7 +305,7 @@ class KundaliMatchingController extends Controller
             });
 
             $planetss = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Saturn', 'Jupiter', 'Rahu', 'Ketu'];
-            $planetPool = Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($planetss, $maleRcd, $api_key, $req) {
+            $planetPool = Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($planetss, $maleRcd, $apiKeyValue, $req) {
                 $requests = [];
                 $baseParamsCarbon = [
                     'dob' => date('d/m/Y', strtotime($maleRcd->birthDate)),
@@ -294,7 +313,7 @@ class KundaliMatchingController extends Controller
                     'tz' => $maleRcd->timezone,
                     'lat' => $maleRcd->latitude,
                     'lon' => $maleRcd->longitude,
-                    'api_key' => $api_key->value,
+                    'api_key' => $apiKeyValue,
                     'lang' => $req->language ?? 'en',
                 ];
                 foreach ($planetss as $planet) {

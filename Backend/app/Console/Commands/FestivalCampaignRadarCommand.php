@@ -9,6 +9,7 @@ use Illuminate\Console\Command;
 class FestivalCampaignRadarCommand extends Command
 {
     protected $signature = 'festivals:campaign-radar
+        {festival? : Target a specific festival name (e.g. "Dev Deepawali")}
         {--horizon=60 : Horizon in days to scan for upcoming festivals}
         {--festival= : Target a specific festival name (e.g. "Dev Deepawali")}
         {--channels=whatsapp,email,push : Comma-separated channels}
@@ -21,7 +22,7 @@ class FestivalCampaignRadarCommand extends Command
     public function handle(FestivalCampaignEngine $engine): int
     {
         $horizon = (int) $this->option('horizon');
-        $target = $this->option('festival');
+        $target = $this->argument('festival') ?: $this->option('festival');
         $dispatch = (bool) $this->option('dispatch');
         $genVideo = (bool) $this->option('generate-video');
         $to = $this->option('to');

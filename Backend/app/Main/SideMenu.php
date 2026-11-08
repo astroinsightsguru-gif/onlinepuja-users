@@ -58,6 +58,18 @@ class SideMenu
                         'params' => '',
                         'title' => '📅 Social & Festivals',
                     ],
+                    'growth-marketing' => [
+                        'icon' => 'send',
+                        'route_name' => 'growth-os.marketing',
+                        'params' => '',
+                        'title' => '📣 Marketing & B2B',
+                    ],
+                    'growth-autopilot' => [
+                        'icon' => 'zap',
+                        'route_name' => 'growth-os.autopilot',
+                        'params' => '',
+                        'title' => '⚡ Autonomous Autopilot',
+                    ],
                     'growth-ai' => [
                         'icon' => 'cpu',
                         'route_name' => 'growth-os.ai',

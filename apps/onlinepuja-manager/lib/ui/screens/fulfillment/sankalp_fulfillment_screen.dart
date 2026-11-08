@@ -25,48 +25,10 @@ class _SankalpFulfillmentScreenState extends State<SankalpFulfillmentScreen> {
     final data = await _api.fetchSankalps();
     if (mounted) {
       setState(() {
-        _fulfillmentList = data.isNotEmpty ? data : _fallbackList();
+        _fulfillmentList = data;
         _isLoading = false;
       });
     }
-  }
-
-  List<Map<String, dynamic>> _fallbackList() {
-    return [
-      {
-        'id': '#OP-PUJA-1048',
-        'orderId': 1048,
-        'devotee': 'Amitabh Trivedi',
-        'gotra': 'Bharadwaj Gotra',
-        'puja': 'Shri Kashi Vishwanath Rudrabhishek',
-        'temple': 'Shri Kashi Vishwanath Dham, Varanasi',
-        'videoUrl': '',
-        'awb': '',
-        'status': 'Video Pending',
-      },
-      {
-        'id': '#OP-PUJA-1047',
-        'orderId': 1047,
-        'devotee': 'Pooja Agarwal',
-        'gotra': 'Garg Gotra',
-        'puja': 'Diwali Maha Lakshmi Havan',
-        'temple': 'Varanasi Sanctum Mandap',
-        'videoUrl': 'https://stream.onlinepuja.live/sankalp/1047.mp4',
-        'awb': '',
-        'status': 'Prasad Dispatch Pending',
-      },
-      {
-        'id': '#OP-PUJA-1046',
-        'orderId': 1046,
-        'devotee': 'Suresh Kulkarni',
-        'gotra': 'Kashyap Gotra',
-        'puja': 'Dev Deepawali 108 Deepdaan',
-        'temple': 'Dashashwamedh Ghat, Kashi',
-        'videoUrl': 'https://stream.onlinepuja.live/sankalp/1046.mp4',
-        'awb': 'BLUEDART-8829104',
-        'status': 'Fulfilled',
-      },
-    ];
   }
 
   void _showAttachVideoDialog(Map<String, dynamic> item) {
@@ -96,7 +58,20 @@ class _SankalpFulfillmentScreenState extends State<SankalpFulfillmentScreen> {
                 }
               });
               Navigator.pop(ctx);
-              final orderId = int.tryParse(item['id'].toString().replaceAll(RegExp(r'[^0-9]'), '')) ?? 1048;
+              final rawOrderId = item['orderId'] ?? item['id'];
+              final orderId = (rawOrderId is num)
+                  ? rawOrderId.toInt()
+                  : int.tryParse(rawOrderId.toString().replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+              if (orderId <= 0) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid Order ID. Cannot fulfill sankalp.'), backgroundColor: Colors.redAccent),
+                  );
+                }
+                return;
+              }
+
               await ManagerApiService().fulfillSankalp(
                 orderId: orderId,
                 videoUrl: vid,
@@ -112,7 +87,9 @@ class _SankalpFulfillmentScreenState extends State<SankalpFulfillmentScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      videoCtrl.dispose();
+    });
   }
 
   void _showAddCourierDialog(Map<String, dynamic> item) {
@@ -140,7 +117,20 @@ class _SankalpFulfillmentScreenState extends State<SankalpFulfillmentScreen> {
                 item['status'] = 'Fulfilled';
               });
               Navigator.pop(ctx);
-              final orderId = int.tryParse(item['id'].toString().replaceAll(RegExp(r'[^0-9]'), '')) ?? 1048;
+              final rawOrderId = item['orderId'] ?? item['id'];
+              final orderId = (rawOrderId is num)
+                  ? rawOrderId.toInt()
+                  : int.tryParse(rawOrderId.toString().replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+              if (orderId <= 0) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid Order ID. Cannot fulfill sankalp.'), backgroundColor: Colors.redAccent),
+                  );
+                }
+                return;
+              }
+
               await ManagerApiService().fulfillSankalp(
                 orderId: orderId,
                 videoUrl: item['videoUrl']?.toString() ?? '',
@@ -156,7 +146,9 @@ class _SankalpFulfillmentScreenState extends State<SankalpFulfillmentScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      awbCtrl.dispose();
+    });
   }
 
   @override
@@ -172,18 +164,51 @@ class _SankalpFulfillmentScreenState extends State<SankalpFulfillmentScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: ManagerTheme.brandGold))
           : RefreshIndicator(
               onRefresh: _loadLiveSankalps,
-              child: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: _fulfillmentList.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, i) {
-          final o = _fulfillmentList[i];
-          final isDone = o['status'] == 'Fulfilled';
-          final hasVideo = (o['videoUrl'] as String).isNotEmpty;
-          final hasAwb = (o['awb'] as String).isNotEmpty;
+              color: ManagerTheme.brandGold,
+              child: _fulfillmentList.isEmpty
+                  ? Center(
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(24),
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: ManagerTheme.surfaceDark,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: const Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('🛕', style: TextStyle(fontSize: 40)),
+                              SizedBox(height: 12),
+                              Text(
+                                'No Pending Sankalps Found',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                'All current devotee puja orders have been completed or no new sankalp requests are queued.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 12, color: Colors.white60),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _fulfillmentList.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, i) {
+                        final o = _fulfillmentList[i];
+                        final isDone = o['status'] == 'Fulfilled';
+                        final hasVideo = (o['videoUrl']?.toString() ?? '').isNotEmpty;
+                        final hasAwb = (o['awb']?.toString() ?? '').isNotEmpty;
 
           return Container(
             padding: const EdgeInsets.all(16),

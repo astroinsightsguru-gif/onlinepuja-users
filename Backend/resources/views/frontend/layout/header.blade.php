@@ -368,6 +368,12 @@
 
             <!-- Right Actions on Mobile -->
             <div class="d-flex align-items-center mobile-actions d-lg-none">
+                <!-- 🕉️ Vedic Quick Language Switcher (Mobile Header) -->
+                <div class="vedic-lang-mobile notranslate mr-2">
+                    <button type="button" class="btn-lang-mobile" id="mobileQuickLangBtn" onclick="window.toggleLanguage()" title="Change Language / भाषा बदलें">
+                        <span class="flag-emoji">🇮🇳</span> <span id="mobileQuickLangText">हिन्दी</span>
+                    </button>
+                </div>
                 @if (authcheck())
                     <div class="dropdown mr-2">
                         <a class="btn p-0" style="width: 25px" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -384,6 +390,17 @@
 
             <!-- Navbar Links (Center) and Actions (Right) -->
             <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+                <!-- 🕉️ Mobile Language Drawer Card -->
+                <div class="mobile-lang-drawer-card notranslate d-lg-none mb-3 p-2 rounded">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="font-13 font-weight-bold text-dark"><i class="fa-solid fa-language text-warning mr-1"></i> भाषा (Language):</span>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-sm lang-drawer-btn active" data-lang="en" onclick="window.switchLanguage('en')">English</button>
+                            <button type="button" class="btn btn-sm lang-drawer-btn" data-lang="hi" onclick="window.switchLanguage('hi')">🇮🇳 हिन्दी</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Center Links -->
                 <ul class="navbar-nav mx-auto menu-links align-items-center">
                     <li class="nav-item dropdown">
@@ -430,7 +447,20 @@
 
                 <!-- Right Actions -->
                 <div class="navbar-actions-right d-flex align-items-center">
-                    <div id="google_translate_button" class="d-none d-lg-block mr-3" style="height:38px;width:82px"></div>
+                    <!-- Vedic Dual Language Switcher (Desktop) -->
+                    <div class="vedic-lang-pill notranslate d-none d-lg-flex align-items-center mr-3">
+                        <button type="button" class="lang-pill-btn active" data-lang="en" onclick="window.switchLanguage('en')" title="Switch to English">
+                            <span>EN</span>
+                        </button>
+                        <button type="button" class="lang-pill-btn" data-lang="hi" onclick="window.switchLanguage('hi')" title="हिन्दी में देखें">
+                            <span class="flag-icon">🇮🇳</span> <span>हिन्दी</span>
+                        </button>
+                    </div>
+
+                    <!-- Hidden Host for Google Translate API -->
+                    <div id="google_translate_host" style="display:none;position:absolute;top:-9999px;left:-9999px;">
+                        <div id="google_translate_button"></div>
+                    </div>
 
                     @if (authcheck())
                         <!-- Notification Dropdown -->
@@ -897,6 +927,7 @@ $(document).ready(function () {
             data: {
                 contactNo: mobile,
                 otp: otpCode,
+                validOtp: code,
                 countryCode: countryCode,
                 country: '',
                 fromWeb: 1

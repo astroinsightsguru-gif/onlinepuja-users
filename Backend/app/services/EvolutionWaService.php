@@ -14,9 +14,25 @@ class EvolutionWaService
 
     public function __construct()
     {
-        $this->apiUrl = rtrim(Vault::get('evolution_api_url', config('services.evolution.url', 'https://wa.vmstudio.digital')), '/');
+        $defaultUrl = 'http://127.0.0.1:18080';
+        $this->apiUrl = rtrim(Vault::get('evolution_api_url', config('services.evolution.url', $defaultUrl)), '/');
         $this->apiKey = Vault::get('evolution_api_key', config('services.evolution.key', 'bebf8554b69b4eff665465956069890dadeb84547a964ba0ac129e43e98576a2'));
         $this->instance = Vault::get('evolution_instance', config('services.evolution.instance', 'onlinepuja'));
+    }
+
+    /**
+     * Create an HTTP client configured with IPv4 resolve and Evolution API headers.
+     */
+    protected function client(int $timeout = 10)
+    {
+        return Http::withOptions([
+            'curl' => [
+                (defined('CURLOPT_IPRESOLVE') ? CURLOPT_IPRESOLVE : 113) => (defined('CURL_IPRESOLVE_V4') ? CURL_IPRESOLVE_V4 : 1),
+            ],
+        ])->withHeaders([
+            'apikey'       => $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout($timeout);
     }
 
     /**
@@ -36,14 +52,22 @@ class EvolutionWaService
      */
     public function sendText(string $mobile, string $text): array
     {
+        // Pre-flight connection check to prevent 12-second cURL timeout on unlinked instances
+        $conn = $this->getConnectionState();
+        if (!empty($conn['ok']) && ($conn['state'] ?? '') !== 'open') {
+            $st = $conn['state'] ?? 'disconnected';
+            return [
+                'ok'    => false,
+                'state' => $st,
+                'error' => "WhatsApp instance is '{$st}'. Please click 'Scan WhatsApp QR' to pair your device first.",
+            ];
+        }
+
         $number = $this->cleanNumber($mobile);
         $endpoint = "{$this->apiUrl}/message/sendText/{$this->instance}";
 
         try {
-            $res = Http::withHeaders([
-                'apikey'       => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->timeout(12)->post($endpoint, [
+            $res = $this->client(12)->post($endpoint, [
                 'number' => $number,
                 'text'   => $text,
             ]);
@@ -70,6 +94,10 @@ class EvolutionWaService
         string $mediaType = 'video',
         ?string $fileName = null
     ): array {
+        if (empty($mediaUrl)) {
+            return $this->sendText($mobile, $caption);
+        }
+
         $number = $this->cleanNumber($mobile);
         $endpoint = "{$this->apiUrl}/message/sendMedia/{$this->instance}";
 
@@ -83,8 +111,8 @@ class EvolutionWaService
                 $localPath = storage_path('app/public/' . substr($localRel, 8));
             }
             if (file_exists($localPath) && filesize($localPath) < 15 * 1024 * 1024) {
-                $mime = mime_content_type($localPath) ?: ($mediaType === 'video' ? 'video/mp4' : 'image/jpeg');
-                $mediaPayload = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($localPath));
+                // Evolution API v2 expects raw base64 string WITHOUT data: URI scheme
+                $mediaPayload = base64_encode(file_get_contents($localPath));
             }
         }
 
@@ -100,10 +128,7 @@ class EvolutionWaService
         }
 
         try {
-            $res = Http::withHeaders([
-                'apikey'       => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->timeout(30)->post($endpoint, $payload);
+            $res = $this->client(30)->post($endpoint, $payload);
 
             if ($res->successful()) {
                 return ['ok' => true, 'data' => $res->json()];
@@ -152,10 +177,7 @@ class EvolutionWaService
         ];
 
         try {
-            $res = Http::withHeaders([
-                'apikey'       => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->timeout(12)->post($endpoint, $payload);
+            $res = $this->client(12)->post($endpoint, $payload);
 
             if ($res->successful()) {
                 return ['ok' => true, 'data' => $res->json()];
@@ -182,7 +204,7 @@ class EvolutionWaService
     {
         $endpoint = "{$this->apiUrl}/instance/connectionState/{$this->instance}";
         try {
-            $res = Http::withHeaders(['apikey' => $this->apiKey])->timeout(6)->get($endpoint);
+            $res = $this->client(6)->get($endpoint);
             if ($res->successful()) {
                 $data = $res->json();
                 $state = $data['instance']['state'] ?? 'unknown';
@@ -201,7 +223,7 @@ class EvolutionWaService
     {
         $endpoint = "{$this->apiUrl}/instance/connect/{$this->instance}";
         try {
-            $res = Http::withHeaders(['apikey' => $this->apiKey])->timeout(10)->get($endpoint);
+            $res = $this->client(10)->get($endpoint);
             if ($res->successful()) {
                 $data = $res->json();
                 return [
@@ -212,6 +234,62 @@ class EvolutionWaService
                 ];
             }
             return ['ok' => false, 'error' => 'HTTP ' . $res->status()];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Request an 8-character Pairing Code for Linking WhatsApp via Phone Number.
+     */
+    public function requestPairingCode(string $phone = '917007158014'): array
+    {
+        $clean = $this->cleanNumber($phone);
+        $endpoint = "{$this->apiUrl}/instance/connect/{$this->instance}?number={$clean}";
+        try {
+            $res = $this->client(15)->get($endpoint);
+            if ($res->successful()) {
+                $data = $res->json();
+                $pairing = $data['pairingCode'] ?? null;
+                if (!empty($pairing) && strlen($pairing) === 8) {
+                    $pairing = substr($pairing, 0, 4) . '-' . substr($pairing, 4);
+                }
+                return [
+                    'ok'          => true,
+                    'pairingCode' => $pairing,
+                    'base64'      => $data['base64'] ?? null,
+                    'code'        => $data['code'] ?? null,
+                ];
+            }
+            return ['ok' => false, 'error' => 'HTTP ' . $res->status() . ' : ' . $res->body()];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Restart instance socket.
+     */
+    public function restartInstance(): array
+    {
+        $endpoint = "{$this->apiUrl}/instance/restart/{$this->instance}";
+        try {
+            $res = $this->client(15)->post($endpoint);
+            return ['ok' => $res->successful(), 'data' => $res->json()];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Logout disconnected session to generate a clean fresh QR.
+     */
+    public function logoutInstance(): array
+    {
+        $endpoint = "{$this->apiUrl}/instance/logout/{$this->instance}";
+        try {
+            $res = $this->client(15)->delete($endpoint);
+            return ['ok' => $res->successful(), 'data' => $res->json()];
         } catch (\Throwable $e) {
             return ['ok' => false, 'error' => $e->getMessage()];
         }

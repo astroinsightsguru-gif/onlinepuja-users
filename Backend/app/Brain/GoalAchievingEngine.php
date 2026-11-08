@@ -141,7 +141,7 @@ class GoalAchievingEngine
 
             if ($topKeyword) {
                 // Trigger content generation for the highest value striking distance keyword
-                Artisan::call('content:generate', ['--count' => 1]);
+                Artisan::call('content:generate', ['--limit' => 1]);
                 $actions[] = [
                     'action' => 'content_sprint',
                     'detail' => "Triggered targeted SEO generation for keyword: '{$topKeyword->phrase}' (Est. Vol: {$topKeyword->est_volume}).",
@@ -158,7 +158,10 @@ class GoalAchievingEngine
 
         // Action 2: Trigger Video Reel Synthesis Burst
         try {
-            Artisan::call('media:video', ['--count' => 1]);
+            Artisan::call('media:video', [
+                'prompt' => 'Sacred Vedic Aarti and Live Darshan at Kashi Vishwanath Temple',
+                '--preset' => 'reel'
+            ]);
             $actions[] = [
                 'action' => 'video_reel_synthesis',
                 'detail' => 'Synthesized native 1080x1920 MP4 video reel with Vedic audio to drive social referral traffic.',
@@ -177,14 +180,15 @@ class GoalAchievingEngine
             try {
                 $b2bLeads = DB::table('b2b_leads')
                     ->whereNotNull('phone')
-                    ->where('is_active', 1)
+                    ->where('status', '!=', 'unsubscribed')
                     ->limit(5)
                     ->get();
 
                 if ($b2bLeads->isNotEmpty()) {
+                    Artisan::call('b2b:campaign-dispatch', ['--limit' => 5]);
                     $actions[] = [
                         'action' => 'b2b_whatsapp_dispatch',
-                        'detail' => "Enqueued promotional campaign to {$b2bLeads->count()} verified B2B travel & pandit partners to drive booking referrals.",
+                        'detail' => "Dispatched partnership campaign across {$b2bLeads->count()} verified B2B travel & pandit partners to drive booking referrals.",
                         'status' => 'success'
                     ];
                 }

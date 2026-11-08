@@ -46,7 +46,11 @@ class _MasterBookingsScreenState extends State<MasterBookingsScreen> {
       return id.contains(q) || devotee.contains(q) || gotra.contains(q) || title.contains(q);
     }).toList();
 
-    final totalRevenue = _bookings.fold<double>(0, (acc, b) => acc + ((b['amount'] as num?)?.toDouble() ?? 0));
+    final totalRevenue = _bookings.fold<double>(0, (acc, b) {
+      final amt = b['amount'];
+      final val = (amt is num) ? amt.toDouble() : (double.tryParse(amt?.toString() ?? '') ?? 0.0);
+      return acc + val;
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -132,7 +136,25 @@ class _MasterBookingsScreenState extends State<MasterBookingsScreen> {
                     const SizedBox(height: 18),
 
                     // Bookings List
-                    ListView.separated(
+                    if (filtered.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: ManagerTheme.surfaceDark,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            _searchQuery.isNotEmpty ? 'No bookings match "$_searchQuery".' : 'No bookings found for the selected filter.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 12, color: Colors.white60),
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: filtered.length,
@@ -143,7 +165,8 @@ class _MasterBookingsScreenState extends State<MasterBookingsScreen> {
                         final devotee = b['devotee']?.toString() ?? 'Devotee';
                         final gotra = b['gotra']?.toString() ?? 'Kashyap';
                         final title = b['title']?.toString() ?? 'Sacred Puja';
-                        final amount = (b['amount'] as num?)?.toDouble() ?? 1500.0;
+                        final amtRaw = b['amount'];
+                        final amount = (amtRaw is num) ? amtRaw.toDouble() : (double.tryParse(amtRaw?.toString() ?? '') ?? 1500.0);
                         final status = b['status']?.toString() ?? 'confirmed';
                         final hasVideo = b['has_video'] == true;
                         final awb = b['awb']?.toString();

@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\Http;
  */
 class KeywordResearch
 {
-    protected const SEEDS_DEFAULT = 'online puja booking,online pandit booking for puja,book pandit online,pandit in varanasi for puja,best pandit for puja in varanasi,online puja booking varanasi,kashi vishwanath rudrabhishek online booking,dev deepawali varanasi deepdaan,diwali lakshmi puja booking,satyanarayan puja pandit online,pind daan in varanasi,chhat puja online booking,griha pravesh pandit booking,mahamrityunjaya jaap varanasi,kaal sarp dosh puja varanasi,kundli matching online,astrology consultation,havan online,e-puja booking';
+    protected const SEEDS_DEFAULT = 'online puja,puja booking,book pandit online,kundli matching online,astrology consultation,havan online,e-puja';
 
-    protected const COMMERCIAL = ['online', 'booking', 'book', 'hire', 'price', 'cost', 'service', 'best', 'top', 'expert', 'pandit', 'puja', 'varanasi', 'kashi'];
+    protected const COMMERCIAL = ['online', 'booking', 'book', 'hire', 'price', 'cost', 'service', 'best', 'top', 'expert'];
 
     public function __construct(protected ProviderManager $ai)
     {
@@ -33,26 +33,40 @@ class KeywordResearch
     /** Run the full sweep. Returns per-source counts. */
     public function run(): array
     {
-        $report = ['autocomplete' => 0, 'ai' => 0];
+        // 'ai' was English-only. keywords:seed-festival is the ONLY source that
+        // has ever produced a Hindi keyword (a fixed festival template), which
+        // starves the pipeline's own Hindi drafting path — Critic has a
+        // Devanagari check, a separate char floor, a Hindi stock-phrase list,
+        // and pickDiverse() explicitly tries to keep a run language-diverse —
+        // all built for a supply this command never fed.
+        $report = ['autocomplete' => 0, 'ai' => 0, 'ai-hi' => 0];
         $seen = [];
 
         foreach ($this->seeds() as $seed) {
             foreach ($this->autocomplete($seed) as $phrase) {
-                $seen[$phrase] = ['source' => 'autocomplete', 'cluster' => $seed];
+                $seen[$phrase] = ['source' => 'autocomplete', 'cluster' => $seed, 'language' => 'en'];
             }
         }
 
-        // AI expansion pass (one call, many seeds).
-        $aiList = $this->aiExpand();
-
-        foreach ($aiList as $phrase) {
+        // AI expansion pass — one call per language, many seeds each.
+        foreach ($this->aiExpand('en') as $phrase) {
             if (! isset($seen[$phrase])) {
-                $seen[$phrase] = ['source' => 'ai', 'cluster' => 'expansion'];
+                $seen[$phrase] = ['source' => 'ai', 'cluster' => 'expansion', 'language' => 'en'];
+            }
+        }
+
+        foreach ($this->aiExpand('hi') as $phrase) {
+            // Hindi phrases are Devanagari, so they can never collide with an
+            // English key in $seen — no need to guard for it, but do skip
+            // anything the model returned in Latin script by mistake, which
+            // would otherwise silently mislabel an English phrase as 'hi'.
+            if (preg_match('/[\x{0900}-\x{097F}]/u', $phrase) && ! isset($seen[$phrase])) {
+                $seen[$phrase] = ['source' => 'ai-hi', 'cluster' => 'expansion', 'language' => 'hi'];
             }
         }
 
         foreach ($seen as $phrase => $meta) {
-            $this->store($phrase, $meta['source'], $meta['cluster']);
+            $this->store($phrase, $meta['source'], $meta['cluster'], $meta['language']);
             $report[$meta['source']]++;
         }
 
@@ -81,18 +95,27 @@ class KeywordResearch
         return array_slice($out, 0, 8);
     }
 
-    protected function aiExpand(): array
+    protected function aiExpand(string $language = 'en'): array
     {
         $seeds = implode(', ', $this->seeds());
 
-        $res = $this->ai->chat(
-            'You are an SEO keyword researcher for an Indian online puja booking platform. Reply with STRICT JSON only.',
-            "Seed topics: {$seeds}\n".
-            'Generate 18 realistic search phrases Indian users would type, mixing informational and booking-intent, '.
-            '3-6 words each, lowercase, no duplicates, no quotes inside. '.
-            'JSON shape: {"keywords":["phrase one","phrase two"]}',
-            ['json' => true, 'temperature' => 0.9, 'max_tokens' => 600]
-        );
+        if ($language === 'hi') {
+            $system = 'You are an SEO keyword researcher for an Indian online puja booking platform. Reply with STRICT JSON only.';
+            $prompt = "Seed topics (translate/adapt the intent, do not transliterate literally): {$seeds}\n".
+                'Generate 18 realistic search phrases in HINDI (Devanagari script) that Indian users would actually type '.
+                'into Google — natural everyday Hindi as spoken, not stiff literary translation. Keep widely-used English '.
+                'words (online, booking, WhatsApp) exactly as commonly typed. Mix informational and booking-intent, '.
+                '3-6 words each, no duplicates, no quotes inside. Every phrase must contain Devanagari characters. '.
+                'JSON shape: {"keywords":["वाक्यांश एक","वाक्यांश दो"]}';
+        } else {
+            $system = 'You are an SEO keyword researcher for an Indian online puja booking platform. Reply with STRICT JSON only.';
+            $prompt = "Seed topics: {$seeds}\n".
+                'Generate 18 realistic search phrases Indian users would type, mixing informational and booking-intent, '.
+                '3-6 words each, lowercase, no duplicates, no quotes inside. '.
+                'JSON shape: {"keywords":["phrase one","phrase two"]}';
+        }
+
+        $res = $this->ai->chat($system, $prompt, ['json' => true, 'temperature' => 0.9, 'max_tokens' => 700]);
 
         if (! $res['ok']) {
             return [];
@@ -103,9 +126,14 @@ class KeywordResearch
         return array_slice(array_map('trim', (array) ($j['keywords'] ?? [])), 0, 18);
     }
 
-    protected function store(string $phrase, string $source, string $cluster): void
+    protected function store(string $phrase, string $source, string $cluster, string $language = 'en'): void
     {
-        if (strlen($phrase) < 4 || strlen($phrase) > 90) {
+        // mb_strlen, not strlen: Devanagari is multi-byte, so a byte-length
+        // check under-counts a Hindi phrase's true length against these bounds
+        // by roughly 2-3x and would reject perfectly good short phrases.
+        $len = mb_strlen($phrase);
+
+        if ($len < 4 || $len > 90) {
             return;
         }
 
@@ -114,6 +142,7 @@ class KeywordResearch
             [
                 'source' => $source,
                 'cluster' => $cluster,
+                'language' => $language,
                 'intent' => $this->intent($phrase),
                 'difficulty' => $this->difficulty($phrase),
                 'est_volume' => null, // filled once GSC OAuth is wired

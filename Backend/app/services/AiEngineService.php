@@ -56,7 +56,10 @@ class AiEngineService
             if ($tier === 'omniroute' && !empty($creds['omniroute_key'])) {
                 try {
                     $url = rtrim($creds['omniroute_url'] ?? 'https://ai.vmstudio.digital', '/') . '/v1/chat/completions';
-                    $model = (!empty($creds['model_omniroute']) && $creds['model_omniroute'] !== 'auto/pro-chat') ? $creds['model_omniroute'] : 'auto/best-fast';
+                    $rawModel = $creds['model_omniroute'] ?? '';
+                    $model = (!empty($rawModel) && $rawModel !== 'auto/pro-chat' && $rawModel !== 'auto/gemini') 
+                        ? $rawModel 
+                        : 'agy/gemini-3.1-flash-lite';
                     $res = $this->client->post($url, [
                         'headers' => [
                             'Authorization' => 'Bearer ' . $creds['omniroute_key'],
@@ -71,7 +74,7 @@ class AiEngineService
                             'temperature' => 0.7,
                             'max_tokens'  => 1200,
                         ],
-                        'timeout' => 20,
+                        'timeout' => 12,
                     ]);
                     $body = json_decode($res->getBody(), true);
                     $text = $body['choices'][0]['message']['content'] ?? '';
@@ -134,9 +137,10 @@ class AiEngineService
                 $orKey = !empty($creds['openrouter_key']) ? $creds['openrouter_key'] : env('OPENROUTER_API_KEY');
                 if (!empty($orKey)) {
                     try {
-                        $model = !empty($creds['model_openrouter']) && str_contains($creds['model_openrouter'], ':free') 
-                            ? $creds['model_openrouter'] 
-                            : 'deepseek/deepseek-r1:free';
+                        $rawModel = $creds['model_openrouter'] ?? '';
+                        $model = (!empty($rawModel) && !str_contains($rawModel, 'llama-3.3-70b')) 
+                            ? $rawModel 
+                            : 'nvidia/nemotron-3.5-lightning:free';
                         $res = $this->client->post('https://openrouter.ai/api/v1/chat/completions', [
                             'headers' => [
                                 'Authorization' => 'Bearer ' . $orKey,
@@ -152,7 +156,7 @@ class AiEngineService
                                 ],
                                 'temperature' => 0.7,
                             ],
-                            'timeout' => 20,
+                            'timeout' => 12,
                         ]);
                         $body = json_decode($res->getBody(), true);
                         $text = $body['choices'][0]['message']['content'] ?? '';
@@ -250,9 +254,20 @@ class AiEngineService
                         'timeout' => 25,
                     ]);
                     $data = json_decode($res->getBody(), true);
-                    $imgUrl = !empty($data['data'][0]['url']) 
-                        ? $data['data'][0]['url'] 
-                        : (!empty($data['data'][0]['b64_json']) ? 'data:image/png;base64,' . $data['data'][0]['b64_json'] : null);
+                    $imgUrl = !empty($data['data'][0]['url']) ? $data['data'][0]['url'] : null;
+
+                    if (!$imgUrl && !empty($data['data'][0]['b64_json'])) {
+                        $rawBin = base64_decode($data['data'][0]['b64_json']);
+                        if ($rawBin && strlen($rawBin) > 500) {
+                            $mediaDir = public_path('storage/brain_media');
+                            if (!is_dir($mediaDir)) {
+                                @mkdir($mediaDir, 0775, true);
+                            }
+                            $fName = 'brain_' . \Illuminate\Support\Str::random(18) . '_' . $w . 'x' . $h . '.jpg';
+                            file_put_contents($mediaDir . '/' . $fName, $rawBin);
+                            $imgUrl = asset('storage/brain_media/' . $fName);
+                        }
+                    }
 
                     if (!empty($imgUrl)) {
                         return [
@@ -385,12 +400,41 @@ class AiEngineService
         $enhanced = VedicPromptEnhancer::enhance($rawTopic, 'video_reel', '9:16');
         $videoPrompt = $enhanced['prompt'];
         $creds = Vault::aiCredentials();
-        $chain = array_filter(array_map('trim', explode(',', (string) ($creds['ai_video_chain'] ?? 'omniroute,huggingface,cinematic_reel'))));
+        $chain = array_filter(array_map('trim', explode(',', (string) ($creds['ai_video_chain'] ?? 'ffmpeg_reel,omniroute,cinematic_reel'))));
 
         foreach ($chain as $tier) {
             $start = microtime(true);
 
-            // Tier 1: OmniRoute Video Gateway
+            // Tier 1: Native FFmpeg 9:16 Sacred Reel Synthesizer (Zero-cost, broadcast-ready 1080x1920)
+            if ($tier === 'ffmpeg_reel' || $tier === 'cinematic_reel') {
+                try {
+                    $driver = new \App\AI\Drivers\FfmpegReelVideoDriver();
+                    $brandCfg = Vault::videoBranding();
+                    $res = $driver->create($videoPrompt, [
+                        'seconds'  => $duration,
+                        'image_url'=> $imageUrl,
+                        'title'    => $rawTopic,
+                        'subtitle' => $brandCfg['video_brand_tagline'] ?? 'वाराणसी से सीधा लाइव संकल्प एवं दर्शन',
+                    ]);
+
+                    if (!empty($res['ok']) && !empty($res['url'])) {
+                        return [
+                            'success'   => true,
+                            'video_url' => asset($res['url']),
+                            'is_mp4'    => true,
+                            'prompt'    => $videoPrompt,
+                            'provider'  => 'Native FFmpeg 9:16 Sacred Reel Synthesizer (HQ Free)',
+                            'model'     => 'h264-1080x1920-hq',
+                            'tier'      => 1,
+                            'time_ms'   => round((microtime(true) - $start) * 1000),
+                        ];
+                    }
+                } catch (\Throwable $e) {
+                    Log::info("FFmpeg Reel Tier bypassed: " . $e->getMessage());
+                }
+            }
+
+            // Tier 2: OmniRoute Video Gateway
             if ($tier === 'omniroute' && !empty($creds['omniroute_key'])) {
                 try {
                     $url = rtrim($creds['omniroute_url'] ?? 'https://ai.vmstudio.digital', '/') . '/v1/videos/generations';
@@ -510,62 +554,27 @@ class AiEngineService
 
     /**
      * Synthesizes a genuine broadcast-ready 1080x1920 (9:16) H.264 MP4 Video Reel from an AI visual frame.
-     * Uses native FFmpeg with smooth Ken Burns cinematic camera push-in and ambient audio.
+     * Delegates to FfmpegReelVideoDriver for 1080x1920 broadcast quality, Devanagari HarfBuzz shaping, and OnlinePuja branding.
      */
-    public function synthesizeMp4Reel(string $imageUrlOrBinary, string $identifier, int $duration = 5): ?string
+    public function synthesizeMp4Reel(string $imageUrlOrBinary, string $identifier, int $duration = 5, array $branding = []): ?string
     {
-        $reelsDir = public_path('storage/reels');
-        if (!is_dir($reelsDir)) {
-            @mkdir($reelsDir, 0775, true);
-        }
-
-        $tmpImg = sys_get_temp_dir() . '/frame_' . $identifier . '.png';
-        $outMp4 = $reelsDir . '/reel_' . $identifier . '.mp4';
-        $publicUrl = asset('storage/reels/reel_' . $identifier . '.mp4');
-
         try {
-            if (str_starts_with($imageUrlOrBinary, 'data:image')) {
-                $data = substr($imageUrlOrBinary, strpos($imageUrlOrBinary, ',') + 1);
-                file_put_contents($tmpImg, base64_decode($data));
-            } elseif (filter_var($imageUrlOrBinary, FILTER_VALIDATE_URL)) {
-                $client = new \GuzzleHttp\Client(['timeout' => 20]);
-                $res = $client->get($imageUrlOrBinary);
-                file_put_contents($tmpImg, (string) $res->getBody());
-            } elseif (file_exists($imageUrlOrBinary)) {
-                copy($imageUrlOrBinary, $tmpImg);
-            } else {
-                return null;
+            $driver = new \App\AI\Drivers\FfmpegReelVideoDriver();
+            $brandCfg = Vault::videoBranding();
+            $res = $driver->create($branding['title'] ?? 'Sacred Vedic Reel', [
+                'seconds'   => $duration,
+                'image_url' => $imageUrlOrBinary,
+                'title'     => $branding['title'] ?? $brandCfg['video_brand_title'] ?? 'OnlinePuja.live',
+                'subtitle'  => $branding['subtitle'] ?? $brandCfg['video_brand_tagline'] ?? 'वाराणसी से सीधा लाइव संकल्प एवं दर्शन',
+                'cta'       => $branding['cta'] ?? ($brandCfg['video_brand_phone'] . ' | ' . $brandCfg['video_brand_cta']),
+            ]);
+
+            if (!empty($res['ok']) && !empty($res['url'])) {
+                return asset($res['url']);
             }
-
-            if (!file_exists($tmpImg) || filesize($tmpImg) < 100) {
-                return null;
-            }
-
-            $totalFrames = $duration * 25;
-            // Ken-Burns slow smooth cinematic camera push-in zoom and vertical balance
-            $vf = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,zoompan=z='min(zoom+0.0012,1.22)':d={$totalFrames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=25,format=yuv420p";
-
-            // Execute FFmpeg with silent/sacred stereo audio track for full Instagram Reels / Facebook compliance
-            $cmd = sprintf(
-                'ffmpeg -loop 1 -i %s -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -vf %s -c:v libx264 -preset ultrafast -crf 23 -c:a aac -shortest -t %d -pix_fmt yuv420p -y %s 2>&1',
-                escapeshellarg($tmpImg),
-                escapeshellarg($vf),
-                $duration,
-                escapeshellarg($outMp4)
-            );
-
-            exec($cmd, $output, $returnCode);
-            @unlink($tmpImg);
-
-            if ($returnCode === 0 && file_exists($outMp4) && filesize($outMp4) > 1000) {
-                return $publicUrl;
-            }
-
-            Log::warning("FFmpeg reel synthesis returned code $returnCode: " . implode("\n", array_slice($output, -10)));
             return null;
         } catch (\Throwable $e) {
             Log::error("FFmpeg reel synthesis exception: " . $e->getMessage());
-            @unlink($tmpImg);
             return null;
         }
     }

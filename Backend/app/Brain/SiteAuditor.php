@@ -15,6 +15,7 @@ class SiteAuditor
         $urls = $this->sitemapUrls($maxUrls);
         $issues = 0;
         $pages = 0;
+        $resolved = 0;
 
         foreach ($urls as $url) {
             try {
@@ -35,9 +36,22 @@ class SiteAuditor
                 $this->upsert($issue + ['page_url' => $url]);
                 $issues++;
             }
+
+            // upsert() only ever adds or refreshes what THIS pass detects —
+            // an issue a prior scan found that no longer reproduces (fixed
+            // in code, healed by seo:fix, or the page simply changed) would
+            // otherwise sit 'open' forever, since nothing else ever revisits
+            // it. Close exactly what this scan looked for and didn't find.
+            $stillOpen = collect($found)->pluck('type')->all();
+
+            $resolved += \DB::table('seo_issues')
+                ->where('page_url', $url)
+                ->where('status', 'open')
+                ->whereNotIn('type', $stillOpen ?: [''])
+                ->update(['status' => 'auto_resolved', 'fixed_at' => now(), 'updated_at' => now()]);
         }
 
-        return ['pages_scanned' => $pages, 'issues' => $issues];
+        return ['pages_scanned' => $pages, 'issues' => $issues, 'auto_resolved' => $resolved];
     }
 
     protected function sitemapUrls(int $cap): array
@@ -49,8 +63,34 @@ class SiteAuditor
         }
 
         preg_match_all('/<loc>([^<]+)<\/loc>/i', file_get_contents($file), $m);
+        $rawUrls = array_unique($m[1] ?? []);
+        $urls = [];
 
-        return array_slice(array_unique($m[1] ?? []), 0, $cap) ?: [url('/')];
+        foreach ($rawUrls as $u) {
+            $u = trim($u);
+            if (empty($u)) {
+                continue;
+            }
+
+            // If it's a child XML sitemap (e.g. sitemap index), extract nested page URLs from it
+            if (preg_match('/\.xml(\?.*)?$/i', $u)) {
+                $subPath = public_path(ltrim(parse_url($u, PHP_URL_PATH) ?: '', '/'));
+                if (file_exists($subPath)) {
+                    preg_match_all('/<loc>([^<]+)<\/loc>/i', file_get_contents($subPath), $subM);
+                    foreach ($subM[1] ?? [] as $subU) {
+                        $subU = trim($subU);
+                        if (!preg_match('/\.xml(\?.*)?$/i', $subU) && !empty($subU)) {
+                            $urls[] = $subU;
+                        }
+                    }
+                }
+                continue;
+            }
+
+            $urls[] = $u;
+        }
+
+        return array_slice(array_unique($urls), 0, $cap) ?: [url('/')];
     }
 
     protected function analyse(string $url, string $html): array

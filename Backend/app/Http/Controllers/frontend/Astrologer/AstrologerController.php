@@ -41,10 +41,7 @@ class AstrologerController extends Controller
         $session = new Session();
         $token = $session->get('astrotoken');
 
-        $getAstrologer = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerById', [
-            'astrologerId' => astroauthcheck()['astrologerId'],
-            'token' => $token
-        ])->json();
+        $getAstrologer = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getAstrologerById(new Request(['astrologerId' => astroauthcheck()['astrologerId'], 'token' => $token]))->getData(true);
         $user = DB::table('users')->where('id', '=', $getAstrologer['recordList'][0]['userId'])->first();
 
         $categories = AstrologerCategory::all();
@@ -57,9 +54,7 @@ class AstrologerController extends Controller
         $qualifications = DegreeOrDiploma::query()->get();
         $jobs = FulltimeJob::query()->get();
         $countryTravel = TravelCountry::query()->get();
-        $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag', [
-            'token' => $token,
-        ])->json();
+        $getsystemflag = collect(DB::table('systemflag')->get()->map(function($f) { return (array)$f; }));
         $documents = AstrologerDocument::query()->get();
         $getsystemflag = collect($getsystemflag['recordList']);
         $appname = $getsystemflag->where('name', 'AppName')->first();
@@ -325,22 +320,15 @@ class AstrologerController extends Controller
 
     public function getAstrologerWallet(Request $request)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         if (!astroauthcheck())
             return redirect()->route('front.astrologerindex');
         $session = new Session();
         $token = $session->get('astrotoken');
-        $getAstrologer = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerById', [
-            'astrologerId' => astroauthcheck()['astrologerId'],
-            'token' => $token,
-        ])->json();
-        $getProfile = Http::withoutVerifying()->post(url('/') . '/api/getProfile', [
-            'token' => $token,
-        ])->json();
-        $withdrawlrequest = Http::withoutVerifying()->post(url('/') . '/api/withdrawlrequest/get', [
-            'astrologerId' => astroauthcheck()['astrologerId'],
-            'token' => $token,
-        ])->json();
+        $getAstrologer = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getAstrologerById(new Request(['astrologerId' => astroauthcheck()['astrologerId'], 'token' => $token]))->getData(true);
+        $astroUser = DB::table('users')->where('id', astroauthcheck()['id'] ?? 0)->first();
+        $getProfile = ['status' => 200, 'recordList' => $astroUser ? (array) $astroUser : [], 'data' => $astroUser ? (array) $astroUser : []];
+        $withdrawlrequest = app(\App\Http\Controllers\API\Astrologer\WithDrawController::class)->getWithdrawRequest(new Request(['astrologerId' => astroauthcheck()['astrologerId'], 'token' => $token]))->getData(true);
 
         $withdrawMethod = DB::table('withdrawmethods')->where('isActive', 1)->get();
 
@@ -358,22 +346,19 @@ class AstrologerController extends Controller
     // --------------------------------------------------------------------------------------------------------------------------------------------------------------
     public function AstrologerWalletRecharge(Request $request)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         if (!astroauthcheck())
             return redirect()->route('front.astrologerindex');
         $session = new Session();
         $token = $session->get('astrotoken');
-        $getRechargeAmount = Http::withoutVerifying()->post(url('/') . '/api/getRechargeAmount', [
-            'token' => $token,
-        ])->json();
+        $getRechargeAmount = app(\App\Http\Controllers\API\User\WalletController::class)->getRechargeAmount(new Request(['token' => $token]))->getData(true);
         $getsystemflag = SystemFlag::all();
         $gstvalue = $getsystemflag->where('name', 'Gst')->first();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
         $getamount = collect($getRechargeAmount['recordList']);
         $selectedamount = $getamount->first();
-        $getProfile = Http::withoutVerifying()->post(url('/') . '/api/getProfile', [
-            'token' => $token,
-        ])->json();
+        $astroUser = DB::table('users')->where('id', astroauthcheck()['id'] ?? 0)->first();
+        $getProfile = ['status' => 200, 'recordList' => $astroUser ? (array) $astroUser : [], 'data' => $astroUser ? (array) $astroUser : []];
         return view('frontend.astrologers.pages.astrologer-wallet-recharge', [
             'getRechargeAmount' => $getRechargeAmount,
             'gstvalue' => $gstvalue,
@@ -386,19 +371,15 @@ class AstrologerController extends Controller
     // ----------------------------------------------------------------------------------------------------------------------------------------------------------
     public function getAstrologerChat(Request $request)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         if (!astroauthcheck())
             return redirect()->route('front.astrologerindex');
         $session = new Session();
         $token = $session->get('astrotoken');
-        $getAstrologerChat = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerById', [
-            'astrologerId' => astroauthcheck()['astrologerId'],
-            'token' => $token,
-        ])->json();
+        $getAstrologerChat = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getAstrologerById(new Request(['astrologerId' => astroauthcheck()['astrologerId'], 'token' => $token]))->getData(true);
         // dd($getAstrologerChat);
-        $getProfile = Http::withoutVerifying()->post(url('/') . '/api/getProfile', [
-            'token' => $token,
-        ])->json();
+        $astroUser = DB::table('users')->where('id', astroauthcheck()['id'] ?? 0)->first();
+        $getProfile = ['status' => 200, 'recordList' => $astroUser ? (array) $astroUser : [], 'data' => $astroUser ? (array) $astroUser : []];
 
         $pujas = Puja::where('astrologerId', astroauthcheck()['astrologerId'])
             ->where('created_by', 'astrologer')
@@ -448,18 +429,14 @@ class AstrologerController extends Controller
     // ----------------------------------------------------------------------------------------------------------------------------------------------------------
     public function getAstrologerCall(Request $request)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         if (!astroauthcheck())
             return redirect()->route('front.astrologerindex');
         $session = new Session();
         $token = $session->get('astrotoken');
-        $getAstrologerCall = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerById', [
-            'astrologerId' => astroauthcheck()['astrologerId'],
-            'token' => $token,
-        ])->json();
-        $getProfile = Http::withoutVerifying()->post(url('/') . '/api/getProfile', [
-            'token' => $token,
-        ])->json();
+        $getAstrologerCall = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getAstrologerById(new Request(['astrologerId' => astroauthcheck()['astrologerId'], 'token' => $token]))->getData(true);
+        $astroUser = DB::table('users')->where('id', astroauthcheck()['id'] ?? 0)->first();
+        $getProfile = ['status' => 200, 'recordList' => $astroUser ? (array) $astroUser : [], 'data' => $astroUser ? (array) $astroUser : []];
         $pujas = Puja::where('astrologerId', astroauthcheck()['astrologerId'])
             ->where('created_by', 'astrologer')
             ->where('puja_start_datetime', '>', Carbon::now())
@@ -478,18 +455,14 @@ class AstrologerController extends Controller
     // ----------------------------------------------------------------------------------------------------------------------------------------------------------
     public function getAstrologerReport(Request $request)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         if (!astroauthcheck())
             return redirect()->route('front.astrologerindex');
         $session = new Session();
         $token = $session->get('astrotoken');
-        $getAstrologerReport = Http::withoutVerifying()->post(url('/') . '/api/getAstrologerById', [
-            'astrologerId' => astroauthcheck()['astrologerId'],
-            'token' => $token,
-        ])->json();
-        $getProfile = Http::withoutVerifying()->post(url('/') . '/api/getProfile', [
-            'token' => $token,
-        ])->json();
+        $getAstrologerReport = app(\App\Http\Controllers\API\Astrologer\AstrologerController::class)->getAstrologerById(new Request(['astrologerId' => astroauthcheck()['astrologerId'], 'token' => $token]))->getData(true);
+        $astroUser = DB::table('users')->where('id', astroauthcheck()['id'] ?? 0)->first();
+        $getProfile = ['status' => 200, 'recordList' => $astroUser ? (array) $astroUser : [], 'data' => $astroUser ? (array) $astroUser : []];
         $getsystemflag = SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
         return view('frontend.astrologers.pages.astrologer-reports', [
@@ -502,7 +475,7 @@ class AstrologerController extends Controller
     // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     public function LiveAstrologers(Request $request)
     {
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
         $liveAstrologer = DB::table('liveastro')
             ->join('astrologers', 'astrologers.id', '=', 'liveastro.astrologerId')
             ->where('liveastro.isActive', '=', true)
@@ -514,9 +487,9 @@ class AstrologerController extends Controller
             return redirect()->route('front.astrologerindex');
         $wallet_amount = '';
         if (astroauthcheck())
-            $userWalletAmount = UserWallet::where('userId', astroauthcheck())->value('amount') ?? 0;
+            $userWalletAmount = UserWallet::where('userId', astroauthcheck()['id'] ?? 0)->value('amount') ?? 0;
         $wallet_amount = $userWalletAmount;
-        $getGift = Http::withoutVerifying()->post(url('/') . '/api/getGift')->json();
+        $getGift = app(\App\Http\Controllers\API\User\GiftController::class)->getGift(new Request())->getData(true);
         $agoraAppIdValue = DB::table('systemflag')
             ->where('name', 'AgoraAppId')
             ->select('value')
@@ -525,12 +498,7 @@ class AstrologerController extends Controller
             ->where('name', 'AgoraAppCertificate')
             ->select('value')
             ->first();
-        $RtmToken = Http::withoutVerifying()->post(url('/') . '/api/generateToken', [
-            'appID' => $agoraAppIdValue->value,
-            'appCertificate' => $agorcertificateValue->value,
-            'user' => 'liveAstrologer_' . astroauthcheck()['id'],
-            'channelName' => $liveAstrologer->channelName
-        ])->json();
+        $RtmToken = app(\App\Http\Controllers\API\User\TokenGeneratorController::class)->generateToken(new Request(['appID' => $agoraAppIdValue->value ?? '', 'appCertificate' => $agorcertificateValue->value ?? '', 'user' => 'liveAstrologer_' . (astroauthcheck()['id'] ?? 0), 'channelName' => $liveAstrologer->channelName]))->getData(true);
         $getsystemflag = SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
 

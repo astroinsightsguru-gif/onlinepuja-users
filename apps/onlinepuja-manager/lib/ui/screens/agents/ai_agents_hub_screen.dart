@@ -37,127 +37,15 @@ class _AiAgentsHubScreenState extends State<AiAgentsHubScreen> with SingleTicker
     final outputs = await _api.fetchAgentOutputs();
     if (mounted) {
       setState(() {
-        _agents = agents.isNotEmpty ? agents : _fallbackAgents();
-        _outputs = outputs.isNotEmpty ? outputs : _fallbackOutputs();
+        _agents = agents;
+        _outputs = outputs;
         _isLoading = false;
       });
     }
   }
 
-  List<Map<String, dynamic>> _fallbackAgents() {
-    return [
-      {
-        'id': 1,
-        'agent_key': 'panchang',
-        'name': 'Dainik Panchang Agent',
-        'icon': '🪔',
-        'role_description': 'Computes Tithi, Muhurat, Sunrise/Sunset & synthesizes 1080x1920 MP4 Video Reels.',
-        'language': 'hi',
-        'tone': 'vedic_devotional',
-        'cron_cadence': '0 4 * * *',
-        'mode': 'supervised',
-        'is_active': true,
-        'last_run_at': null,
-        'last_status': 'success',
-      },
-      {
-        'id': 2,
-        'agent_key': 'rashifal',
-        'name': 'Rashifal & Jyotish Agent',
-        'icon': '🔮',
-        'role_description': 'Generates daily 12 Rashi forecasts, lucky numbers, Vedic remedies (upay) & puja cross-sells.',
-        'language': 'hi',
-        'tone': 'vedic_devotional',
-        'cron_cadence': '30 4 * * *',
-        'mode': 'supervised',
-        'is_active': true,
-        'last_run_at': null,
-        'last_status': 'success',
-      },
-      {
-        'id': 3,
-        'agent_key': 'seo_blog',
-        'name': 'SEO Devotional Blog Agent',
-        'icon': '✍️',
-        'role_description': 'Writes 1,800+ word devotional guides with FAQ schema and featured 1200x630 banners.',
-        'language': 'en',
-        'tone': 'modern_inspirational',
-        'cron_cadence': '0 6 * * *',
-        'mode': 'autonomous',
-        'is_active': true,
-        'last_run_at': null,
-        'last_status': 'success',
-      },
-      {
-        'id': 4,
-        'agent_key': 'festival',
-        'name': 'Festival Campaign Orchestrator',
-        'icon': '🎆',
-        'role_description': 'Orchestrates Dev Deepawali Varanasi 2026 & parallel milestone campaigns (T-14 to Day-0).',
-        'language': 'hi',
-        'tone': 'high_conversion',
-        'cron_cadence': '0 0 * * *',
-        'mode': 'supervised',
-        'is_active': true,
-        'last_run_at': null,
-        'last_status': 'success',
-      },
-      {
-        'id': 5,
-        'agent_key': 'b2b',
-        'name': 'B2B Partner Agent',
-        'icon': '💼',
-        'role_description': 'Scans travel agencies, tour operators & astrologers for 25% revenue share partnership pitches.',
-        'language': 'en',
-        'tone': 'high_conversion',
-        'cron_cadence': '0 10 * * 1,4',
-        'mode': 'supervised',
-        'is_active': true,
-        'last_run_at': null,
-        'last_status': 'success',
-      },
-      {
-        'id': 6,
-        'agent_key': 'retention',
-        'name': 'Puja Sankalp & Retention Agent',
-        'icon': '📦',
-        'role_description': 'Delivers sanctum darshan video links, Speed Post courier tracking & Gotra vault tithi reminders.',
-        'language': 'hi',
-        'tone': 'vedic_devotional',
-        'cron_cadence': '0 */2 * * *',
-        'mode': 'autonomous',
-        'is_active': true,
-        'last_run_at': null,
-        'last_status': 'success',
-      },
-    ];
-  }
-
-  List<Map<String, dynamic>> _fallbackOutputs() {
-    return [
-      {
-        'id': 101,
-        'title': 'दैनिक पंचांग (कार्तिक शुक्ल पक्ष)',
-        'content_payload': 'शुभ मुहूर्त: अभिजित (11:42 - 12:28). राहुकाल: 01:30 - 03:00. आज काशी विश्वनाथ में रुद्राभिषेक कराएं।',
-        'media_type': 'video_reel',
-        'media_url': 'https://onlinepuja.live/shorts/panchang-sample.mp4',
-        'status': 'pending_review',
-        'agent': {'name': 'Dainik Panchang Agent'},
-      },
-      {
-        'id': 102,
-        'title': '12 राशि दैनिक भविष्यफल व अचूक उपाय',
-        'content_payload': 'मेष: लाल पुष्प सूर्य देव को अर्पित करें। धनु: विष्णु जी को पीला चंदन लगाएं।',
-        'media_type': 'image',
-        'media_url': 'https://onlinepuja.live/assets/rashifal/sample.jpg',
-        'status': 'pending_review',
-        'agent': {'name': 'Rashifal & Jyotish Agent'},
-      },
-    ];
-  }
-
   Future<void> _toggleAgent(Map<String, dynamic> agent) async {
-    final id = agent['id'] as int;
+    final id = (agent['id'] as num?)?.toInt() ?? int.tryParse(agent['id']?.toString() ?? '') ?? 0;
     final currentStatus = agent['is_active'] == true;
     setState(() {
       agent['is_active'] = !currentStatus;
@@ -182,7 +70,7 @@ class _AiAgentsHubScreenState extends State<AiAgentsHubScreen> with SingleTicker
   }
 
   Future<void> _runAgentNow(Map<String, dynamic> agent) async {
-    final id = agent['id'] as int;
+    final id = (agent['id'] as num?)?.toInt() ?? int.tryParse(agent['id']?.toString() ?? '') ?? 0;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('⚡ Triggering ${agent['name']}...'),
@@ -399,7 +287,8 @@ class _AiAgentsHubScreenState extends State<AiAgentsHubScreen> with SingleTicker
                     ),
                     onPressed: () async {
                       Navigator.pop(ctx);
-                      final success = await _api.updateAgentConfig(agent['id'] as int, {
+                      final agentId = (agent['id'] as num?)?.toInt() ?? int.tryParse(agent['id']?.toString() ?? '') ?? 0;
+                      final success = await _api.updateAgentConfig(agentId, {
                         'system_prompt': promptCtrl.text,
                         'tone': selectedTone,
                         'mode': selectedMode,
@@ -422,11 +311,13 @@ class _AiAgentsHubScreenState extends State<AiAgentsHubScreen> with SingleTicker
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      promptCtrl.dispose();
+    });
   }
 
   Future<void> _approveOutput(Map<String, dynamic> output) async {
-    final id = output['id'] as int;
+    final id = (output['id'] as num?)?.toInt() ?? int.tryParse(output['id']?.toString() ?? '') ?? 0;
     final success = await _api.approveOutput(id);
     if (success) {
       setState(() {
@@ -564,6 +455,12 @@ class _AiAgentsHubScreenState extends State<AiAgentsHubScreen> with SingleTicker
   }
 
   Widget _buildAgentsTab() {
+    if (_agents.isEmpty) {
+      return const Center(
+        child: Text('No AI agents registered in swarm.', style: TextStyle(color: Colors.white54)),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _agents.length,

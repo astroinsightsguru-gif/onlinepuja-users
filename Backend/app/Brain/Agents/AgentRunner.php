@@ -116,9 +116,9 @@ class AgentRunner
             "🪔 काशी विश्वनाथ एवं दशाश्वमेध घाट पर अपने गोत्र संकल्प से दीपदान व रुद्राभिषेक पूजा बुक करें:\n" .
             "👉 https://onlinepuja.live";
 
-        // Generate high-resolution graphic URL
-        $mediaUrl = 'https://onlinepuja.live/assets/panchang/panchang-' . $now->format('Y-m-d') . '.jpg';
-        $videoReelUrl = 'https://onlinepuja.live/shorts/panchang-reel-' . $now->format('Y-m-d') . '.mp4';
+        // Generate graphic & direct devotional page URL
+        $mediaUrl = 'https://onlinepuja.live/panchang';
+        $videoReelUrl = 'https://onlinepuja.live/panchang';
 
         $output = AiAgentOutput::create([
             'agent_id' => $agent->id,
@@ -169,7 +169,7 @@ class AgentRunner
             'title' => "दैनिक १२ राशि भविष्यफल ({$dateFormatted})",
             'content_payload' => $payload,
             'media_type' => 'image',
-            'media_url' => 'https://onlinepuja.live/assets/rashifal/rashifal-' . $now->format('Y-m-d') . '.jpg',
+            'media_url' => 'https://onlinepuja.live/horoscope',
             'status' => ($agent->mode === 'autonomous') ? 'published' : 'pending_review',
             'published_at' => ($agent->mode === 'autonomous') ? now() : null,
             'distribution_channels' => ['whatsapp', 'push', 'instagram'],
@@ -194,15 +194,21 @@ class AgentRunner
             ->orderByDesc('id')
             ->first();
 
+        $payload = [];
+        if ($latestPost && !empty($latestPost->payload)) {
+            $payload = is_array($latestPost->payload) ? $latestPost->payload : (json_decode($latestPost->payload, true) ?: []);
+        }
+
         $title = $latestPost ? $latestPost->title : 'Vedic Puja Rituals and Ghat Pilgrimage in Kashi 2026';
-        $slug = $latestPost ? $latestPost->slug : 'varanasi-pilgrimage-guide';
+        $slug = $payload['slug'] ?? \Illuminate\Support\Str::slug($title);
+        $content = $payload['html'] ?? ($payload['meta_description'] ?? '1,850 words article on Varanasi sacred rituals with FAQ schema.');
 
         $output = AiAgentOutput::create([
             'agent_id' => $agent->id,
             'title' => "Published Article: {$title}",
-            'content_payload' => $latestPost ? $latestPost->content : "1,850 words article on Varanasi sacred rituals with FAQ schema.",
+            'content_payload' => is_string($content) ? mb_substr(strip_tags($content), 0, 800) . '...' : json_encode($content),
             'media_type' => 'blog',
-            'media_url' => "https://onlinepuja.live/blogs/{$slug}",
+            'media_url' => "https://onlinepuja.live/blog/{$slug}",
             'status' => 'published',
             'published_at' => now(),
             'distribution_channels' => ['blog', 'sitemap'],
@@ -216,12 +222,14 @@ class AgentRunner
      */
     protected static function runFestivalAgent(AiAgent $agent): AiAgentOutput
     {
-        $festival = 'Dev Deepawali Varanasi 2026';
-        $title = '🪔 Dev Deepawali & 108 Deepdaan on Manikarnika & Dashashwamedh Ghats';
+        $fest = DB::table('hindu_festivals')->where('date', '>=', now()->toDateString())->orderBy('date', 'ASC')->first();
+        $festival = $fest ? ($fest->name ?? 'Dev Deepawali Varanasi 2026') : 'Dev Deepawali Varanasi 2026';
+        $festDate = $fest ? Carbon::parse($fest->date)->format('d F Y') : '24 November 2026';
+        $title = "🪔 {$festival} & 108 Deepdaan on Manikarnika & Dashashwamedh Ghats";
 
-        $payload = "✨ Auspicious Dev Deepawali 2026 Campaign Package\n\n" .
-            "On Tuesday, 24 November 2026, celebrate Kartik Purnima in Kashi.\n" .
-            "Offer 108 earthen lamps (Deepdaan) on the holy Ganga with certified Vedic Purohits chanting your family Gotra Sankalp.\n\n" .
+        $payload = "✨ Auspicious {$festival} ({$festDate}) Campaign Package\n\n" .
+            "On {$festDate}, celebrate with certified Vedic Purohits chanting your family Gotra Sankalp in Varanasi.\n" .
+            "Offer sacred puja on the holy Ganga with verified rituals.\n\n" .
             "Assets Synthesized:\n" .
             "• 1200x630 Facebook/Twitter Banner\n" .
             "• 1080x1080 Square WhatsApp Card\n" .
@@ -233,7 +241,7 @@ class AgentRunner
             'title' => "Festival Campaign: {$festival}",
             'content_payload' => $payload,
             'media_type' => 'video_reel',
-            'media_url' => 'https://onlinepuja.live/shorts/dev-deepawali-varanasi-2026.mp4',
+            'media_url' => 'https://onlinepuja.live/puja/category/list',
             'status' => ($agent->mode === 'autonomous') ? 'published' : 'pending_review',
             'published_at' => ($agent->mode === 'autonomous') ? now() : null,
             'distribution_channels' => ['whatsapp', 'email', 'push'],

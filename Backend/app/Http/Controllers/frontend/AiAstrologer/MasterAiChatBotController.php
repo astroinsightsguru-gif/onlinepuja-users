@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Frontend\AiAstrologer;
+namespace App\Http\Controllers\frontend\AiAstrologer;
 
 use App\Http\Controllers\Controller;
 use App\Models\AiAstrologerModel\AiAstrologer;
@@ -35,9 +35,8 @@ class MasterAiChatBotController extends Controller
                 $page = $req->page ? $req->page : 1;
                 $paginationStart = ($page - 1) * $this->limit;
 
-                $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag')->json();
-                $getsystemflag = collect($getsystemflag['recordList']);
-                $currency = $getsystemflag->where('name', 'currencySymbol')->first();
+                $currencyRow = DB::table('systemflag')->where('name', 'currencySymbol')->first();
+                    $currency = $currencyRow ? ['name' => $currencyRow->name, 'value' => $currencyRow->value] : ['name' => 'currencySymbol', 'value' => '₹'];
                 $searchString = $req->input('searchString', '');
 
                 $aiAstrologers = AiAstrologer::query()
@@ -196,14 +195,8 @@ class MasterAiChatBotController extends Controller
     {
         if (authcheck()) {
             $userId = authcheck()['id'];
-            $session = new Session();
-            $token = $session->get('token');
-            $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag', [
-                'token' => $token,
-            ])->json();
-
-            $getsystemflag = collect($getsystemflag['recordList']);
-            $currency = $getsystemflag->where('name', 'currencySymbol')->first();
+            $currencyRow = DB::table('systemflag')->where('name', 'currencySymbol')->first();
+                    $currency = $currencyRow ? ['name' => $currencyRow->name, 'value' => $currencyRow->value] : ['name' => 'currencySymbol', 'value' => '₹'];
 
             $user_balance = UserWallet::where('userId', $userId)->value('amount');
             $astrologer = AiAstrologer::where('type', 'master')->first();
@@ -232,13 +225,8 @@ class MasterAiChatBotController extends Controller
     {
         if (authcheck()) {
             $userId = authcheck()['id'];
-            $session = new Session();
-            $token = $session->get('token');
-            $getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag', [
-                'token' => $token,
-            ])->json();
-            $getsystemflag = collect($getsystemflag['recordList']);
-            $currency = $getsystemflag->where('name', 'currencySymbol')->first();
+            $currencyRow = DB::table('systemflag')->where('name', 'currencySymbol')->first();
+                    $currency = $currencyRow ? ['name' => $currencyRow->name, 'value' => $currencyRow->value] : ['name' => 'currencySymbol', 'value' => '₹'];
 
             $user_balance = UserWallet::where('userId', $userId)->value('amount');
             $astrologer = AiAstrologer::where('type', 'master')->first();

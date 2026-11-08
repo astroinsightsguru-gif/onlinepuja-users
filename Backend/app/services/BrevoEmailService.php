@@ -17,8 +17,8 @@ class BrevoEmailService
     public function __construct()
     {
         $this->apiKey = Vault::get('brevo_api_key', config('services.brevo.key', ''));
-        $this->senderEmail = Vault::get('brevo_sender_email', config('mail.from.address', 'no-reply@onlinepuja.live'));
-        $this->senderName = Vault::get('brevo_sender_name', config('mail.from.name', 'OnlinePuja Live'));
+        $this->senderEmail = Vault::get('brevo_sender_email', config('mail.from.address', 'care@onlinepuja.live'));
+        $this->senderName = Vault::get('brevo_sender_name', config('mail.from.name', 'Onlinepuja.live'));
         $listId = Vault::get('brevo_list_id', config('services.brevo.list_id', null));
         $this->defaultListId = $listId ? (int)$listId : 2;
     }

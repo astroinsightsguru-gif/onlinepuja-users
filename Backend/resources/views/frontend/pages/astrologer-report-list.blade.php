@@ -202,7 +202,7 @@ $countries = DB::table('countries')
                     data-astrologer-id="{{ $astrologer['id'] }}">
                     <ul class="list-unstyled d-flex mb-0">
                         <li class="mr-3 position-relative psychic-presence status-online" data-status="online"><a
-                                href="{{ route('front.astrologerDetails', ['slug' => $astrologer['slug']]) }}">
+                                href="{{ route('front.astrologerDetails', ['slug' => $astrologer['slug'] ?? ($astrologer->slug ?? ($astrologer['id'] ?? 1))]) }}">
                                 <div class="psyich-img position-relative">
                                     @if ($astrologer['profileImage'])
                                     <img width="85" height="85" style="border-radius:50%;" loading="lazy" src="{{ Str::startsWith($astrologer['profileImage'], ['http://','https://']) ? $astrologer['profileImage'] : '/' . $astrologer['profileImage'] }}" onerror="this.onerror=null;this.src='/public/frontend/onlinepujacdn/dashaspeaks/web/content/images/user-img-new.png';" alt="Customer image" onclick="openImage('{{ $astrologer['profileImage'] }}')" />

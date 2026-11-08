@@ -30,58 +30,29 @@ class _BlogsManagementScreenState extends State<BlogsManagementScreen> {
     if (mounted) {
       setState(() {
         _blogs = list;
-        if (_blogs.isEmpty) {
-          _blogs = _fallbackBlogs();
-        }
         _isLoading = false;
       });
     }
   }
 
-  List<Map<String, dynamic>> _fallbackBlogs() {
-    return [
-      {
-        'id': 46,
-        'title': 'Somvati Amavasya Pitru Shanti 2026: Auspicious Muhurat, Sacred Puja Vidhi & Teertha Sankalp',
-        'slug': 'somvati-amavasya-pitru-shanti-2026-puja-vidhi-muhurat-guide',
-        'author': 'OnlinePuja Vedic Desk',
-        'views': 4120,
-        'is_active': true,
-        'created_at': '21 Oct 2026',
-      },
-      {
-        'id': 45,
-        'title': 'Dev Deepawali Varanasi 2026: Complete Rituals, 108 Deepdaan & Kashi Moksha Mahatmya',
-        'slug': 'dev-deepawali-varanasi-2026-complete-rituals-108-deepdaan-kashi-moksha-mahatmya',
-        'author': 'Acharya Vashistha',
-        'views': 8920,
-        'is_active': true,
-        'created_at': '20 Oct 2026',
-      },
-      {
-        'id': 44,
-        'title': 'Diwali Maha Lakshmi & Kubera Yagya Vidhi: 108 Lotus Seed Mantras for Wealth',
-        'slug': 'diwali-maha-lakshmi-kubera-yagya-vidhi-108-lotus-seed-mantras-for-wealth',
-        'author': 'Vedic Research Wing',
-        'views': 5640,
-        'is_active': true,
-        'created_at': '19 Oct 2026',
-      },
-    ];
-  }
-
-  Future<void> _toggleBlogStatus(int id, int index) async {
+  Future<void> _toggleBlogStatus(int id) async {
     HapticFeedback.lightImpact();
-    final current = _blogs[index]['is_active'] as bool? ?? true;
+    final realIndex = _blogs.indexWhere((b) => b['id'] == id);
+    if (realIndex == -1) return;
+
+    final current = _blogs[realIndex]['is_active'] as bool? ?? true;
     setState(() {
-      _blogs[index]['is_active'] = !current;
+      _blogs[realIndex]['is_active'] = !current;
     });
 
     final ok = await _api.toggleBlog(id);
     if (!ok && mounted) {
-      setState(() {
-        _blogs[index]['is_active'] = current;
-      });
+      final revertIndex = _blogs.indexWhere((b) => b['id'] == id);
+      if (revertIndex != -1) {
+        setState(() {
+          _blogs[revertIndex]['is_active'] = current;
+        });
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to update blog status on server.')),
       );
@@ -229,12 +200,30 @@ class _BlogsManagementScreenState extends State<BlogsManagementScreen> {
                     const SizedBox(height: 20),
 
                     // Blog List
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, i) {
+                    if (filtered.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: ManagerTheme.surfaceDark,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            _searchQuery.isNotEmpty ? 'No blogs matching "$_searchQuery".' : 'No devotional articles published yet. Tap "Draft AI Blog" to generate one.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 12, color: Colors.white60),
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, i) {
                         final b = filtered[i];
                         final id = (b['id'] as num?)?.toInt() ?? 0;
                         final title = b['title']?.toString() ?? 'Devotional Article';
@@ -266,7 +255,7 @@ class _BlogsManagementScreenState extends State<BlogsManagementScreen> {
                                   Switch(
                                     value: isActive,
                                     activeThumbColor: ManagerTheme.brandGold,
-                                    onChanged: (val) => _toggleBlogStatus(id, i),
+                                    onChanged: (val) => _toggleBlogStatus(id),
                                   ),
                                 ],
                               ),

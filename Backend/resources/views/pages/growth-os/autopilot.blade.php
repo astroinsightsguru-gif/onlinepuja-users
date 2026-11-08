@@ -15,79 +15,82 @@
 <div style="display: flex; flex-direction: column; gap: 20px;">
 
     {{-- TOP BANNER: Autopilot Status Radar & High-Level Metrics --}}
-    <div class="ai-box">
-        <div style="display: flex; flex-direction: column; gap: 14px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="width: 44px; height: 44px; border-radius: 12px; background: #fffbeb; border: 1.5px solid #fde68a; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold;">
-                        ⚡
-                    </span>
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <h2 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0;">
-                                Autopilot Astrology Cockpit
-                            </h2>
-                            <span class="ai-pill {{ $mode === 'full' ? 'ai-pill-emerald' : ($mode === 'supervised' ? 'ai-pill-amber' : 'ai-pill-rose') }}">
-                                {{ $mode === 'full' ? '● Full Autopilot' : ($mode === 'supervised' ? '👁️ Supervised (Human Review)' : '⏸️ Paused') }}
-                            </span>
-                        </div>
-                        <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0;">
-                            Autonomous Planetary Gochar, Panchang Forecasts, Festival Puja Drips, AI Twin Fallback & Churn Revival
-                        </p>
+    <div class="ai-hero-card" style="display: flex; flex-direction: column; gap: 18px; margin-bottom: 0;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <span class="ai-icon-bubble ai-icon-bubble-amber" style="width: 48px; height: 48px; font-size: 24px; box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);">
+                    ⚡
+                </span>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <h2 style="font-size: 18px; font-weight: 800; color: #ffffff; margin: 0; letter-spacing: -0.01em;">
+                            Autopilot Astrology Cockpit
+                        </h2>
+                        <span class="ai-pill {{ $mode === 'full' ? 'ai-pill-emerald' : ($mode === 'supervised' ? 'ai-pill-amber' : 'ai-pill-rose') }}" style="box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);">
+                            <span class="op-pulse-dot {{ $mode === 'full' ? 'op-pulse-dot-emerald' : ($mode === 'supervised' ? 'op-pulse-dot-amber' : 'op-pulse-dot-rose') }}"></span>
+                            {{ $mode === 'full' ? 'Autonomous Mode' : ($mode === 'supervised' ? 'Supervised (Human Approval)' : 'Paused') }}
+                        </span>
                     </div>
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" class="ai-btn-gold select-run-loop" data-loop="all">
-                        <span>⚡</span> Run All Loops Now
-                    </button>
-                    @if($pending_count > 0)
-                        <button type="button" class="ai-btn-success select-approve-all">
-                            <span>✓</span> Approve All ({{ $pending_count }})
-                        </button>
-                    @endif
+                    <p style="font-size: 12.5px; color: #94a3b8; margin: 4px 0 0 0;">
+                        Autonomous Planetary Gochar, Panchang Forecasts, Festival Puja Drips, AI Twin Fallback & Churn Revival
+                    </p>
                 </div>
             </div>
 
-            {{-- 4-Pillar Stat Tiles --}}
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid #f1f5f9;">
-                <div class="ai-stat-card" style="background: #fffbeb !important; border-color: #fde68a !important;">
-                    <div>
-                        <span style="font-size: 10.5px; font-weight: 800; color: #92400e; text-transform: uppercase;">Staged for Review</span>
-                        <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
-                            <span style="font-size: 24px; font-weight: 900; color: #b45309; font-family: monospace;">{{ $pending_count }}</span>
-                            <span style="font-size: 11px; color: #92400e;">awaiting 1-click</span>
-                        </div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="ai-btn-gold select-run-loop" data-loop="all">
+                    <span>⚡</span> Run All Loops Now
+                </button>
+                @if($pending_count > 0)
+                    <button type="button" class="ai-btn-success select-approve-all" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 800; cursor: pointer;">
+                        <span>✓</span> Approve All ({{ $pending_count }})
+                    </button>
+                @endif
+            </div>
+        </div>
+
+        {{-- 4-Pillar Stat Tiles --}}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                <div class="ai-icon-bubble ai-icon-bubble-amber" style="width: 36px; height: 36px; font-size: 16px;">⏳</div>
+                <div>
+                    <span style="font-size: 10px; font-weight: 800; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.05em;">Staged for Review</span>
+                    <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
+                        <span style="font-size: 22px; font-weight: 900; color: #ffffff; font-family: monospace;">{{ $pending_count }}</span>
+                        <span style="font-size: 11px; color: #fde68a;">awaiting 1-click</span>
                     </div>
                 </div>
+            </div>
 
-                <div class="ai-stat-card" style="background: #ecfdf5 !important; border-color: #a7f3d0 !important;">
-                    <div>
-                        <span style="font-size: 10.5px; font-weight: 800; color: #065f46; text-transform: uppercase;">Dispatched Today</span>
-                        <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
-                            <span style="font-size: 24px; font-weight: 900; color: #059669; font-family: monospace;">{{ $sent_today }}</span>
-                            <span style="font-size: 11px; color: #065f46;">devotees reached</span>
-                        </div>
+            <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                <div class="ai-icon-bubble ai-icon-bubble-emerald" style="width: 36px; height: 36px; font-size: 16px;">🚀</div>
+                <div>
+                    <span style="font-size: 10px; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.05em;">Dispatched Today</span>
+                    <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
+                        <span style="font-size: 22px; font-weight: 900; color: #ffffff; font-family: monospace;">{{ $sent_today }}</span>
+                        <span style="font-size: 11px; color: #a7f3d0;">devotees reached</span>
                     </div>
                 </div>
+            </div>
 
-                <div class="ai-stat-card" style="background: #eff6ff !important; border-color: #bfdbfe !important;">
-                    <div>
-                        <span style="font-size: 10.5px; font-weight: 800; color: #1e40af; text-transform: uppercase;">Lifetime Dispatched</span>
-                        <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
-                            <span style="font-size: 24px; font-weight: 900; color: #2563eb; font-family: monospace;">{{ $sent_count }}</span>
-                            <span style="font-size: 11px; color: #1e40af;">total pushes</span>
-                        </div>
+            <div style="background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                <div class="ai-icon-bubble ai-icon-bubble-blue" style="width: 36px; height: 36px; font-size: 16px;">📬</div>
+                <div>
+                    <span style="font-size: 10px; font-weight: 800; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.05em;">Lifetime Dispatched</span>
+                    <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
+                        <span style="font-size: 22px; font-weight: 900; color: #ffffff; font-family: monospace;">{{ $sent_count }}</span>
+                        <span style="font-size: 11px; color: #bfdbfe;">total pushes</span>
                     </div>
                 </div>
+            </div>
 
-                <div class="ai-stat-card" style="background: #fff1f2 !important; border-color: #fecdd3 !important;">
-                    <div>
-                        <span style="font-size: 10.5px; font-weight: 800; color: #9f1239; text-transform: uppercase;">AI Quality Floor</span>
-                        <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
-                            <span style="font-size: 24px; font-weight: 900; color: #e11d48; font-family: monospace;">{{ $confidence_floor }}%</span>
-                            <span style="font-size: 11px; color: #9f1239;">quality threshold</span>
-                        </div>
+            <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                <div class="ai-icon-bubble ai-icon-bubble-rose" style="width: 36px; height: 36px; font-size: 16px;">🎯</div>
+                <div>
+                    <span style="font-size: 10px; font-weight: 800; color: #fb7185; text-transform: uppercase; letter-spacing: 0.05em;">AI Quality Floor</span>
+                    <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
+                        <span style="font-size: 22px; font-weight: 900; color: #ffffff; font-family: monospace;">{{ $confidence_floor }}%</span>
+                        <span style="font-size: 11px; color: #fecdd3;">quality threshold</span>
                     </div>
                 </div>
             </div>
@@ -197,14 +200,26 @@
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+            @php
+                $loopColors = [
+                    'panchang' => 'amber',
+                    'transit' => 'purple',
+                    'festival' => 'rose',
+                    'churn' => 'blue',
+                    'twin' => 'emerald',
+                ];
+            @endphp
             @foreach($loops as $loopKey => $loopData)
-            <div class="ai-box" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
+            @php
+                $colorKey = $loopColors[$loopKey] ?? 'blue';
+            @endphp
+            <div class="ai-box" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0; border-top: 3px solid {{ $loopData['enabled'] ? ($colorKey === 'amber' ? '#f59e0b' : ($colorKey === 'purple' ? '#a855f7' : ($colorKey === 'rose' ? '#f43f5e' : ($colorKey === 'emerald' ? '#10b981' : '#3b82f6')))) : '#cbd5e1' }};">
                 <div>
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
-                        <span style="width: 38px; height: 38px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                        <span class="ai-icon-bubble ai-icon-bubble-{{ $colorKey }}" style="width: 40px; height: 40px; font-size: 20px;">
                             {{ $loopData['icon'] }}
                         </span>
-                        <span class="ai-pill {{ $loopData['enabled'] ? 'ai-pill-emerald' : 'ai-pill-slate' }}" style="font-size: 10px;">
+                        <span class="ai-pill {{ $loopData['enabled'] ? 'ai-pill-' . $colorKey : 'ai-pill-slate' }}" style="font-size: 10px;">
                             {{ $loopData['enabled'] ? 'Active' : 'Disabled' }}
                         </span>
                     </div>
@@ -219,7 +234,7 @@
                 </div>
 
                 <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
-                    <button type="button" class="ai-btn-secondary select-run-loop" data-loop="{{ $loopKey }}" style="width: 100%; font-size: 11.5px; padding: 6px 10px;">
+                    <button type="button" class="ai-btn-secondary select-run-loop" data-loop="{{ $loopKey }}" style="width: 100%; font-size: 11.5px; padding: 7px 10px; border-radius: 8px; font-weight: 700; cursor: pointer;">
                         Trigger {{ ucfirst($loopKey) }}
                     </button>
                 </div>

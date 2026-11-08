@@ -60,6 +60,9 @@ class MarketingCockpitController extends Controller
         $paperclip = $this->getPaperclipSummary();
         $seo = $this->getSeoSummary();
 
+        $waService = new \App\Services\EvolutionWaService();
+        $waConn = $waService->getConnectionState();
+
         $tracking = [
             'ga4' => [
                 'id' => Vault::get('ga4_measurement_id', 'G-7T63JY1D93'),
@@ -78,6 +81,7 @@ class MarketingCockpitController extends Controller
                 'url' => Vault::get('evolution_api_url', 'https://wa.vmstudio.digital'),
                 'instance' => Vault::get('evolution_instance', 'onlinepuja'),
                 'active' => !empty(Vault::get('evolution_api_key')),
+                'state' => $waConn['state'] ?? 'close',
             ],
             'youtube' => [
                 'client_id' => Vault::get('youtube_client_id'),
@@ -92,7 +96,39 @@ class MarketingCockpitController extends Controller
             'recent_items' => DB::table('autopilot_queue')->orderByDesc('id')->limit(8)->get(),
         ];
 
-        return view('pages.marketing.cockpit', compact('radar', 'paperclip', 'seo', 'tracking', 'autopilot'));
+        $b2b = $this->getB2bSummary();
+
+        return view('pages.marketing.cockpit', compact('radar', 'paperclip', 'seo', 'tracking', 'autopilot', 'b2b'));
+    }
+
+    protected function getB2bSummary(): array
+    {
+        try {
+            $totalLeads = DB::table('b2b_leads')->count();
+            $contacted = DB::table('b2b_leads')->where('status', 'contacted')->count();
+            $converted = DB::table('b2b_leads')->whereIn('status', ['converted', 'active'])->count();
+            $leads = DB::table('b2b_leads')->orderByDesc('id')->limit(50)->get();
+            $cities = DB::table('b2b_leads')->select('city', DB::raw('count(*) as count'))->groupBy('city')->orderByDesc('count')->get();
+            $categories = DB::table('b2b_leads')->select('category', DB::raw('count(*) as count'))->groupBy('category')->orderByDesc('count')->get();
+
+            return [
+                'total_leads' => $totalLeads,
+                'contacted'   => $contacted,
+                'converted'   => $converted,
+                'leads'       => $leads,
+                'cities'      => $cities,
+                'categories'  => $categories,
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'total_leads' => 0,
+                'contacted'   => 0,
+                'converted'   => 0,
+                'leads'       => collect(),
+                'cities'      => collect(),
+                'categories'  => collect(),
+            ];
+        }
     }
 
     protected function getRadarSummary(): array
@@ -189,7 +225,7 @@ class MarketingCockpitController extends Controller
                 return [
                     'online' => true,
                     'agent_count' => count($agents),
-                    'agents' => array_slice($agents, 0, 5),
+                    'agents' => $agents,
                 ];
             }
         } catch (\Throwable $e) {
@@ -221,5 +257,18 @@ class MarketingCockpitController extends Controller
                 ['name' => 'Vedic Panchang & Muhurat', 'slug' => '/panchang', 'articles' => 7, 'status' => 'Active'],
             ],
         ];
+    }
+
+    public function getWhatsAppQr()
+    {
+        $wa = new \App\Services\EvolutionWaService();
+        return response()->json($wa->requestQrCode());
+    }
+
+    public function getWhatsAppPairingCode(Request $request)
+    {
+        $phone = $request->input('phone', '917007158014');
+        $wa = new \App\Services\EvolutionWaService();
+        return response()->json($wa->requestPairingCode($phone));
     }
 }

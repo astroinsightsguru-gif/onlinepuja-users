@@ -81,6 +81,56 @@ class ManagerApiService {
     return null;
   }
 
+  // 1f. Generate & Schedule 9:16 Devotional Video Reel
+  Future<Map<String, dynamic>?> generateSocialReel({
+    required String topic,
+    required String hook,
+    required String script,
+    String platform = 'youtube_shorts',
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/social/generate-reel'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'topic': topic,
+          'hook': hook,
+          'script': script,
+          'platform': platform,
+        }),
+      ).timeout(const Duration(seconds: 20));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 1g. Generate AI Devotional Poster via FLUX.1
+  Future<Map<String, dynamic>?> generateSocialPoster({
+    required String prompt,
+    required String headline,
+    String ratio = '4:5',
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/social/generate-poster'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'prompt': prompt,
+          'headline': headline,
+          'ratio': ratio,
+        }),
+      ).timeout(const Duration(seconds: 20));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   // 2. Fetch Banners
   Future<List<Map<String, dynamic>>> fetchBanners() async {
     try {
@@ -352,23 +402,28 @@ class ManagerApiService {
     }
   }
 
-  // 17. Fetch B2B Leads Directory
-  Future<Map<String, dynamic>> fetchB2bLeads({String? city}) async {
+  // 17. Fetch B2B Leads Directory (with Category, City & Search)
+  Future<Map<String, dynamic>> fetchB2bLeads({String? city, String? category, String? search}) async {
     try {
-      String url = '$baseUrl/b2b/leads';
-      if (city != null && city != 'all') url += '?city=$city';
+      final queryParams = <String, String>{};
+      if (city != null && city != 'all') queryParams['city'] = city;
+      if (category != null && category != 'all') queryParams['category'] = category;
+      if (search != null && search.trim().isNotEmpty) queryParams['search'] = search.trim();
 
-      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+      final uri = Uri.parse('$baseUrl/b2b/leads').replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+      final res = await http.get(uri).timeout(const Duration(seconds: 10));
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body);
         return {
           'total': decoded['total_leads'] ?? 0,
+          'returned_count': decoded['returned_count'] ?? 0,
           'cities': decoded['cities'] is List ? List<Map<String, dynamic>>.from(decoded['cities']) : <Map<String, dynamic>>[],
+          'categories': decoded['categories'] is List ? List<Map<String, dynamic>>.from(decoded['categories']) : <Map<String, dynamic>>[],
           'leads': decoded['leads'] is List ? List<Map<String, dynamic>>.from(decoded['leads']) : <Map<String, dynamic>>[],
         };
       }
     } catch (_) {}
-    return {'total': 0, 'cities': <Map<String, dynamic>>[], 'leads': <Map<String, dynamic>>[]};
+    return {'total': 0, 'returned_count': 0, 'cities': <Map<String, dynamic>>[], 'categories': <Map<String, dynamic>>[], 'leads': <Map<String, dynamic>>[]};
   }
 
   // 18. Fetch B2B Proposal Pitch
@@ -486,6 +541,61 @@ class ManagerApiService {
         Uri.parse('$baseUrl/social/$id/publish'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 8));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 24b. Fetch Social Analytics & KPIs
+  Future<Map<String, dynamic>?> fetchSocialAnalytics() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/social/analytics'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 24c. Create & Queue Custom Social Post
+  Future<bool> createSocialPost({
+    required String platform,
+    required String caption,
+    String? hashtags,
+    String? scheduleAt,
+    bool generateAiImage = false,
+    String? imagePrompt,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/social/posts/create'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'platform': platform,
+          'caption': caption,
+          'hashtags': hashtags ?? '',
+          'schedule_at': scheduleAt,
+          'generate_ai_image': generateAiImage,
+          'image_prompt': imagePrompt ?? '',
+        }),
+      ).timeout(const Duration(seconds: 25));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 24d. Retry Failed Social Post
+  Future<bool> retrySocialPost(int id) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/social/posts/$id/retry'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 25));
       return res.statusCode == 200;
     } catch (_) {
       return false;
@@ -807,13 +917,89 @@ class ManagerApiService {
     return null;
   }
 
-  // 🤖 PAPERCLIP AUTONOMOUS AI ENGINE (7 AI AGENTS)
+  // 🤖 PAPERCLIP AUTONOMOUS AI ENGINE (MULTI-BUSINESS SQUAD)
   // ===============================================
 
-  Future<Map<String, dynamic>?> fetchPaperclipOverview() async {
+  Future<List<Map<String, dynamic>>> fetchPaperclipCompanies() async {
     try {
       final res = await http.get(
-        Uri.parse('$baseUrl/paperclip/overview'),
+        Uri.parse('$baseUrl/paperclip/companies'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['ok'] == true && decoded['companies'] is List) {
+          return List<Map<String, dynamic>>.from(decoded['companies']);
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  Future<bool> createPaperclipCompany(String name, String description) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/paperclip/companies'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'description': description,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        return decoded['ok'] == true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  Future<List<Map<String, dynamic>>> fetchPaperclipActivity({String? companyId}) async {
+    try {
+      String url = '$baseUrl/paperclip/activity';
+      if (companyId != null) url += '?company_id=$companyId';
+      final res = await http.get(
+        Uri.parse(url),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 12));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['ok'] == true && decoded['activities'] is List) {
+          return List<Map<String, dynamic>>.from(decoded['activities']);
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  Future<List<Map<String, dynamic>>> fetchPaperclipReports({String? companyId}) async {
+    try {
+      String url = '$baseUrl/paperclip/reports';
+      if (companyId != null) url += '?company_id=$companyId';
+      final res = await http.get(
+        Uri.parse(url),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 12));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['ok'] == true && decoded['reports'] is List) {
+          return List<Map<String, dynamic>>.from(decoded['reports']);
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  Future<Map<String, dynamic>?> fetchPaperclipOverview({String? companyId}) async {
+    try {
+      String url = '$baseUrl/paperclip/overview';
+      if (companyId != null) url += '?company_id=$companyId';
+      final res = await http.get(
+        Uri.parse(url),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 12));
 
@@ -824,10 +1010,12 @@ class ManagerApiService {
     return null;
   }
 
-  Future<List<dynamic>?> fetchPaperclipAgents() async {
+  Future<List<dynamic>?> fetchPaperclipAgents({String? companyId}) async {
     try {
+      String url = '$baseUrl/paperclip/agents';
+      if (companyId != null) url += '?company_id=$companyId';
       final res = await http.get(
-        Uri.parse('$baseUrl/paperclip/agents'),
+        Uri.parse(url),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 12));
 
@@ -841,10 +1029,12 @@ class ManagerApiService {
     return null;
   }
 
-  Future<List<dynamic>?> fetchPaperclipIssues() async {
+  Future<List<dynamic>?> fetchPaperclipIssues({String? companyId}) async {
     try {
+      String url = '$baseUrl/paperclip/issues';
+      if (companyId != null) url += '?company_id=$companyId';
       final res = await http.get(
-        Uri.parse('$baseUrl/paperclip/issues'),
+        Uri.parse(url),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 12));
 
@@ -902,5 +1092,396 @@ class ManagerApiService {
       return res.statusCode == 200;
     } catch (_) {}
     return false;
+  }
+
+  // 🛑 34b. Emergency Master Swarm Halt / Freeze
+  Future<bool> emergencyHaltSwarm({required bool halt}) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/paperclip/emergency-halt'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({'halt': halt}),
+      ).timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        return decoded['ok'] == true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  // 🔓 34c. Unblock & Retry Blocked Mission
+  Future<bool> unblockPaperclipIssue(String issueId) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/paperclip/unblock-issue'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({'issueId': issueId}),
+      ).timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        return decoded['ok'] == true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  // 🔍 34d. Fetch Detailed Issue Diagnostics & Deliverables
+  Future<Map<String, dynamic>?> fetchPaperclipIssueDetails(String issueId) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/paperclip/issue-details/$issueId'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 📄 34e. Fetch Attachment Deliverable Markdown
+  Future<String?> fetchPaperclipAttachment(String attachmentId) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/paperclip/attachment/$attachmentId'),
+        headers: {'Accept': 'text/plain'},
+      ).timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200) {
+        return res.body;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 💬 34f. Direct 1-on-1 Strategic Chat with Agent
+  Future<Map<String, dynamic>?> sendAgentChatMessage({
+    required String agentId,
+    required String message,
+    String? agentName,
+    List<Map<String, String>>? history,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/paperclip/agent-chat'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'agentId': agentId,
+          'agentName': agentName,
+          'message': message,
+          'history': history ?? [],
+        }),
+      ).timeout(const Duration(seconds: 35));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 📥 34g. Sync Agent Deliverable into Live CMS / Editorial Board
+  Future<Map<String, dynamic>?> syncDeliverableToApp({
+    required String title,
+    required String content,
+    required String type, // blog, reel, campaign
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/paperclip/sync-deliverable'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'title': title,
+          'content': content,
+          'type': type,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 💱 35. Fetch Puja Financial Hub & Ledger Overview
+  Future<Map<String, dynamic>?> fetchFinanceOverview() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/finance/overview')).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['success'] == true && decoded['data'] != null) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 🪔 36. Caller ID Lookup: Devotee & Client Dossier
+  Future<Map<String, dynamic>?> lookupDevoteeByPhone(String phone) async {
+    try {
+      final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
+      if (clean.length < 4) return null;
+      final res = await http.get(Uri.parse('$baseUrl/contacts?search=${Uri.encodeComponent(clean)}')).timeout(const Duration(seconds: 6));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['contacts'] is List && (decoded['contacts'] as List).isNotEmpty) {
+          return Map<String, dynamic>.from(decoded['contacts'][0]);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 📧 37. Fetch Brevo Email Campaigns & Audience Lists Overview
+  Future<Map<String, dynamic>?> fetchEmailOverview() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/email/overview')).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['success'] == true && decoded['data'] != null) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 🔄 38. Sync Devotees or B2B Partners to Brevo Email Audience
+  Future<Map<String, dynamic>> syncEmailContacts({String target = 'devotees'}) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/email/sync'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({'target': target}),
+      ).timeout(const Duration(seconds: 25));
+
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return {'success': false, 'message': 'Failed to communicate with Brevo service.'};
+  }
+
+  // 🚀 39. Fetch Anti-Ban B2B WhatsApp Campaign Cockpit Data
+  Future<Map<String, dynamic>?> fetchB2bCampaignCockpit() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/campaigns/b2b/cockpit')).timeout(const Duration(seconds: 12));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded['success'] == true && decoded['data'] != null) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // ⚡ 40. Mark B2B Lead as Contacted & Fetch Next Lead for Fast-Runner
+  Future<Map<String, dynamic>?> markB2bLeadContacted({
+    required int id,
+    String? notes,
+    String category = 'travel_agency',
+    String? templateBody,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/campaigns/b2b/mark-contacted'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'id': id,
+          'notes': notes ?? 'Contacted via Speed-Dial Campaign Runner',
+          'category': category,
+          'template_body': templateBody,
+        }),
+      ).timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 📱 41. Fetch WhatsApp QR Code or Connection State
+  Future<Map<String, dynamic>?> fetchWhatsAppQr() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/campaigns/whatsapp/qr')).timeout(const Duration(seconds: 12));
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 📜 42. Generate Vedic Janampatri Kundli PDF & Dispatch via WhatsApp
+  Future<Map<String, dynamic>?> generateKundliPdf({
+    required String name,
+    required String dob,
+    required String tob,
+    String gender = 'Male',
+    String pob = 'Varanasi, UP',
+    String? phone,
+    bool dispatchWhatsapp = true,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/kundli/generate'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'gender': gender,
+          'dob': dob,
+          'tob': tob,
+          'pob': pob,
+          'phone': phone,
+          'dispatch_whatsapp': dispatchWhatsapp,
+        }),
+      ).timeout(const Duration(seconds: 25));
+
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 👥 43. Fetch Team Members List
+  Future<Map<String, dynamic>?> fetchTeamList() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/team')).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 👥 44. Fetch Team Roles and Available Modules
+  Future<Map<String, dynamic>?> fetchTeamRolesAndModules() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/team/roles')).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(res.body));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 👥 45. Create Team Member with Granular Permissions
+  Future<Map<String, dynamic>> createTeamMember({
+    required String name,
+    required String email,
+    String? contactNo,
+    String? password,
+    required int roleId,
+    List<String> permissions = const [],
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/team/create'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'name': name.trim(),
+          'email': email.trim(),
+          'contactNo': contactNo?.trim(),
+          'password': password,
+          'roleId': roleId,
+          'permissions': permissions,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      final decoded = jsonDecode(res.body);
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+    return {'ok': false, 'error': 'Server communication error'};
+  }
+
+  // 👥 46. Update Team Member Profile & Permissions
+  Future<Map<String, dynamic>> updateTeamMember({
+    required int id,
+    required String name,
+    required String email,
+    String? contactNo,
+    String? password,
+    required int roleId,
+    List<String> permissions = const [],
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/team/update'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'id': id,
+          'name': name.trim(),
+          'email': email.trim(),
+          'contactNo': contactNo?.trim(),
+          'password': password,
+          'roleId': roleId,
+          'permissions': permissions,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      final decoded = jsonDecode(res.body);
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+    return {'ok': false, 'error': 'Server communication error'};
+  }
+
+  // 👥 47. Toggle Active/Suspended Status of Team Member
+  Future<Map<String, dynamic>> toggleTeamMemberStatus({
+    required int id,
+    required bool isActive,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/team/toggle-status'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'id': id,
+          'isActive': isActive,
+        }),
+      ).timeout(const Duration(seconds: 10));
+
+      final decoded = jsonDecode(res.body);
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+    return {'ok': false, 'error': 'Server communication error'};
+  }
+
+  // 👥 48. Soft Delete Team Member
+  Future<Map<String, dynamic>> deleteTeamMember(int id) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/team/delete'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({'id': id}),
+      ).timeout(const Duration(seconds: 10));
+
+      final decoded = jsonDecode(res.body);
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+    return {'ok': false, 'error': 'Server communication error'};
   }
 }

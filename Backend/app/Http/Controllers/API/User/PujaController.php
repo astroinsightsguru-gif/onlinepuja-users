@@ -248,7 +248,7 @@ class PujaController extends Controller
 
 
             if ($validator->fails()) {
-                DB::rollback();
+                if (DB::transactionLevel() > 0) { DB::rollback(); }
                 return response()->json([
                     'error' => $validator->messages(),
                     'status' => 400,
@@ -258,6 +258,7 @@ class PujaController extends Controller
             // $user_country=User::where('id',$id)->where('country','India')->first();  // commented
             $user_country = User::where('id', $id)->where('countryCode', '+91')->first(); // added
             $inr_usd_conv_rate = DB::table('systemflag')->where('name', 'UsdtoInr')->select('value')->first();
+            $convRateVal = ($inr_usd_conv_rate && !empty($inr_usd_conv_rate->value)) ? $inr_usd_conv_rate->value : 83.5;
 
 
             // $Gstpersantage = DB::table('systemflag')
@@ -324,7 +325,7 @@ class PujaController extends Controller
                         // 'gstPercent' => $Gstpersantage->value,
                         'totalPayable' => $req['totalPayable'],
                         'orderStatus' => 'Complete',
-                        'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                        'inr_usd_conversion_rate' => $convRateVal,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
 
@@ -340,7 +341,7 @@ class PujaController extends Controller
                         'transactionType' => 'pujaOrder',
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
-                        'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                        'inr_usd_conversion_rate' => $convRateVal,
                     ];
                     DB::table('wallettransaction')->insert($transactionData);
 
@@ -573,6 +574,7 @@ class PujaController extends Controller
             // $user_country = User::where('id', $pujaorder->user_id)->where('country', 'India')->first();  // commented
             $user_country = User::where('id', $pujaorder->user_id)->where('countryCode', '+91')->first(); // added
             $inr_usd_conv_rate = DB::table('systemflag')->where('name', 'UsdtoInr')->select('value')->first();
+            $convRateVal = ($inr_usd_conv_rate && !empty($inr_usd_conv_rate->value)) ? $inr_usd_conv_rate->value : 83.5;
             $wallet = DB::table('user_wallets')
                 ->where('userId', '=', $pujaorder->user_id)
                 ->first();
@@ -600,7 +602,7 @@ class PujaController extends Controller
                 "transactionType" => 'pujaRefund',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
-                'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate' => $convRateVal,
             ];
 
             DB::table('wallettransaction')->insert($transaction);

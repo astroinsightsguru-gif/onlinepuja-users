@@ -25,18 +25,11 @@ class CallController extends Controller
             $session = new Session();
             $token = $session->get('astrotoken');
 
-        Artisan::call('cache:clear');
+        // Artisan::call('cache:clear'); // Removed for performance
 
 
-        // $getUserNotification = Http::withoutVerifying()->post(url('/') . '/api/getUserNotification', [
-        //     'token' => $token,
-        // ])->json();
-
-
-
-        $getUser = Http::withoutVerifying()->post(url('/') . '/api/getUserById', [
-            'userId' => $callrequest->userId,
-        ])->json();
+        $uRow = DB::table('users')->where('id', $callrequest->userId)->first();
+        $getUser = ['status' => 200, 'recordList' => $uRow ? (array) $uRow : []];
 
         $agoraAppIdValue = DB::table('systemflag')
         ->where('name', 'AgoraAppId')

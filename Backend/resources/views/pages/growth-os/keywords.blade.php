@@ -1,20 +1,25 @@
 @extends('pages.growth-os.layout')
 
 @section('growth_content')
+@php
+    $clusters = $clusters ?? collect([]);
+    $keywords = $keywords ?? collect([]);
+    $untapped = $untapped ?? collect([]);
+@endphp
 <div class="grid grid-cols-12 gap-6">
 
     {{-- Left: Keyword List & Clusters --}}
     <div class="col-span-12 lg:col-span-8">
-        <div class="box p-6 bg-white rounded-xl shadow-sm border border-slate-100">
+        <div class="ai-box">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
                 <div>
-                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
                         <i data-lucide="key" class="w-5 h-5 text-amber-500"></i> Researched Keywords & Clusters
                     </h3>
                     <div class="text-xs text-slate-500 mt-0.5">Tri-source research from Google Autocomplete, Intent Analysis & AI expansion.</div>
                 </div>
-                <button id="btn-trigger-research" class="btn btn-sm btn-outline-primary text-xs py-1.5 px-3">
-                    <i data-lucide="compass" class="w-3.5 h-3.5 mr-1"></i> Trigger Tri-Source Research
+                <button id="btn-trigger-research" class="ai-btn-gold" style="font-size: 11.5px; padding: 7px 14px;">
+                    <i data-lucide="compass" style="width: 13px; height: 13px; margin-right: 4px; color: #020617;"></i> Trigger Tri-Source Research
                 </button>
             </div>
 
@@ -40,7 +45,7 @@
 
             {{-- Keywords Table --}}
             <div class="overflow-x-auto mt-4">
-                <table class="table table-report w-full text-xs">
+                <table class="ai-table">
                     <thead>
                         <tr class="bg-slate-50 text-slate-600">
                             <th class="py-2.5">Search Phrase</th>
@@ -91,7 +96,7 @@
 
             {{-- Pagination --}}
             <div class="mt-4">
-                {{ $keywords->links() }}
+                {{ method_exists($keywords, 'links') ? $keywords->links() : '' }}
             </div>
         </div>
     </div>
@@ -100,7 +105,7 @@
     <div class="col-span-12 lg:col-span-4 space-y-6">
 
         {{-- Add Manual Keyword --}}
-        <div class="box p-5 bg-white rounded-xl shadow-sm border border-slate-100">
+        <div class="ai-box">
             <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">Add Target Keyword</h4>
             <form method="POST" action="{{ route('growth-os.keywords.store') }}" class="space-y-3 text-xs">
                 @csrf
@@ -126,7 +131,7 @@
         </div>
 
         {{-- Cluster Breakdown --}}
-        <div class="box p-5 bg-white rounded-xl shadow-sm border border-slate-100">
+        <div class="ai-box">
             <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">Silo Cluster Breakdown</h4>
             <div class="space-y-2 max-h-72 overflow-y-auto pr-1 text-xs">
                 @foreach($clusters as $cluster)

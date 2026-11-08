@@ -1,5 +1,5 @@
 <?php
-namespace app\Http\Controllers\Admin;
+namespace App\Http\Controllers\Admin;
 
 use App\Helpers\StorageHelper;
 use App\Http\Controllers\Controller;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Exception;
 if (!defined('LOGINPATH')) define('LOGINPATH', '/admin/login');
 
-class DailyHoroScopeInsightController extends Controller
+class DailyHoroscopeInsightController extends Controller
 {
     public function getDailyHoroscopeInsight(Request $request)
     {

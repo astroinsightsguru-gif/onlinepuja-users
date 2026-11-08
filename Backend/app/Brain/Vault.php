@@ -119,6 +119,8 @@ class Vault
             'fb_app_secret'      => $metaSecret,
             'fb_api_version'     => self::get('fb_api_version', 'v21.0'),
             'instagram_token'    => self::get('instagram_token'),
+            'youtube_client_id'  => self::get('youtube_client_id', env('YOUTUBE_CLIENT_ID', '')),
+            'youtube_client_secret' => self::get('youtube_client_secret', env('YOUTUBE_CLIENT_SECRET', '')),
             'youtube_token'      => self::get('youtube_token'),
         ];
     }

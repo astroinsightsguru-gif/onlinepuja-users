@@ -1,11 +1,12 @@
 {
-    "name": "onlinepuja_manager",
-    "short_name": "onlinepuja_manager",
-    "start_url": ".",
+    "name": "OnlinePuja Manager",
+    "short_name": "Puja Manager",
+    "start_url": "./",
+    "scope": "./",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0B141A",
+    "theme_color": "#0F172A",
+    "description": "OnlinePuja Varanasi Sanctuary Executive Operations, Devotee CRM & Growth OS",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

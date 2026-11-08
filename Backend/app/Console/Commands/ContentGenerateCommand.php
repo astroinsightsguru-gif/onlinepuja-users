@@ -14,18 +14,45 @@ class ContentGenerateCommand extends Command
     public function handle(ContentPipeline $pipeline): int
     {
         $limit = max(1, (int) $this->option('limit'));
-        $publish = (bool) $this->option('publish');
 
-        $this->info("Drafting up to {$limit} article(s)" . ($publish ? " with IMMEDIATE PUBLISH..." : "..."));
+        $this->info("Drafting up to {$limit} article(s)…");
 
-        $out = $pipeline->run($limit, $publish);
+        $out = $pipeline->run($limit);
+
+        // A silently reduced budget looks identical to "the keyword pool was
+        // thin today". Say which it was.
+        if (! empty($out['gated'])) {
+            $this->warn(sprintf(
+                'Readiness gate: drafting %d of %d — the catalogue cannot convert this traffic yet. Supply tasks filed in the content queue.',
+                $out['budget'],
+                $out['requested']
+            ));
+        }
 
         foreach ($out['results'] as $r) {
-            $status = $r['ok'] ? '<info>drafted</info>' : '<comment>'.$r['error'].'</comment>';
+            if ($r['ok']) {
+                $status = '<info>drafted</info> (plan #'.($r['plan_id'] ?? '?').')';
+            } else {
+                // A Critic rejection carries 'failures', a provider error carries
+                // 'error' — neither key is guaranteed, so never assume one.
+                $why = $r['error']
+                    ?? (! empty($r['failures']) ? implode('; ', (array) $r['failures']) : 'unknown')
+                    ;
+                $status = '<comment>'.($r['status'] ?? 'failed').': '.$why.'</comment>';
+            }
+
             $this->line("• {$r['keyword']} — {$status}");
         }
 
         $this->info("Drafted: {$out['drafted']} · Failed: {$out['failed']}");
+
+        \App\Brain\RunLog::recordUnlessNoop(
+            'content:generate', 'blog',
+            $out['failed'] > 0 ? ($out['drafted'] > 0 ? 'partial' : 'fail') : 'ok',
+            "Drafted {$out['drafted']} article(s), {$out['failed']} failed",
+            ['results' => $out['results']],
+            $out['drafted'], $out['failed']
+        );
 
         return self::SUCCESS;
     }

@@ -716,12 +716,13 @@ public function addCallRequest(Request $req)
             ]);
         }
         $inr_usd_conv_rate = DB::table('systemflag')->where('name', 'UsdtoInr')->select('value')->first();
+        $convRateValRefund = ($inr_usd_conv_rate && !empty($inr_usd_conv_rate->value)) ? (float)$inr_usd_conv_rate->value : 83.5;
         // 4️⃣ Insert refund record in payments table
         DB::table('payment')->insert([
             'paymentMode' => 'Refund',
             'payment_for' => 'wallet',
             'paymentReference' => 'REFUND-' . $callId . '-' . time(),
-            'inr_usd_conversion_rate' => $inr_usd_conv_rate->value, // optional, can be set if needed
+            'inr_usd_conversion_rate' => $convRateValRefund, // optional, can be set if needed
             'amount' => $appointment->amount,
             'userId' => $appointment->userId,
             'paymentStatus' => 'Success',
@@ -801,17 +802,8 @@ public function addCallRequest(Request $req)
                 ->whereIn('callStatus', ['Pending', 'Accepted'])
                 ->delete();
 
-            $addCallStatus = Http::withoutVerifying()->post(url('/') . '/api/addCallStatus', [
-                'token' => $req->token,
-                'status' => 'Busy',
-                'astrologerId' => $callRequest->astrologerId
-            ])->json();
-
-            $addChatStatus = Http::withoutVerifying()->post(url('/') . '/api/addStatus', [
-                'token' => $req->token,
-                'status' => 'Busy',
-                'astrologerId' => $callRequest->astrologerId
-            ])->json();
+            $this->addCallStatus(new Request(['token' => $req->token, 'status' => 'Busy', 'astrologerId' => $callRequest->astrologerId]));
+            app(\App\Http\Controllers\API\User\ChatRequestController::class)->addChatStatus(new Request(['token' => $req->token, 'status' => 'Busy', 'astrologerId' => $callRequest->astrologerId]));
 
             $call_type = '';
             if ($callRequest->call_type == '10') {
@@ -860,9 +852,7 @@ public function addCallRequest(Request $req)
             $callRequest = CallRequest::find($req->callId);
 
             if ($callRequest->call_method == 'exotel') {
-                $connectCall = Http::withoutVerifying()->post(url('/') . '/api/connectCall', [
-                    'callId' => $req->callId,
-                ])->json();
+                app(\App\Http\Controllers\API\User\ExotelController::class)->connectCall(new Request(['callId' => $req->callId]));
             }
 
             $call_type = '';
@@ -1031,22 +1021,14 @@ public function addCallRequest(Request $req)
                 ->select('callrequest.*', 'users.name', 'astrologers.name as astrologerName', 'astrologers.userId as astrologerUserId')
                 ->first();
 
-            $addCallStatus = Http::withoutVerifying()->post(url('/') . '/api/addCallStatus', [
-                'token' => $req->token,
-                'status' => 'Online',
-                'astrologerId' => $callData->astrologerId
-            ])->json();
-
-            $addChatStatus = Http::withoutVerifying()->post(url('/') . '/api/addStatus', [
-                'token' => $req->token,
-                'status' => 'Online',
-                'astrologerId' => $callData->astrologerId
-            ])->json();
+            $this->addCallStatus(new Request(['token' => $req->token, 'status' => 'Online', 'astrologerId' => $callData->astrologerId]));
+            app(\App\Http\Controllers\API\User\ChatRequestController::class)->addChatStatus(new Request(['token' => $req->token, 'status' => 'Online', 'astrologerId' => $callData->astrologerId]));
 
             $id = $callData->userId;
 
             $user_country = User::where('id', $id)->where('countryCode', '=', '+91')->first(); // added by bhushan borse on 04, june 2025
             $inr_usd_conv_rate = DB::table('systemflag')->where('name', 'UsdtoInr')->select('value')->first();
+            $convRateVal = ($inr_usd_conv_rate && !empty($inr_usd_conv_rate->value)) ? (float)$inr_usd_conv_rate->value : 83.5;
             $firebaseProjectId = DB::table('systemflag')->where('name', 'firebaseprojectId')->select('value')->first();
             $astrologercountry = Astrologer::where('id', $callData->astrologerId)->where('countryCode', '=', '+91')->first();  // added by bhushan borse on 04, june 2025
 
@@ -1073,7 +1055,7 @@ public function addCallRequest(Request $req)
 
             if ($callData->call_type == 11) {
 
-                $chargeAmount = $user_country ? $charge[0]->videoCallRate : convertusdtoinr($charge->videoCallRate_usd);
+                $chargeAmount = $user_country ? $charge[0]->videoCallRate : convertusdtoinr($charge[0]->videoCallRate_usd ?? $charge[0]->videoCallRate);
                 if ($callData->is_emergency) {
                     $chargeAmount = $user_country ? $charge[0]->emergency_video_charge : convertinrtousd($charge[0]->emergency_video_charge);
                 }
@@ -1134,7 +1116,7 @@ public function addCallRequest(Request $req)
                 'sId1' => $req->sId1,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
-                'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate' => $convRateVal,
 
             );
             DB::Table('callrequest')
@@ -1195,7 +1177,7 @@ public function addCallRequest(Request $req)
                 'orderStatus' => 'Complete',
                 'totalMin' => $totalMin,
                 'callId' => $req->callId,
-                'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate' => $convRateVal,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
 
@@ -1211,7 +1193,7 @@ public function addCallRequest(Request $req)
                 "astrologerId" => $callData->astrologerId,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
-                'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate' => $convRateVal,
             );
             $astrologerTransaction = array(
                 'userId' => $callData->astrologerUserId,
@@ -1222,7 +1204,7 @@ public function addCallRequest(Request $req)
                 "astrologerId" => $callData->astrologerId,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
-                'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                'inr_usd_conversion_rate' => $convRateVal,
             );
             if (!$callData->isFreeSession || $callData->is_emergency) {
                 if ($commission && count($commission) > 0) {
@@ -1233,7 +1215,7 @@ public function addCallRequest(Request $req)
                         "orderId" => $Orderid,
                         "createdBy" => $charge[0]->userId,
                         "modifiedBy" => $charge[0]->userId,
-                        'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                        'inr_usd_conversion_rate' => $convRateVal,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
 
@@ -1247,7 +1229,7 @@ public function addCallRequest(Request $req)
                         "orderId" => $Orderid,
                         "createdBy" => $charge[0]->userId,
                         "modifiedBy" => $charge[0]->userId,
-                        'inr_usd_conversion_rate' => $inr_usd_conv_rate->value,
+                        'inr_usd_conversion_rate' => $convRateVal,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                     );
@@ -1258,16 +1240,16 @@ public function addCallRequest(Request $req)
             DB::table('wallettransaction')->insert($astrologerTransaction);
             }
 
-            $apiEndpoint = "https://firestore.googleapis.com/v1/projects/" . $firebaseProjectId->value . "/databases/(default)/documents/";
-            $client = new Client();
+            if ($firebaseProjectId && !empty($firebaseProjectId->value)) {
+                $apiEndpoint = "https://firestore.googleapis.com/v1/projects/" . $firebaseProjectId->value . "/databases/(default)/documents/";
+                $client = new Client();
 
-            try {
-                $response = $client->delete($apiEndpoint . "updatecall/{$req->callId}");
-            } catch (\Exception $e) {
-                return response()->json(['error' => $e->getMessage()], 500);
+                try {
+                    $response = $client->delete($apiEndpoint . "updatecall/{$req->callId}");
+                } catch (\Exception $e) {
+                    \Log::warning('Firestore cleanup failed in endCall: ' . $e->getMessage());
+                }
             }
-
-
 
             return response()->json([
                 'message' => 'Call Request End Successfully',
@@ -1317,17 +1299,8 @@ public function addCallRequest(Request $req)
             );
 
 
-            $addCallStatus = Http::withoutVerifying()->post(url('/') . '/api/addCallStatus', [
-                'token' => $req->token,
-                'status' => 'Online',
-                'astrologerId' => $callData->astrologerId
-            ])->json();
-
-            $addChatStatus = Http::withoutVerifying()->post(url('/') . '/api/addStatus', [
-                'token' => $req->token,
-                'status' => 'Online',
-                'astrologerId' => $callData->astrologerId
-            ])->json();
+            $this->addCallStatus(new Request(['token' => $req->token, 'status' => 'Online', 'astrologerId' => $callData->astrologerId]));
+            app(\App\Http\Controllers\API\User\ChatRequestController::class)->addChatStatus(new Request(['token' => $req->token, 'status' => 'Online', 'astrologerId' => $callData->astrologerId]));
             if ($callData) {
                 $callData->delete();
             }
@@ -1476,9 +1449,7 @@ public function storeCallRecording(Request $req)
             $user_wallet = DB::table('user_wallets')->where('userId', $call->userId)->first();
             $astrologerCharge = DB::table("astrologers")->where('id', $call->astrologerId)->first();
 
-            $getcurrentDuration = Http::withoutVerifying()->post(url('/') . '/api/getcurrentCallDuration', [
-                'callId' => $request->callId,
-            ])->json();
+            $getcurrentDuration = $this->getcurrentCallDuration(new Request(['callId' => $request->callId]))->getData(true);
 
             if ($call->call_type == 11) {
                 $astrologerCharge->charge = $astrologerCharge->videoCallRate;
