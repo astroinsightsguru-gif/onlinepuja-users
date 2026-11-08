@@ -632,9 +632,17 @@ Route::prefix('manager')->group(function () {
     Route::post('seo/aeo-fix', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'fixAeoArticle']);
     Route::post('seo/generate-draft', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generateVedicDraft']);
 
+    // 📈 Real Keyword Intelligence, Predictive Traffic Forecast & Closed-Loop Goal Achieving
+    Route::get('growth/keyword-intel', [\App\Http\Controllers\API\Manager\GrowthIntelligenceController::class, 'getKeywordIntel']);
+    Route::get('growth/traffic-forecast', [\App\Http\Controllers\API\Manager\GrowthIntelligenceController::class, 'getForecast']);
+    Route::get('growth/goal-status', [\App\Http\Controllers\API\Manager\GrowthIntelligenceController::class, 'getGoalStatus']);
+    Route::post('growth/trigger-catchup', [\App\Http\Controllers\API\Manager\GrowthIntelligenceController::class, 'triggerCatchup']);
+
     // ðŸ“± Social Media Omnichannel Control
     Route::get('social/posts', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getSocialPosts']);
     Route::post('social/{id}/publish', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'publishSocialNow']);
+    Route::post('social/generate-reel', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generateSocialReel']);
+    Route::post('social/generate-poster', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generateSocialPoster']);
 
     // ðŸ›• Master Bookings & Revenue Ledger
     Route::get('bookings', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getAllBookings']);
@@ -669,6 +677,20 @@ Route::prefix('manager')->group(function () {
     Route::get('paperclip/issues', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipIssues']);
     Route::post('paperclip/dispatch', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'dispatchPaperclipMission']);
     Route::post('paperclip/pause-agent', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'togglePaperclipAgentPause']);
+    Route::post('paperclip/unblock-issue', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'unblockPaperclipIssue']);
+    Route::get('paperclip/issue-details/{id}', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipIssueDetails']);
+    Route::get('paperclip/attachment/{id}', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipAttachmentContent']);
+    Route::post('paperclip/agent-chat', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'agentDirectChat']);
+    Route::post('paperclip/sync-deliverable', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'syncPaperclipDeliverable']);
+
+    // 👥 Team & Access Control Management
+    Route::post('google-login', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'googleLogin']);
+    Route::get('team', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getTeamList']);
+    Route::get('team/roles', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getTeamRoles']);
+    Route::post('team/create', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'createTeamMember']);
+    Route::post('team/update', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'updateTeamMember']);
+    Route::post('team/toggle-status', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'toggleTeamMemberStatus']);
+    Route::post('team/delete', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'deleteTeamMember']);
 });
 
 
@@ -759,4 +781,8 @@ Route::match(['get', 'post'], 'social/webhook', function (\Illuminate\Http\Reque
         'received_at' => now()->toIso8601String(),
     ]);
 });
+
+// 🕉️ WhatsApp 2-Way Interactive Bot Webhook (Evolution API)
+Route::match(['get', 'post'], 'whatsapp/webhook', [\App\Http\Controllers\API\WhatsAppWebhookController::class, 'handle'])->name('api.whatsapp.webhook');
+
 

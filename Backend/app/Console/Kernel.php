@@ -40,6 +40,12 @@ class Kernel extends ConsoleKernel
             ->name('goal_snapshot')
             ->withoutOverlapping();
 
+        // 🧠 BRAIN: Closed-Loop Growth & Goal Achieving Engine
+        $schedule->command('brain:growth --remediate')
+            ->dailyAt('23:45')
+            ->name('growth_engine_audit')
+            ->withoutOverlapping();
+
         // 🧠 SELF-RESEARCHING: keyword tri-source sweep (weekly)
         $schedule->command('seo:research')
             ->weeklyOn(0, '02:00')
@@ -260,6 +266,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('sitemap:generate --ping')
             ->dailyAt('20:00')
             ->name('sitemap_generate_evening')
+            ->withoutOverlapping();
+
+        // 🕉️ WHATSAPP DEVOTIONAL ENGINE: Daily Hindi Panchang & 12-Rashi Broadcast (Daily 06:30 AM IST)
+        $schedule->command('whatsapp:daily-panchang-broadcast --dispatch')
+            ->dailyAt('06:30')
+            ->name('whatsapp_daily_panchang_broadcast')
             ->withoutOverlapping();
     }
 
