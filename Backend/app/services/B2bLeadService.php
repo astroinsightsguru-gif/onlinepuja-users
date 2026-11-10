@@ -227,17 +227,18 @@ class B2bLeadService
     /**
      * Query Google Places API radar to fetch businesses for a city and category.
      */
-    public function queryGooglePlacesRadar(string $city, string $category = 'travel_agency', int $limit = 20): array
+    public function queryGooglePlacesRadar(string $city, string $category = 'travel_agency', int $limit = 20, ?string $customQuery = null): array
     {
         $queryMap = [
-            'travel_agency' => "tour and travel agency in {$city}",
-            'astrologer'    => "famous astrologer in {$city}",
-            'samagri_store' => "puja samagri store in {$city}",
-            'corporate'     => "business association traders council in {$city}",
-            'hotel'         => "hotels and dharamshala near ghats in {$city}",
+            'travel_agency' => "tour and travel agency pilgrimage packages in {$city}",
+            'astrologer'    => "famous astrologer jyotish kendra in {$city}",
+            'samagri_store' => "puja samagri store bhandar in {$city}",
+            'corporate'     => "business association traders chamber in {$city}",
+            'hotel'         => "hotels and dharamshala ashram near ghats temple in {$city}",
+            'temple_trust'  => "famous temple trust mandir samiti in {$city}",
         ];
 
-        $searchText = $queryMap[$category] ?? "travel agency in {$city}";
+        $searchText = !empty($customQuery) ? $customQuery : ($queryMap[$category] ?? "tour and travel agency in {$city}");
 
         if (empty($this->googleApiKey)) {
             Log::warning("Google Map API Key not set. Falling back to local curated directory for {$city}.");
@@ -246,7 +247,7 @@ class B2bLeadService
 
         try {
             $url = "https://maps.googleapis.com/maps/api/place/textsearch/json";
-            $res = Http::timeout(10)->get($url, [
+            $res = Http::timeout(15)->get($url, [
                 'query' => $searchText,
                 'key'   => $this->googleApiKey,
             ]);
@@ -259,6 +260,7 @@ class B2bLeadService
             $places = $data['results'] ?? [];
 
             $imported = 0;
+            $importedLeads = [];
             foreach (array_slice($places, 0, $limit) as $p) {
                 $name = $p['name'] ?? null;
                 $placeId = $p['place_id'] ?? null;
@@ -308,9 +310,27 @@ class B2bLeadService
                 if ($lead->wasRecentlyCreated) {
                     $imported++;
                 }
+                $importedLeads[] = [
+                    'id'            => $lead->id,
+                    'business_name' => $lead->business_name,
+                    'phone'         => $lead->phone,
+                    'category'      => $lead->category,
+                    'city'          => $lead->city,
+                    'address'       => $lead->address,
+                    'google_rating' => $lead->google_rating,
+                    'website'       => $lead->website,
+                    'partner_code'  => $lead->partner_code,
+                    'is_new'        => $lead->wasRecentlyCreated,
+                ];
             }
 
-            return ['ok' => true, 'imported' => $imported, 'total_queried' => count($places)];
+            return [
+                'ok'            => true,
+                'imported'      => $imported,
+                'total_queried' => count($places),
+                'leads'         => $importedLeads,
+                'search_query'  => $searchText,
+            ];
         } catch (\Throwable $e) {
             Log::error("Google Places Radar Exception: " . $e->getMessage());
             return ['ok' => false, 'error' => $e->getMessage()];

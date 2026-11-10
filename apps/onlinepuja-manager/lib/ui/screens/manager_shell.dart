@@ -6,6 +6,11 @@ import '../../services/manager_auth_session.dart';
 import '../../theme/manager_theme.dart';
 import 'astrologers/astrologers_hub_screen.dart';
 import 'b2b/b2b_partner_hub_screen.dart';
+import 'blogs/blogs_management_screen.dart';
+import 'blogs/vedic_seo_aeo_screen.dart';
+import 'bookings/master_bookings_screen.dart';
+import 'campaigns/campaign_automation_screen.dart';
+import 'crm/crm_hub_screen.dart';
 import 'crm/leads_pipeline_screen.dart';
 import 'dashboard/live_radar_screen.dart';
 import 'dialer/dialer_screen.dart';
@@ -16,6 +21,9 @@ import 'growth/growth_ai_cockpit_screen.dart';
 import 'kundli/kundli_studio_screen.dart';
 import 'agents/paperclip_squad_screen.dart';
 import 'quotes/quotation_desk_screen.dart';
+import 'social/social_management_screen.dart';
+import 'social/social_studio_screen.dart';
+import 'studio/banner_puja_studio_screen.dart';
 import 'team/team_management_screen.dart';
 import 'whatsapp/whatsapp_inbox_screen.dart';
 import '../widgets/active_call_hud.dart';
@@ -64,7 +72,7 @@ class _ManagerShellState extends State<ManagerShell> {
       'icon': Icons.people_alt_rounded,
       'color': ManagerTheme.brandGold,
       'module': 'crm',
-      'screen': const LeadsPipelineScreen(),
+      'screen': const CrmHubScreen(),
     },
     {
       'key': 'astrologers',
@@ -113,6 +121,22 @@ class _ManagerShellState extends State<ManagerShell> {
       'color': ManagerTheme.brandGold,
       'module': 'campaigns',
       'screen': const GrowthAiCockpitScreen(),
+    },
+    {
+      'key': 'social_hub',
+      'label': 'Social Hub',
+      'icon': Icons.share_rounded,
+      'color': const Color(0xFFF43F5E),
+      'module': 'campaigns',
+      'screen': const SocialManagementScreen(),
+    },
+    {
+      'key': 'blogs_hub',
+      'label': 'Blogs Hub',
+      'icon': Icons.menu_book_rounded,
+      'color': const Color(0xFF34D399),
+      'module': 'seo',
+      'screen': const BlogsManagementScreen(),
     },
     {
       'key': 'finance',
@@ -268,6 +292,232 @@ class _ManagerShellState extends State<ManagerShell> {
     );
   }
 
+  void _showMasterHubLauncher(BuildContext context, ManagerAuthSession session) {
+    final clusters = [
+      {
+        'title': 'Sales & Devotee CRM',
+        'icon': Icons.point_of_sale_rounded,
+        'color': ManagerTheme.brandGold,
+        'items': [
+          {'name': 'Live Radar', 'icon': Icons.radar_rounded, 'color': ManagerTheme.brandGold, 'module': null, 'target': const LiveRadarScreen()},
+          {'name': 'Devotees & Gotra Vault', 'icon': Icons.people_alt_rounded, 'color': const Color(0xFFF59E0B), 'module': 'crm', 'target': const CrmHubScreen()},
+          {'name': 'Devotee Leads Pipeline', 'icon': Icons.view_kanban_rounded, 'color': const Color(0xFFFBBF24), 'module': 'crm', 'target': const LeadsPipelineScreen()},
+          {'name': 'Smart Dialer', 'icon': Icons.phone_in_talk_rounded, 'color': const Color(0xFF25D366), 'module': 'crm', 'target': const DialerScreen()},
+          {'name': 'Master Bookings & Revenue', 'icon': Icons.account_balance_wallet_rounded, 'color': const Color(0xFF34D399), 'module': 'finance', 'target': const MasterBookingsScreen()},
+          {'name': 'Dynamic Quotations Desk', 'icon': Icons.description_rounded, 'color': const Color(0xFF60A5FA), 'module': 'finance', 'target': const QuotationDeskScreen()},
+          {'name': 'WhatsApp Devotee Inbox', 'icon': Icons.chat_bubble_rounded, 'color': const Color(0xFF25D366), 'module': 'campaigns', 'target': const WhatsAppInboxScreen()},
+        ],
+      },
+      {
+        'title': 'Sacred Puja Operations',
+        'icon': Icons.temple_hindu_rounded,
+        'color': const Color(0xFFF59E0B),
+        'items': [
+          {'name': 'Sankalp Fulfillment & Video', 'icon': Icons.local_shipping_rounded, 'color': const Color(0xFF60A5FA), 'module': 'crm', 'target': const SankalpFulfillmentScreen()},
+          {'name': 'Astrologers & Pandits Hub', 'icon': Icons.self_improvement_rounded, 'color': const Color(0xFFF59E0B), 'module': 'astrologers', 'target': const AstrologersHubScreen()},
+          {'name': 'Vedic Janampatri PDF Studio', 'icon': Icons.picture_as_pdf_rounded, 'color': const Color(0xFFFBBF24), 'module': 'kundli', 'target': const KundliStudioScreen()},
+          {'name': 'Puja Pricing & Banners Studio', 'icon': Icons.storefront_rounded, 'color': const Color(0xFFEC4899), 'module': 'crm', 'target': const BannerPujaStudioScreen()},
+        ],
+      },
+      {
+        'title': 'Autonomous Growth AI',
+        'icon': Icons.auto_awesome_rounded,
+        'color': const Color(0xFFA78BFA),
+        'items': [
+          {'name': 'Paperclip 8-Agent Squad', 'icon': Icons.hub_rounded, 'color': const Color(0xFFA78BFA), 'module': 'paperclip', 'target': const PaperclipSquadScreen(embedded: true)},
+          {'name': 'Growth AI Cockpit', 'icon': Icons.rocket_launch_rounded, 'color': ManagerTheme.brandGold, 'module': 'campaigns', 'target': const GrowthAiCockpitScreen()},
+          {'name': 'Social Autopilot & Publisher', 'icon': Icons.share_rounded, 'color': const Color(0xFFF43F5E), 'module': 'campaigns', 'target': const SocialManagementScreen()},
+          {'name': 'Vedic Blogs Studio & Publishing', 'icon': Icons.menu_book_rounded, 'color': const Color(0xFF34D399), 'module': 'seo', 'target': const BlogsManagementScreen()},
+          {'name': 'B2B Partner & Corporate Radar', 'icon': Icons.business_center_rounded, 'color': const Color(0xFF38BDF8), 'module': 'b2b', 'target': const B2bPartnerHubScreen()},
+          {'name': 'Vedic SEO & AEO Studio', 'icon': Icons.manage_search_rounded, 'color': const Color(0xFF34D399), 'module': 'seo', 'target': const VedicSeoAeoScreen()},
+          {'name': 'Social Studio & Reel Creator', 'icon': Icons.video_camera_back_rounded, 'color': const Color(0xFFF43F5E), 'module': 'campaigns', 'target': const SocialStudioScreen()},
+          {'name': 'Brevo Email Campaign Engine', 'icon': Icons.mail_rounded, 'color': const Color(0xFFFB923C), 'module': 'campaigns', 'target': const EmailCampaignHubScreen()},
+          {'name': 'Festival & Muhurat Automations', 'icon': Icons.celebration_rounded, 'color': const Color(0xFFE879F9), 'module': 'campaigns', 'target': const CampaignAutomationScreen()},
+        ],
+      },
+      {
+        'title': 'Platform & Team Governance',
+        'icon': Icons.admin_panel_settings_rounded,
+        'color': const Color(0xFFEC4899),
+        'items': [
+          {'name': 'Financial Ledger & Margins', 'icon': Icons.account_balance_wallet_rounded, 'color': const Color(0xFF10B981), 'module': 'finance', 'target': const FinanceHubScreen()},
+          {'name': 'Team Members & Role Access', 'icon': Icons.admin_panel_settings_rounded, 'color': const Color(0xFFEC4899), 'module': 'team', 'target': const TeamManagementScreen()},
+        ],
+      },
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0F172A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scrollController) => Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: ManagerTheme.brandGold.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.dashboard_customize_rounded, color: ManagerTheme.brandGold, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'OnlinePuja Command Hubs',
+                          style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Unified 4-Cluster Access to all 31 Sacred Operations',
+                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white60),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Color(0xFF1E293B), height: 1),
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                itemCount: clusters.length,
+                itemBuilder: (context, idx) {
+                  final cluster = clusters[idx];
+                  final items = (cluster['items'] as List).where((item) {
+                    final mod = item['module'] as String?;
+                    if (mod == null) return true;
+                    return session.hasPermission(mod);
+                  }).toList();
+
+                  if (items.isEmpty) return const SizedBox.shrink();
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B).withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: (cluster['color'] as Color).withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                          child: Row(
+                            children: [
+                              Icon(cluster['icon'] as IconData, color: cluster['color'] as Color, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                cluster['title'] as String,
+                                style: TextStyle(
+                                  color: cluster['color'] as Color,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(color: Color(0xFF334155), height: 1),
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(10),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 2.3,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                          ),
+                          itemCount: items.length,
+                          itemBuilder: (context, itemIdx) {
+                            final it = items[itemIdx];
+                            return Material(
+                              color: const Color(0xFF0F172A),
+                              borderRadius: BorderRadius.circular(10),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => it['target'] as Widget),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: (it['color'] as Color).withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(it['icon'] as IconData, color: it['color'] as Color, size: 16),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          it['name'] as String,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final callProvider = Provider.of<CallProvider>(context);
@@ -318,6 +568,48 @@ class _ManagerShellState extends State<ManagerShell> {
                 ),
               ),
             ),
+
+          // Top Left Command Launcher Pill (⌘ 31 HUBS)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 6,
+            left: 12,
+            child: InkWell(
+              onTap: () => _showMasterHubLauncher(context, session),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.dashboard_customize_rounded, color: Color(0xFF0B0F19), size: 14),
+                    SizedBox(width: 5),
+                    Text(
+                      '31 HUBS',
+                      style: TextStyle(
+                        color: Color(0xFF0B0F19),
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
           // Top Floating Bar (Language Switcher + User Profile Pill)
           Positioned(

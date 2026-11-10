@@ -458,6 +458,58 @@ class ManagerApiService {
     return {'success': false, 'message': 'Failed to dispatch B2B campaign.'};
   }
 
+  // 19B. Scan Live Google Maps Places Radar (Lead Finder)
+  Future<Map<String, dynamic>> scanB2bRadar({
+    required String city,
+    required String category,
+    int limit = 20,
+    String? customQuery,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/b2b/radar/scan'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'city': city,
+          'category': category,
+          'limit': limit,
+          if (customQuery != null && customQuery.trim().isNotEmpty) 'custom_query': customQuery.trim(),
+        }),
+      ).timeout(const Duration(seconds: 45));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      } else {
+        final err = jsonDecode(res.body);
+        return {'status': res.statusCode, 'success': false, 'error': err['error'] ?? 'Radar scan failed'};
+      }
+    } catch (e) {
+      return {'status': 500, 'success': false, 'error': e.toString()};
+    }
+  }
+
+  // 19C. Update B2B Lead Status
+  Future<bool> updateB2bLeadStatus({
+    required int id,
+    required String status,
+    String? notes,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/b2b/status'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'id': id,
+          'status': status,
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
+        }),
+      ).timeout(const Duration(seconds: 10));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // 20. Send Omnichannel Broadcast (WhatsApp + Brevo + Push)
   Future<Map<String, dynamic>> sendOmnichannelBroadcast({
     required String headline,

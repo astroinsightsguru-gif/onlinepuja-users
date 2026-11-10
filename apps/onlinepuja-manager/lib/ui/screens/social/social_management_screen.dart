@@ -217,7 +217,7 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E293B),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _composeGenerateAi ? ManagerTheme.brandGold.withOpacity(0.5) : Colors.white12),
+                        border: Border.all(color: _composeGenerateAi ? ManagerTheme.brandGold.withValues(alpha: 0.5) : Colors.white12),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,7 +237,7 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
                               ),
                               Switch(
                                 value: _composeGenerateAi,
-                                activeColor: ManagerTheme.brandGold,
+                                activeThumbColor: ManagerTheme.brandGold,
                                 onChanged: (val) {
                                   setSheetState(() => _composeGenerateAi = val);
                                 },
@@ -327,7 +327,7 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+          color: isSelected ? color.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: isSelected ? color : Colors.white12, width: 1.5),
         ),
@@ -503,7 +503,7 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
                       ),
                       Text(
                         'Auto-Publishing Active',
-                        style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.5)),
+                        style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5)),
                       ),
                     ],
                   ),
@@ -559,7 +559,7 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
                             color: ManagerTheme.surfaceDark,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isFailed ? Colors.redAccent.withOpacity(0.5) : (isPublished ? ManagerTheme.brandEmerald.withOpacity(0.3) : Colors.white12),
+                              color: isFailed ? Colors.redAccent.withValues(alpha: 0.5) : (isPublished ? ManagerTheme.brandEmerald.withValues(alpha: 0.3) : Colors.white12),
                               width: isFailed ? 1.5 : 1,
                             ),
                           ),
@@ -575,9 +575,9 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: pColor.withOpacity(0.2),
+                                          color: pColor.withValues(alpha: 0.2),
                                           borderRadius: BorderRadius.circular(6),
-                                          border: Border.all(color: pColor.withOpacity(0.5)),
+                                          border: Border.all(color: pColor.withValues(alpha: 0.5)),
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
@@ -650,9 +650,9 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: Colors.redAccent.withOpacity(0.12),
+                                    color: Colors.redAccent.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
+                                    border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
                                   ),
                                   child: Row(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -692,11 +692,11 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.schedule_rounded, size: 12, color: Colors.white.withOpacity(0.4)),
+                                      Icon(Icons.schedule_rounded, size: 12, color: Colors.white.withValues(alpha: 0.4)),
                                       const SizedBox(width: 4),
                                       Text(
                                         isPublished ? 'Published: ${published ?? scheduled}' : 'Scheduled: $scheduled',
-                                        style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
+                                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
                                       ),
                                     ],
                                   ),
@@ -751,7 +751,7 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFF1E293B),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -777,9 +777,9 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: connected ? color.withOpacity(0.12) : Colors.amber.withOpacity(0.12),
+        color: connected ? color.withValues(alpha: 0.12) : Colors.amber.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: connected ? color.withOpacity(0.4) : Colors.amber.withOpacity(0.5)),
+        border: Border.all(color: connected ? color.withValues(alpha: 0.4) : Colors.amber.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -799,7 +799,7 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
             const SizedBox(width: 4),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              decoration: BoxDecoration(color: Colors.amber.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+              decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
               child: Text(notice, style: const TextStyle(color: Colors.amber, fontSize: 9, fontWeight: FontWeight.bold)),
             ),
           ],
@@ -815,22 +815,22 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
 
     switch (status.toLowerCase()) {
       case 'published':
-        bg = ManagerTheme.brandEmerald.withOpacity(0.2);
+        bg = ManagerTheme.brandEmerald.withValues(alpha: 0.2);
         fg = ManagerTheme.brandEmerald;
         label = 'PUBLISHED';
         break;
       case 'failed':
-        bg = Colors.redAccent.withOpacity(0.2);
+        bg = Colors.redAccent.withValues(alpha: 0.2);
         fg = Colors.redAccent;
         label = 'FAILED';
         break;
       case 'publishing':
-        bg = Colors.amber.withOpacity(0.2);
+        bg = Colors.amber.withValues(alpha: 0.2);
         fg = Colors.amber;
         label = 'DISPATCHING';
         break;
       default:
-        bg = ManagerTheme.brandGold.withOpacity(0.2);
+        bg = ManagerTheme.brandGold.withValues(alpha: 0.2);
         fg = ManagerTheme.brandGold;
         label = 'QUEUED';
         break;
@@ -841,7 +841,7 @@ class _SocialManagementScreenState extends State<SocialManagementScreen> {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: fg.withOpacity(0.4)),
+        border: Border.all(color: fg.withValues(alpha: 0.4)),
       ),
       child: Text(label, style: TextStyle(color: fg, fontSize: 9, fontWeight: FontWeight.bold)),
     );

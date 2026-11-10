@@ -617,10 +617,12 @@ Route::prefix('manager')->group(function () {
     Route::get('festivals', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getFestivals']);
     Route::post('festivals/schedule', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'scheduleFestival']);
 
-    // 💼 B2B Partner Network & Google Maps Leads
+    // 💼 B2B Partner Network & Google Maps Leads & Live Lead Radar
     Route::get('b2b/leads', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getB2bLeads']);
     Route::get('b2b/pitch/{id?}', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getB2bPitch']);
     Route::post('b2b/dispatch', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'dispatchB2bCampaign']);
+    Route::post('b2b/radar/scan', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'scanB2bRadar']);
+    Route::post('b2b/status', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'updateB2bLeadStatus']);
 
     // 🚀 Omnichannel Broadcast (WhatsApp + Brevo + Push)
     Route::post('growth/omnichannel-broadcast', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'omnichannelBroadcast']);
@@ -638,8 +640,12 @@ Route::prefix('manager')->group(function () {
     Route::get('growth/goal-status', [\App\Http\Controllers\API\Manager\GrowthIntelligenceController::class, 'getGoalStatus']);
     Route::post('growth/trigger-catchup', [\App\Http\Controllers\API\Manager\GrowthIntelligenceController::class, 'triggerCatchup']);
 
-    // ðŸ“± Social Media Omnichannel Control
+    // 📱 Social Media Omnichannel Control
+    Route::get('social/analytics', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getSocialAnalytics']);
     Route::get('social/posts', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getSocialPosts']);
+    Route::post('social/posts/create', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'createSocialPost']);
+    Route::post('social/posts/{id}/retry', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'retrySocialPost']);
+    Route::post('social/posts/{id}/publish', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'publishSocialNow']);
     Route::post('social/{id}/publish', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'publishSocialNow']);
     Route::post('social/generate-reel', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generateSocialReel']);
     Route::post('social/generate-poster', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generateSocialPoster']);
@@ -672,6 +678,9 @@ Route::prefix('manager')->group(function () {
     Route::post('campaigns/trigger', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'triggerCampaignAutomation']);
 
     // 🤖 Paperclip Autonomous AI Squad Proxy (7 AI Agents)
+    Route::get('paperclip/companies', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipCompanies']);
+    Route::get('paperclip/activity', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipActivity']);
+    Route::get('paperclip/reports', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipReports']);
     Route::get('paperclip/overview', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipOverview']);
     Route::get('paperclip/agents', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipAgents']);
     Route::get('paperclip/issues', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getPaperclipIssues']);

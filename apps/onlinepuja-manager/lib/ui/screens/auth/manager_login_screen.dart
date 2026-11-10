@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/manager_auth_session.dart';
 import '../../../theme/manager_theme.dart';
 import 'manager_pin_screen.dart';
@@ -19,6 +20,33 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
   bool _isLoading = false;
   bool _isGoogleLoading = false;
   bool _enableQuickPin = true;
+  bool _rememberPassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedEmail = prefs.getString('op_saved_email');
+      final savedPass = prefs.getString('op_saved_pass');
+      final remember = prefs.getBool('op_remember_pass') ?? true;
+      if (mounted) {
+        setState(() {
+          _rememberPassword = remember;
+          if (savedEmail != null && savedEmail.isNotEmpty) {
+            _emailCtrl.text = savedEmail;
+          }
+          if (remember && savedPass != null && savedPass.isNotEmpty) {
+            _passCtrl.text = savedPass;
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -80,6 +108,18 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
     setState(() => _isLoading = false);
 
     if (result.success) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (_rememberPassword) {
+          await prefs.setString('op_saved_email', email);
+          await prefs.setString('op_saved_pass', password);
+          await prefs.setBool('op_remember_pass', true);
+        } else {
+          await prefs.remove('op_saved_pass');
+          await prefs.setBool('op_remember_pass', false);
+        }
+      } catch (_) {}
+
       _showSnack('Superadmin session authorized 🙏', isError: false);
     } else {
       _showSnack(result.message, isError: true);
@@ -309,6 +349,7 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                   TextField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email, AutofillHints.username],
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       filled: true,
@@ -341,6 +382,7 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                   TextField(
                     controller: _passCtrl,
                     obscureText: _obscurePassword,
+                    autofillHints: const [AutofillHints.password],
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       filled: true,
@@ -370,7 +412,41 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 8),
+
+                  // Remember Password Option
+                  InkWell(
+                    onTap: () => setState(() => _rememberPassword = !_rememberPassword),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: Checkbox(
+                              value: _rememberPassword,
+                              activeColor: ManagerTheme.brandGold,
+                              checkColor: const Color(0xFF0B0F19),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                              onChanged: (val) => setState(() => _rememberPassword = val ?? true),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Save password on this device for instant login',
+                            style: TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
 
                   // Master Quick PIN Option
                   Container(

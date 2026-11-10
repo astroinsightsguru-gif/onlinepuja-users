@@ -259,6 +259,18 @@
     border-color: #fde68a !important;
     color: #92400e !important;
 }
+
+/* Prevent Brain AI floating bubble from overlapping action buttons */
+#brain-chat-floating, #brain-toggle-btn, .brain-bubble, .brain-launcher {
+    bottom: 85px !important;
+    right: 18px !important;
+    z-index: 45 !important;
+}
+@media (max-width: 768px) {
+    .ai-scope {
+        padding-bottom: 120px !important;
+    }
+}
 </style>
 
 <div class="ai-scope">
@@ -391,13 +403,13 @@
                         <div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span class="ai-step-badge" style="background: #d97706;">1</span>
-                                <strong style="color: #0f172a; font-size: 12px;">OmniRoute Gateway</strong>
+                                <strong style="color: #0f172a; font-size: 12px;">ComfyUI & OmniRoute FLUX</strong>
                             </div>
                             <div style="margin-top: 4px; font-size: 11px; color: #92400e; padding-left: 28px;">
-                                Synced: <span id="omni-image-count-badge" style="font-weight: 800; font-family: monospace;">{{ $omniImageModels->count() }} Models</span>
+                                comfyui/flux-dev · comfyui/sdxl · {{ $omniImageModels->count() }} Models
                             </div>
                         </div>
-                        <span class="ai-pill" style="background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;">Primary</span>
+                        <span class="ai-pill" style="background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;">Primary GPU</span>
                     </div>
 
                     <div class="ai-cascade-item ai-cascade-fallback">
@@ -405,7 +417,7 @@
                             <span class="ai-step-badge" style="background: #64748b;">2</span>
                             <span style="font-weight: 600; color: #334155;">Pollinations AI</span>
                         </div>
-                        <span style="font-size: 11px; color: #64748b; font-family: monospace;">Flux Free Tier</span>
+                        <span style="font-size: 11px; color: #64748b; font-family: monospace;">FLUX Free Tier</span>
                     </div>
 
                     <div class="ai-cascade-item ai-cascade-fallback">
@@ -455,18 +467,31 @@
                         <div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span class="ai-step-badge" style="background: #e11d48;">1</span>
-                                <strong style="color: #0f172a; font-size: 12px;">Native FFmpeg 9:16 Reel</strong>
+                                <strong style="color: #0f172a; font-size: 12px;">ComfyUI AnimateDiff & SVD</strong>
                             </div>
                             <div style="margin-top: 4px; font-size: 11px; color: #9f1239; padding-left: 28px;">
-                                <span>1080x1920 HQ · HarfBuzz Devanagari · Watermark</span>
+                                comfy.vmstudio.digital · GPU Motion Studio
                             </div>
                         </div>
-                        <span class="ai-pill" style="background: #ffe4e6; color: #9f1239; border: 1px solid #fda4af;">Primary ($0 Free)</span>
+                        <span class="ai-pill" style="background: #ffe4e6; color: #9f1239; border: 1px solid #fda4af;">Primary GPU</span>
+                    </div>
+
+                    <div class="ai-cascade-item ai-cascade-fallback">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="ai-step-badge" style="background: #64748b;">2</span>
+                                <strong style="color: #0f172a; font-size: 12px;">Native FFmpeg 9:16 Reel</strong>
+                            </div>
+                            <div style="margin-top: 4px; font-size: 11px; color: #475569; padding-left: 28px;">
+                                1080x1920 HQ · HarfBuzz Devanagari · Watermark
+                            </div>
+                        </div>
+                        <span class="ai-pill" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">$0 Free</span>
                     </div>
 
                     <div class="ai-cascade-item ai-cascade-fallback">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="ai-step-badge" style="background: #64748b;">2</span>
+                            <span class="ai-step-badge" style="background: #64748b;">3</span>
                             <span style="font-weight: 600; color: #334155;">OmniRoute Video</span>
                         </div>
                         <span style="font-size: 11px; color: #64748b; font-family: monospace;">Synced: {{ $omniVideoModels->count() }} Models</span>
@@ -474,18 +499,10 @@
 
                     <div class="ai-cascade-item ai-cascade-fallback">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="ai-step-badge" style="background: #64748b;">3</span>
+                            <span class="ai-step-badge" style="background: #64748b;">4</span>
                             <span style="font-weight: 600; color: #334155;">Hugging Face Video</span>
                         </div>
                         <span style="font-size: 11px; color: #64748b; font-family: monospace;">Wan2.1-T2V Free</span>
-                    </div>
-
-                    <div class="ai-cascade-item ai-cascade-fallback">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="ai-step-badge" style="background: #64748b;">4</span>
-                            <span style="font-weight: 600; color: #334155;">Pollinations Motion</span>
-                        </div>
-                        <span style="font-size: 11px; color: #64748b;">Keyless Motion</span>
                     </div>
                 </div>
             </div>
@@ -708,6 +725,50 @@
                         <button type="button" class="toggle-secret-btn" data-target="omniroute_key" style="background: none; border: none; font-size: 11px; color: #2563eb; font-weight: 700; cursor: pointer;">Show</button>
                     </div>
                     <input type="password" id="omniroute_key" name="omniroute_key" value="{{ $creds['omniroute_key'] ?? '' }}" class="ai-input" style="font-family: monospace;" placeholder="sk-omni-…">
+                </div>
+            </div>
+
+            {{-- 1.5. ComfyUI Dedicated GPU Studio Node --}}
+            <div style="background: #f8fafc; border: 1.5px solid #fed7aa; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 13px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                        <span>🎨</span> ComfyUI GPU Node & Workflows
+                    </span>
+                    <span class="ai-pill" style="background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5;">GPU Node Active</span>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">ComfyUI Host URL (Routed via OmniRoute)</label>
+                    <input type="text" name="comfy_url" value="{{ $creds['comfy_url'] ?? 'https://comfy.vmstudio.digital' }}" class="ai-input" style="font-family: monospace;" placeholder="https://comfy.vmstudio.digital">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">ComfyUI Image Model / Checkpoint</label>
+                    <select name="model_comfyui_image" class="ai-select">
+                        <option value="comfyui/flux-dev" {{ ($creds['model_comfyui_image'] ?? 'comfyui/flux-dev') == 'comfyui/flux-dev' ? 'selected' : '' }}>
+                            ⚡ comfyui/flux-dev (FLUX.1-Dev Photorealistic Sacred Art)
+                        </option>
+                        <option value="comfyui/sdxl" {{ ($creds['model_comfyui_image'] ?? '') == 'comfyui/sdxl' ? 'selected' : '' }}>
+                            🖼️ comfyui/sdxl (Stable Diffusion XL Base 1.0)
+                        </option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">ComfyUI Video Animation Model</label>
+                    <select name="model_comfyui_video" class="ai-select">
+                        <option value="comfyui/animatediff" {{ ($creds['model_comfyui_video'] ?? 'comfyui/animatediff') == 'comfyui/animatediff' ? 'selected' : '' }}>
+                            🎬 comfyui/animatediff (AnimateDiff Motion LoRA 9:16)
+                        </option>
+                        <option value="comfyui/svd-xt" {{ ($creds['model_comfyui_video'] ?? '') == 'comfyui/svd-xt' ? 'selected' : '' }}>
+                            🎥 comfyui/svd-xt (Stable Video Diffusion XT 25-frame)
+                        </option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                    <button type="button" onclick="testComfyNode()" style="flex: 1; justify-content: center; background: #ea580c; color: white; border: none; border-radius: 8px; padding: 7px 12px; font-weight: 700; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <i data-lucide="cpu" style="width: 14px; height: 14px;"></i> Ping ComfyUI Node
+                    </button>
+                    <a href="https://comfy.vmstudio.digital" target="_blank" style="justify-content: center; background: #e2e8f0; color: #1e293b; border-radius: 8px; padding: 7px 12px; font-weight: 700; font-size: 11px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                        <i data-lucide="external-link" style="width: 14px; height: 14px;"></i> Open UI
+                    </a>
                 </div>
             </div>
 
@@ -1005,6 +1066,11 @@
                 body: JSON.stringify({ action: 'sync_models' })
             })
             .then(function(r) {
+                if (r.status === 419) {
+                    alert('Session CSRF expired. Reloading page to refresh token...');
+                    window.location.reload();
+                    return;
+                }
                 if (!r.ok) {
                     return r.text().then(function(t) {
                         try { return JSON.parse(t); } catch(e) { throw new Error('HTTP ' + r.status + ': ' + t.substring(0, 150)); }
@@ -1185,6 +1251,11 @@
                 })
             })
             .then(function(r) {
+                if (r.status === 419) {
+                    alert('Session CSRF expired. Reloading page to refresh token...');
+                    window.location.reload();
+                    return;
+                }
                 if (!r.ok) {
                     return r.text().then(function(t) {
                         try { return JSON.parse(t); } catch(e) { throw new Error('HTTP ' + r.status + ': ' + t.substring(0, 150)); }
@@ -1363,6 +1434,34 @@ function testBrevoEmail() {
     .then(function(r) { return r.json(); })
     .then(function(res) {
         alert(res.ok ? '✅ ' + (res.message || 'Brevo email sent!') : '❌ ' + (res.error || res.message));
+    })
+    .catch(function(err) { alert('Error: ' + err.message); });
+}
+
+function testComfyNode() {
+    var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+    fetch('{{ route("growth-os.action") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ action: 'test_comfyui' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+        if (res.ok) {
+            var d = res.data || {};
+            var msg = '🎨 ComfyUI GPU Node & OmniRoute Audit:\n';
+            msg += '• Host: ' + (d.comfy_url || 'https://comfy.vmstudio.digital') + '\n';
+            msg += '• OmniRoute Gateway: ' + (d.omniroute_connected ? '✅ Connected' : '⚠️ Offline') + '\n';
+            msg += '• Direct Node Health: ' + (d.direct_node_ping ? '✅ Active' : 'ℹ️ Routed via OmniRoute/Cloudflare') + '\n';
+            msg += '• Available Workflows:\n  - Image: ' + (d.available_models?.image || []).join(', ') + '\n  - Video: ' + (d.available_models?.video || []).join(', ');
+            alert(msg);
+        } else {
+            alert('❌ ' + (res.error || res.message));
+        }
     })
     .catch(function(err) { alert('Error: ' + err.message); });
 }

@@ -218,6 +218,242 @@ class _B2bPartnerHubScreenState extends State<B2bPartnerHubScreen> {
     ).then((_) => _loadB2bData());
   }
 
+  void _showLeadRadarModal() {
+    String selectedRadarCity = 'Varanasi';
+    String selectedRadarCategory = 'astrologer';
+    int selectedLimit = 20;
+    final customQueryCtrl = TextEditingController();
+    bool isScanning = false;
+    String? scanStatusMessage;
+
+    final predefinedCities = [
+      'Varanasi',
+      'Haridwar',
+      'Ayodhya',
+      'Rishikesh',
+      'Ujjain',
+      'Mathura',
+      'Delhi',
+      'Mumbai',
+      'Jaipur',
+      'Kolkata',
+      'Bengaluru',
+      'Pune',
+      'Hyderabad',
+      'Ahmedabad',
+    ];
+
+    final categories = [
+      {'key': 'astrologer', 'label': '🕉️ Astrologers & Jyotish', 'desc': 'Verified Pandits & Kundli experts'},
+      {'key': 'travel_agency', 'label': '✈️ Pilgrimage & Travel', 'desc': 'Yatra & tour operators'},
+      {'key': 'samagri_store', 'label': '🌺 Puja Samagri Vendors', 'desc': 'Samagri stores & bhandars'},
+      {'key': 'hotel', 'label': '🏨 Dharamshalas & Hotels', 'desc': 'Accommodations near holy temples'},
+      {'key': 'temple_trust', 'label': '🏛️ Temple Trusts & Samiti', 'desc': 'Mandir management trusts'},
+      {'key': 'corporate', 'label': '🎁 Corporate & Traders', 'desc': 'Business councils & HR gifting'},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0F172A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        side: BorderSide(color: ManagerTheme.brandGold, width: 1.5),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalCtx, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 20,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.radar_rounded, color: Color(0xFF38BDF8), size: 24),
+                          SizedBox(width: 10),
+                          Text(
+                            'Live Lead Finder Radar',
+                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, color: Colors.white60),
+                        onPressed: isScanning ? null : () => Navigator.pop(modalCtx),
+                      ),
+                    ],
+                  ),
+                  const Text(
+                    'Mine Google Places & Directories for high-intent business leads & verified WhatsApp numbers in seconds.',
+                    style: TextStyle(fontSize: 12, color: Colors.white54, height: 1.4),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Category selection
+                  const Text('TARGET PERSONA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF38BDF8))),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: categories.map((cat) {
+                      final isSelected = selectedRadarCategory == cat['key'];
+                      return ChoiceChip(
+                        label: Text(cat['label']!),
+                        selected: isSelected,
+                        selectedColor: const Color(0xFF38BDF8).withValues(alpha: 0.25),
+                        backgroundColor: const Color(0xFF1E293B),
+                        labelStyle: TextStyle(
+                          color: isSelected ? const Color(0xFF38BDF8) : Colors.white70,
+                          fontSize: 12,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        side: BorderSide(color: isSelected ? const Color(0xFF38BDF8) : Colors.white12),
+                        onSelected: isScanning ? null : (_) {
+                          setModalState(() => selectedRadarCategory = cat['key']!);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // City selection
+                  const Text('TARGET INDIAN CITY / CORRIDOR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: ManagerTheme.brandGold)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: predefinedCities.map((city) {
+                      final isSelected = selectedRadarCity.toLowerCase() == city.toLowerCase();
+                      return ChoiceChip(
+                        label: Text(city),
+                        selected: isSelected,
+                        selectedColor: ManagerTheme.brandGold.withValues(alpha: 0.25),
+                        backgroundColor: const Color(0xFF1E293B),
+                        labelStyle: TextStyle(
+                          color: isSelected ? ManagerTheme.brandGold : Colors.white70,
+                          fontSize: 11.5,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        side: BorderSide(color: isSelected ? ManagerTheme.brandGold : Colors.white10),
+                        onSelected: isScanning ? null : (_) {
+                          setModalState(() => selectedRadarCity = city);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Custom Search Query
+                  TextField(
+                    controller: customQueryCtrl,
+                    enabled: !isScanning,
+                    style: const TextStyle(fontSize: 12.5, color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Custom Search Query (Optional)',
+                      hintText: 'e.g. Vedic Purohit Sangh in $selectedRadarCity',
+                      prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Colors.white38),
+                      filled: true,
+                      fillColor: const Color(0xFF1E293B),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Status message
+                  if (scanStatusMessage != null)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: ManagerTheme.brandEmerald.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: ManagerTheme.brandEmerald.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle_rounded, color: ManagerTheme.brandEmerald, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              scanStatusMessage!,
+                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Action Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF38BDF8),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: isScanning
+                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                          : const Icon(Icons.radar_rounded, size: 20),
+                      label: Text(
+                        isScanning
+                            ? 'Scanning Google Maps Radar...'
+                            : 'Scan & Discover $selectedRadarCity Leads',
+                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: isScanning
+                          ? null
+                          : () async {
+                              setModalState(() {
+                                isScanning = true;
+                                scanStatusMessage = null;
+                              });
+
+                              final res = await _api.scanB2bRadar(
+                                city: selectedRadarCity,
+                                category: selectedRadarCategory,
+                                limit: selectedLimit,
+                                customQuery: customQueryCtrl.text.trim().isNotEmpty ? customQueryCtrl.text.trim() : null,
+                              );
+
+                              if (modalCtx.mounted) {
+                                setModalState(() {
+                                  isScanning = false;
+                                  if (res['success'] == true) {
+                                    final imported = res['radar']?['imported'] ?? 0;
+                                    final totalInCity = res['city_leads'] ?? 0;
+                                    scanStatusMessage = '✓ Indexed $imported new leads! Total in $selectedRadarCity: $totalInCity.';
+                                  } else {
+                                    scanStatusMessage = 'Notice: ${res['error'] ?? 'Radar scan finished.'}';
+                                  }
+                                });
+                              }
+
+                              // Refresh background list
+                              _loadB2bData();
+                            },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   String _formatCategoryLabel(String cat) {
     switch (cat.toLowerCase()) {
       case 'travel_agency':
@@ -251,6 +487,11 @@ class _B2bPartnerHubScreenState extends State<B2bPartnerHubScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: '🔍 Live Google Maps Lead Radar',
+            icon: const Icon(Icons.radar_rounded, color: Color(0xFF38BDF8)),
+            onPressed: _showLeadRadarModal,
+          ),
           IconButton(
             tooltip: '🚀 Anti-Ban Campaign Dispatcher',
             icon: const Icon(Icons.rocket_launch_rounded, color: ManagerTheme.brandGold),
@@ -382,19 +623,36 @@ class _B2bPartnerHubScreenState extends State<B2bPartnerHubScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ManagerTheme.brandGold,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF38BDF8),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.radar_rounded, size: 16),
+                  label: const Text('🔍 Lead Radar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: _showLeadRadarModal,
+                ),
               ),
-              icon: const Icon(Icons.rocket_launch_rounded, size: 16),
-              label: const Text('🚀 Launch Anti-Ban WhatsApp Campaign Dispatcher', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
-              onPressed: _dispatchB2bCampaign,
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ManagerTheme.brandGold,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.rocket_launch_rounded, size: 16),
+                  label: const Text('🚀 Dispatch WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: _dispatchB2bCampaign,
+                ),
+              ),
+            ],
           ),
         ],
       ),

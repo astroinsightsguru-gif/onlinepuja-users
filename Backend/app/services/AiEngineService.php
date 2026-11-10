@@ -224,7 +224,7 @@ class AiEngineService
         $size = $enhanced['size'];
 
         $creds = Vault::aiCredentials();
-        $chain = array_filter(array_map('trim', explode(',', (string) ($creds['ai_image_chain'] ?? 'omniroute,pollinations,cloudflare,huggingface'))));
+        $chain = array_filter(array_map('trim', explode(',', (string) ($creds['ai_image_chain'] ?? 'comfyui,omniroute,pollinations,cloudflare,huggingface'))));
 
         $w = 1024; $h = 1024;
         if ($aspectRatio === '4:5') { $w = 1024; $h = 1280; }
@@ -233,6 +233,54 @@ class AiEngineService
 
         foreach ($chain as $tier) {
             $start = microtime(true);
+
+            // Tier: ComfyUI Dedicated GPU Studio (comfy.vmstudio.digital routed via OmniRoute)
+            if ($tier === 'comfyui') {
+                try {
+                    $comfyModel = Vault::get('model_comfyui_image', 'comfyui/flux-dev');
+                    $omniUrl = rtrim($creds['omniroute_url'] ?? 'https://ai.vmstudio.digital', '/');
+
+                    if (!empty($creds['omniroute_key'])) {
+                        $res = $this->client->post($omniUrl . '/v1/images/generations', [
+                            'headers' => [
+                                'Authorization' => 'Bearer ' . $creds['omniroute_key'],
+                                'Content-Type'  => 'application/json',
+                            ],
+                            'json' => [
+                                'model'           => $comfyModel,
+                                'prompt'          => $prompt,
+                                'negative_prompt' => $negativePrompt,
+                                'n'               => 1,
+                                'size'            => $size,
+                            ],
+                            'timeout' => 12,
+                        ]);
+                        $data = json_decode($res->getBody(), true);
+                        $imgUrl = !empty($data['data'][0]['url']) ? $data['data'][0]['url'] : null;
+
+                        if (!$imgUrl && !empty($data['data'][0]['b64_json'])) {
+                            $rawBin = base64_decode($data['data'][0]['b64_json']);
+                            if ($rawBin && strlen($rawBin) > 500) {
+                                $imgUrl = $this->saveBinaryMedia($rawBin, 'jpg', 'comfy_');
+                            }
+                        }
+
+                        if (!empty($imgUrl)) {
+                            return [
+                                'success'  => true,
+                                'url'      => $imgUrl,
+                                'prompt'   => $prompt,
+                                'provider' => 'ComfyUI GPU Studio (via OmniRoute)',
+                                'model'    => $comfyModel,
+                                'tier'     => 1,
+                                'time_ms'  => round((microtime(true) - $start) * 1000),
+                            ];
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::info("ComfyUI Image Tier bypassed: " . $e->getMessage() . " -> Cascading to next tier");
+                }
+            }
 
             // Tier 1: OmniRoute Gateway
             if ($tier === 'omniroute' && !empty($creds['omniroute_key'])) {
@@ -327,10 +375,10 @@ class AiEngineService
 
                     $binary = (string) $res->getBody();
                     if (!empty($binary) && strlen($binary) > 1000) {
-                        $base64 = 'data:image/jpeg;base64,' . base64_encode($binary);
+                        $imgUrl = $this->saveBinaryMedia($binary, 'jpg', 'cf_flux_');
                         return [
                             'success'  => true,
-                            'url'      => $base64,
+                            'url'      => $imgUrl,
                             'prompt'   => $prompt,
                             'provider' => 'Cloudflare Workers AI (Free Tier)',
                             'model'    => 'flux-1-schnell',
@@ -357,10 +405,10 @@ class AiEngineService
                     ]);
                     $binary = (string) $res->getBody();
                     if (!empty($binary) && strlen($binary) > 1000) {
-                        $base64 = 'data:image/jpeg;base64,' . base64_encode($binary);
+                        $imgUrl = $this->saveBinaryMedia($binary, 'jpg', 'hf_flux_');
                         return [
                             'success'  => true,
-                            'url'      => $base64,
+                            'url'      => $imgUrl,
                             'prompt'   => $prompt,
                             'provider' => 'Hugging Face Serverless (Free Tier)',
                             'model'    => 'FLUX.1-schnell',
@@ -400,10 +448,48 @@ class AiEngineService
         $enhanced = VedicPromptEnhancer::enhance($rawTopic, 'video_reel', '9:16');
         $videoPrompt = $enhanced['prompt'];
         $creds = Vault::aiCredentials();
-        $chain = array_filter(array_map('trim', explode(',', (string) ($creds['ai_video_chain'] ?? 'ffmpeg_reel,omniroute,cinematic_reel'))));
+        $chain = array_filter(array_map('trim', explode(',', (string) ($creds['ai_video_chain'] ?? 'comfyui,ffmpeg_reel,omniroute,kaggle'))));
 
         foreach ($chain as $tier) {
             $start = microtime(true);
+
+            // Tier: ComfyUI Video Studio (AnimateDiff & SVD-XT via OmniRoute)
+            if ($tier === 'comfyui') {
+                try {
+                    $comfyVideoModel = Vault::get('model_comfyui_video', 'comfyui/animatediff');
+                    $omniUrl = rtrim($creds['omniroute_url'] ?? 'https://ai.vmstudio.digital', '/');
+
+                    if (!empty($creds['omniroute_key'])) {
+                        $res = $this->client->post($omniUrl . '/v1/videos/generations', [
+                            'headers' => [
+                                'Authorization' => 'Bearer ' . $creds['omniroute_key'],
+                                'Content-Type'  => 'application/json',
+                            ],
+                            'json' => [
+                                'model'    => $comfyVideoModel,
+                                'prompt'   => $videoPrompt,
+                                'duration' => $duration,
+                            ],
+                            'timeout' => 45,
+                        ]);
+                        $data = json_decode($res->getBody(), true);
+                        $videoUrl = $data['data']['video_url'] ?? $data['video_url'] ?? $data['url'] ?? null;
+                        if ($videoUrl) {
+                            return [
+                                'success'   => true,
+                                'video_url' => $videoUrl,
+                                'prompt'    => $videoPrompt,
+                                'provider'  => 'ComfyUI Video Studio (via OmniRoute)',
+                                'model'     => $comfyVideoModel,
+                                'tier'      => 1,
+                                'time_ms'   => round((microtime(true) - $start) * 1000),
+                            ];
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::info("ComfyUI Video Tier bypassed: " . $e->getMessage() . " -> Cascading to FFmpeg Reel");
+                }
+            }
 
             // Tier 1: Native FFmpeg 9:16 Sacred Reel Synthesizer (Zero-cost, broadcast-ready 1080x1920)
             if ($tier === 'ffmpeg_reel' || $tier === 'cinematic_reel') {
@@ -577,5 +663,19 @@ class AiEngineService
             Log::error("FFmpeg reel synthesis exception: " . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Persist binary or base64 media to public disk and return public URL
+     */
+    protected function saveBinaryMedia(string $binaryData, string $extension = 'jpg', string $prefix = 'brain_'): string
+    {
+        $mediaDir = public_path('storage/brain_media');
+        if (!is_dir($mediaDir)) {
+            @mkdir($mediaDir, 0775, true);
+        }
+        $fName = $prefix . \Illuminate\Support\Str::random(18) . '.' . $extension;
+        file_put_contents($mediaDir . '/' . $fName, $binaryData);
+        return asset('storage/brain_media/' . $fName);
     }
 }

@@ -463,10 +463,13 @@ class GrowthOsController extends Controller
             ],
         ];
 
-        // Synced Live OmniRoute Models from ai.vmstudio.digital
-        $omniTextModels = DB::table('ai_models')->where('provider', 'omniroute')->where('kind', 'text')->orderBy('label')->get();
-        $omniImageModels = DB::table('ai_models')->where('provider', 'omniroute')->where('kind', 'image')->orderBy('label')->get();
-        $omniVideoModels = DB::table('ai_models')->where('provider', 'omniroute')->where('kind', 'video')->orderBy('label')->get();
+        // Synced Live OmniRoute Models from ai.vmstudio.digital (optimized column select)
+        $omniTextModels = DB::table('ai_models')->select('id', 'model_id', 'label')->where('provider', 'omniroute')->where('kind', 'text')->orderBy('label')->get();
+        $omniImageModels = DB::table('ai_models')->select('id', 'model_id', 'label')->where('provider', 'omniroute')->where('kind', 'image')->orderBy('label')->get();
+        $omniVideoModels = DB::table('ai_models')->select('id', 'model_id', 'label')->where('provider', 'omniroute')->where('kind', 'video')->orderBy('label')->get();
+
+        $comfyImageModels = DB::table('ai_models')->select('id', 'model_id', 'label')->where('model_id', 'like', '%comfyui%')->where('kind', 'image')->get();
+        $comfyVideoModels = DB::table('ai_models')->select('id', 'model_id', 'label')->where('model_id', 'like', '%comfyui%')->whereIn('kind', ['video', 'text'])->get();
 
         $omniTotal = DB::table('ai_models')->where('provider', 'omniroute')->count();
         $lastSyncedRow = DB::table('ai_models')->where('provider', 'omniroute')->orderByDesc('last_synced_at')->first();
@@ -480,6 +483,8 @@ class GrowthOsController extends Controller
             'omniTextModels', 
             'omniImageModels', 
             'omniVideoModels', 
+            'comfyImageModels',
+            'comfyVideoModels',
             'omniTotal',
             'lastSyncedAt',
             'totalModelsCount'
@@ -491,6 +496,7 @@ class GrowthOsController extends Controller
     {
         $keys = [
             'omniroute_url', 'omniroute_key',
+            'comfy_url', 'model_comfyui_image', 'model_comfyui_video',
             'openrouter_key', 'gemini_key', 'ai_text_chain', 'ai_image_chain', 'ai_video_chain',
             'model_omniroute', 'model_omniroute_image', 'model_omniroute_video', 'model_openrouter',
             'cloudflare_account_id', 'cloudflare_api_token', 'huggingface_token',
@@ -729,6 +735,56 @@ class GrowthOsController extends Controller
                         'message' => $res['message'] ?? "Queued {$res['queued']} upcoming devotional festival wishes!",
                         'queued'  => $res['queued'] ?? 0,
                     ]);
+                case 'test_comfyui':
+                    $comfyUrl = rtrim(Vault::get('comfy_url', 'https://comfy.vmstudio.digital'), '/');
+                    $omniUrl = rtrim(Vault::get('omniroute_url', 'https://ai.vmstudio.digital'), '/');
+                    $omniKey = Vault::get('omniroute_key');
+
+                    $status = [
+                        'comfy_url' => $comfyUrl,
+                        'omniroute_connected' => false,
+                        'direct_node_ping' => false,
+                        'available_models' => [
+                            'image' => ['comfyui/flux-dev', 'comfyui/sdxl'],
+                            'video' => ['comfyui/animatediff', 'comfyui/svd-xt'],
+                        ],
+                    ];
+
+                    try {
+                        $res = \Illuminate\Support\Facades\Http::timeout(3)->get($comfyUrl . '/system_stats');
+                        if ($res->ok()) {
+                            $status['direct_node_ping'] = true;
+                            $status['system_stats'] = $res->json();
+                        }
+                    } catch (\Throwable $e) {
+                        $status['direct_node_ping_error'] = $e->getMessage();
+                    }
+
+                    try {
+                        if (!empty($omniKey)) {
+                            $checkUrl = 'http://127.0.0.1:20128/v1/models';
+                            $res = \Illuminate\Support\Facades\Http::timeout(8)->withToken($omniKey)->get($checkUrl);
+                            if (!$res->ok()) {
+                                $res = \Illuminate\Support\Facades\Http::timeout(12)->withToken($omniKey)->get($omniUrl . '/v1/models');
+                            }
+                            if ($res->ok()) {
+                                $data = $res->json();
+                                $models = collect($data['data'] ?? []);
+                                $hasComfy = $models->contains(fn ($m) => str_contains($m['id'] ?? '', 'comfyui'));
+                                $status['omniroute_connected'] = true;
+                                $status['omniroute_has_comfy'] = $hasComfy;
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        $status['omniroute_error'] = $e->getMessage();
+                    }
+
+                    return response()->json([
+                        'ok' => true,
+                        'message' => 'ComfyUI GPU integration checked successfully!',
+                        'data' => $status,
+                    ]);
+
                 case 'test_ai_engine':
                     $engine = $request->input('engine', 'text');
                     $prompt = $request->input('prompt', 'Vedic blessings from Varanasi');

@@ -728,6 +728,11 @@ class _PaperclipSquadScreenState extends State<PaperclipSquadScreen> {
 
                   const SizedBox(height: 18),
 
+                  // ⚡ 1-Tap Strategic Growth Presets Bar
+                  _buildStrategicPresetsBar(provider),
+
+                  const SizedBox(height: 18),
+
                   // 4-Tab Segmented Selector
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -735,11 +740,11 @@ class _PaperclipSquadScreenState extends State<PaperclipSquadScreen> {
                       children: [
                         _buildTabButton('Squad & Agents (${agents.length})', 0),
                         const SizedBox(width: 8),
-                        _buildTabButton('⚡ What Agents Are Doing (${provider.activities.length})', 1),
+                        _buildTabButton('⚡ Agent Activity (${provider.activities.length})', 1),
                         const SizedBox(width: 8),
                         _buildTabButton('Missions & Kanban (${issues.length})', 2),
                         const SizedBox(width: 8),
-                        _buildTabButton('📑 Reports & Deliverables (${provider.reports.length})', 3),
+                        _buildTabButton('📑 Deliverables Vault (${provider.reports.length})', 3),
                       ],
                     ),
                   ),
@@ -748,11 +753,52 @@ class _PaperclipSquadScreenState extends State<PaperclipSquadScreen> {
 
                   if (_activeTab == 0) ...[
                     // Tab 0: Squad List
-                    if (agents.isEmpty)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(32),
-                          child: Text('Connecting to Paperclip Squad...', style: TextStyle(color: Colors.white54)),
+                    if (provider.isLoading && agents.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        alignment: Alignment.center,
+                        child: const Column(
+                          children: [
+                            CircularProgressIndicator(color: ManagerTheme.brandGold),
+                            SizedBox(height: 14),
+                            Text('Syncing with Autonomous Squad...', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                          ],
+                        ),
+                      )
+                    else if (agents.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(28),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.hub_outlined, color: ManagerTheme.brandGold, size: 40),
+                            const SizedBox(height: 10),
+                            const Text(
+                              'Squad Connected — Ready to Initialize',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Tap below to refresh real-time agent telemetry from the cluster.',
+                              style: TextStyle(color: Colors.white54, fontSize: 12),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: ManagerTheme.brandGold,
+                                foregroundColor: Colors.black,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              icon: const Icon(Icons.refresh_rounded, size: 16),
+                              label: const Text('Refresh Squad', style: TextStyle(fontWeight: FontWeight.bold)),
+                              onPressed: () => provider.fetchAll(),
+                            ),
+                          ],
                         ),
                       )
                     else
@@ -827,22 +873,188 @@ class _PaperclipSquadScreenState extends State<PaperclipSquadScreen> {
     );
   }
 
+  Widget _buildStrategicPresetsBar(PaperclipProvider provider) {
+    final presets = [
+      {
+        'icon': '🪔',
+        'label': 'Festival WhatsApp Blitz',
+        'title': 'Launch Upcoming Hindu Festival WhatsApp Broadcast & Puja Ads',
+        'desc': 'Draft devotional copy for upcoming Ekadashi/Pradosh, segment devotee gotra lists, and deploy 1-tap bookable Sankalp cards.',
+        'priority': 'critical',
+      },
+      {
+        'icon': '📈',
+        'label': 'Vedic SEO Silo',
+        'title': 'Deploy Programmatic Temple Puja Silo (Kashi, Ujjain & Haridwar)',
+        'desc': 'Construct high-intent localized landing pages with schema markup for Rudrabhishek, Kaal Sarp, and Navagraha Shanti.',
+        'priority': 'high',
+      },
+      {
+        'icon': '🎥',
+        'label': 'Spiritual Reels Autopilot',
+        'title': 'Produce 5 Devotional Mantra Shorts with High-Res AI Images',
+        'desc': 'Synthesize 9:16 vertical shorts with Devanagari Sanskrit shlokas, temple bells audio, and Gotra booking links.',
+        'priority': 'high',
+      },
+      {
+        'icon': '🤝',
+        'label': 'B2B Pilgrimage Outreach',
+        'title': 'Pitch 25 Luxury Pilgrimage & Tour Operators for VIP Darshan',
+        'desc': 'Extract verified tour operator contacts and trigger automated B2B WhatsApp proposals for corporate pujas.',
+        'priority': 'high',
+      },
+      {
+        'icon': '🔮',
+        'label': 'Astrologer Onboarding',
+        'title': 'Scrape & Invite 50 Verified Vedic Astrologers to Partner Network',
+        'desc': 'Identify online astrologers, import profiles into B2B leads pipeline, and send WhatsApp partnership invitations.',
+        'priority': 'medium',
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.bolt_rounded, color: ManagerTheme.brandGold, size: 18),
+                SizedBox(width: 6),
+                Text(
+                  '1-Tap Strategic Growth Presets',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: ManagerTheme.brandGold.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: ManagerTheme.brandGold.withOpacity(0.4)),
+              ),
+              child: const Text('HYPER-GROWTH', style: TextStyle(color: ManagerTheme.brandGold, fontSize: 9, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: presets.map((p) {
+              return Container(
+                margin: const EdgeInsets.only(right: 8),
+                child: ActionChip(
+                  backgroundColor: const Color(0xFF1E293B),
+                  side: BorderSide(color: ManagerTheme.brandGold.withOpacity(0.35)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  avatar: Text(p['icon']!, style: const TextStyle(fontSize: 14)),
+                  label: Text(
+                    p['label']!,
+                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                  onPressed: () {
+                    _missionTitleCtrl.text = p['title']!;
+                    _missionDescCtrl.text = p['desc']!;
+                    _selectedPriority = p['priority']!;
+                    _showDispatchMissionSheet();
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Map<String, dynamic> _getAgentVisuals(PaperclipAgentModel agent) {
+    final nameLower = agent.name.toLowerCase();
+
+    if (agent.isChiefOfStaff || nameLower.contains('chief')) {
+      return {
+        'icon': '👑',
+        'badge': 'Chief Growth Officer',
+        'color': ManagerTheme.brandGold,
+        'gradient': [const Color(0xFFF59E0B), const Color(0xFFB45309)],
+      };
+    } else if (nameLower.contains('seo') || nameLower.contains('silo')) {
+      return {
+        'icon': '🪔',
+        'badge': 'Vedic SEO & AEO Lead',
+        'color': const Color(0xFF34D399),
+        'gradient': [const Color(0xFF10B981), const Color(0xFF047857)],
+      };
+    } else if (nameLower.contains('astrology') || nameLower.contains('wisdom')) {
+      return {
+        'icon': '🔮',
+        'badge': 'Kundli & Muhurat Specialist',
+        'color': const Color(0xFFA78BFA),
+        'gradient': [const Color(0xFF8B5CF6), const Color(0xFF5B21B6)],
+      };
+    } else if (nameLower.contains('whatsapp') || nameLower.contains('crm')) {
+      return {
+        'icon': '💬',
+        'badge': 'WhatsApp & Devotee Retention',
+        'color': const Color(0xFF38BDF8),
+        'gradient': [const Color(0xFF0284C7), const Color(0xFF075985)],
+      };
+    } else if (nameLower.contains('b2b') || nameLower.contains('outbound')) {
+      return {
+        'icon': '🤝',
+        'badge': 'B2B & VIP Darshan Lead',
+        'color': const Color(0xFFFB923C),
+        'gradient': [const Color(0xFFF97316), const Color(0xFFC2410C)],
+      };
+    } else if (nameLower.contains('paid') || nameLower.contains('media') || nameLower.contains('growth')) {
+      return {
+        'icon': '🎯',
+        'badge': 'Meta CAPI & Ads Architect',
+        'color': const Color(0xFFF43F5E),
+        'gradient': [const Color(0xFFE11D48), const Color(0xFF9F1239)],
+      };
+    } else {
+      return {
+        'icon': '📦',
+        'badge': 'Temple Logistics & Merch',
+        'color': const Color(0xFF2DD4BF),
+        'gradient': [const Color(0xFF0D9488), const Color(0xFF115E59)],
+      };
+    }
+  }
+
   Widget _buildTabButton(String label, int index) {
     final isSelected = _activeTab == index;
     return InkWell(
       onTap: () => setState(() => _activeTab = index),
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
         decoration: BoxDecoration(
-          color: isSelected ? ManagerTheme.brandGold : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          color: isSelected ? ManagerTheme.brandGold : const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? ManagerTheme.brandGold : Colors.white12,
+            width: isSelected ? 1.5 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: ManagerTheme.brandGold.withOpacity(0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.bold,
             color: isSelected ? Colors.black : Colors.white70,
           ),
@@ -1054,9 +1266,14 @@ class _PaperclipSquadScreenState extends State<PaperclipSquadScreen> {
 
   Widget _buildAgentCard(PaperclipAgentModel agent, PaperclipProvider provider) {
     final isPaused = agent.isPaused;
+    final visuals = _getAgentVisuals(agent);
+    final Color accentColor = visuals['color'] as Color;
+    final List<Color> gradientColors = visuals['gradient'] as List<Color>;
+    final String emoji = visuals['icon'] as String;
+    final String badge = visuals['badge'] as String;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
@@ -1064,102 +1281,198 @@ class _PaperclipSquadScreenState extends State<PaperclipSquadScreen> {
           color: agent.isChiefOfStaff ? ManagerTheme.brandGold : const Color(0xFF334155),
           width: agent.isChiefOfStaff ? 1.5 : 1,
         ),
+        boxShadow: agent.isChiefOfStaff
+            ? [
+                BoxShadow(
+                  color: ManagerTheme.brandGold.withOpacity(0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            backgroundColor: agent.isChiefOfStaff ? ManagerTheme.brandGold.withOpacity(0.2) : const Color(0xFF334155),
-            radius: 22,
-            child: Text(
-              agent.name.isNotEmpty ? agent.name[0] : '🤖',
-              style: TextStyle(fontWeight: FontWeight.bold, color: agent.isChiefOfStaff ? ManagerTheme.brandGold : Colors.white),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        agent.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
-                      ),
+                // Persona Gradient Avatar
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: gradientColors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isPaused ? Colors.red.withOpacity(0.2) : ManagerTheme.brandEmerald.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(6),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradientColors.first.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                      child: Text(
-                        isPaused ? 'PAUSED' : 'READY',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: isPaused ? Colors.redAccent : ManagerTheme.brandEmerald,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                if (agent.title != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    agent.title!,
-                    style: TextStyle(fontSize: 11, color: ManagerTheme.brandGold.withOpacity(0.9)),
+                    ],
                   ),
-                ],
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF334155),
-                        borderRadius: BorderRadius.circular(4),
+                  alignment: Alignment.center,
+                  child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              agent.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isPaused ? Colors.red.withOpacity(0.18) : ManagerTheme.brandEmerald.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: isPaused ? Colors.redAccent.withOpacity(0.4) : ManagerTheme.brandEmerald.withOpacity(0.4)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: isPaused ? Colors.redAccent : ManagerTheme.brandEmerald,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  isPaused ? 'PAUSED' : 'READY',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isPaused ? Colors.redAccent : ManagerTheme.brandEmerald,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        agent.role.toUpperCase(),
-                        style: const TextStyle(fontSize: 9, color: Colors.white70, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (agent.model != null)
+                      const SizedBox(height: 3),
                       Text(
-                        agent.model!,
-                        style: const TextStyle(fontSize: 10, color: Colors.white38),
+                        agent.title ?? badge,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: accentColor.withOpacity(0.95)),
                       ),
-                  ],
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F172A),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.white12),
+                            ),
+                            child: Text(
+                              badge.toUpperCase(),
+                              style: TextStyle(fontSize: 9, color: accentColor, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F172A),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.white12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.memory_rounded, size: 10, color: Colors.white54),
+                                const SizedBox(width: 4),
+                                Text(
+                                  agent.model ?? 'OmniRoute (Claude 3.5)',
+                                  style: const TextStyle(fontSize: 9, color: Colors.white60),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: ManagerTheme.brandGold,
-              size: 20,
+            const SizedBox(height: 14),
+            const Divider(color: Colors.white10, height: 1),
+            const SizedBox(height: 10),
+            // Action Buttons Row
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ManagerTheme.brandGold.withOpacity(0.18),
+                      foregroundColor: ManagerTheme.brandGold,
+                      elevation: 0,
+                      side: BorderSide(color: ManagerTheme.brandGold.withOpacity(0.4)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 15),
+                    label: const Text('1-on-1 Consult', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    onPressed: () => _openAgentChatModal(agent),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    foregroundColor: Colors.white70,
+                    elevation: 0,
+                    side: const BorderSide(color: Colors.white24),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.rocket_launch_rounded, size: 14, color: ManagerTheme.brandGold),
+                  label: const Text('Dispatch', style: TextStyle(fontSize: 12)),
+                  onPressed: () {
+                    _selectedAssigneeId = agent.id;
+                    _missionTitleCtrl.text = 'Mission for ${agent.name}';
+                    _missionDescCtrl.text = 'Execute priority growth directives for OnlinePuja.live';
+                    _showDispatchMissionSheet();
+                  },
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    side: BorderSide(color: isPaused ? Colors.redAccent.withOpacity(0.3) : Colors.white12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: Icon(
+                    isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                    color: isPaused ? ManagerTheme.brandEmerald : Colors.orangeAccent,
+                    size: 20,
+                  ),
+                  tooltip: isPaused ? 'Resume Agent' : 'Pause Agent',
+                  onPressed: () => provider.toggleAgentPause(agent.id, !isPaused),
+                ),
+              ],
             ),
-            tooltip: '1-on-1 Chat with Agent',
-            onPressed: () => _openAgentChatModal(agent),
-          ),
-          IconButton(
-            icon: Icon(
-              isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-              color: isPaused ? ManagerTheme.brandEmerald : Colors.orangeAccent,
-              size: 22,
-            ),
-            tooltip: isPaused ? 'Resume Agent' : 'Pause Agent',
-            onPressed: () {
-              provider.toggleAgentPause(agent.id, !isPaused);
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1679,23 +1992,56 @@ class _PaperclipSquadScreenState extends State<PaperclipSquadScreen> {
                     // Chat messages
                     Expanded(
                       child: messages.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.psychology_rounded, size: 48, color: ManagerTheme.brandGold),
-                                    const SizedBox(height: 12),
-                                    Text('Ask ${agent.name}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'Direct consultation with autonomous agent persona for strategic execution, content scripts, and campaign telemetry.',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
-                                    ),
-                                  ],
-                                ),
+                          ? SingleChildScrollView(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(height: 16),
+                                  const Icon(Icons.psychology_rounded, size: 48, color: ManagerTheme.brandGold),
+                                  const SizedBox(height: 12),
+                                  Text('Consult ${agent.name}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Direct 1-on-1 strategic consultation via live OmniRoute intelligence bridge.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  const Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text('Suggested Strategic Directives:', style: TextStyle(color: ManagerTheme.brandGold, fontSize: 11, fontWeight: FontWeight.bold)),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  ...[
+                                    'What is our festival blitz strategy for the upcoming week?',
+                                    'Draft 3 high-converting WhatsApp messages with Gotra Sankalp booking links.',
+                                    'Analyze our current SEO silos and recommend 5 new temple puja targets.',
+                                    'What are the priority B2B partnership outreach targets right now?',
+                                  ].map((promptText) {
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 8),
+                                      width: double.infinity,
+                                      child: OutlinedButton(
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: Colors.white,
+                                          alignment: Alignment.centerLeft,
+                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                          side: BorderSide(color: ManagerTheme.brandGold.withOpacity(0.35)),
+                                          backgroundColor: const Color(0xFF1E293B),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
+                                        onPressed: () {
+                                          chatCtrl.text = promptText;
+                                        },
+                                        child: Text(
+                                          '💬  $promptText',
+                                          style: const TextStyle(fontSize: 12, color: Colors.white70),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ],
                               ),
                             )
                           : ListView.builder(
@@ -1708,16 +2054,19 @@ class _PaperclipSquadScreenState extends State<PaperclipSquadScreen> {
                                   alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                                   child: Container(
                                     margin: const EdgeInsets.only(bottom: 10),
-                                    constraints: BoxConstraints(maxWidth: MediaQuery.of(sheetContext).size.width * 0.8),
+                                    constraints: BoxConstraints(maxWidth: MediaQuery.of(sheetContext).size.width * 0.85),
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                     decoration: BoxDecoration(
                                       color: isUser ? const Color(0xFF3B82F6) : const Color(0xFF1E293B),
                                       borderRadius: BorderRadius.circular(14),
                                       border: isUser ? null : Border.all(color: ManagerTheme.brandGold.withOpacity(0.3)),
                                     ),
-                                    child: Text(
-                                      m['content'] ?? '',
-                                      style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+                                    child: MarkdownBody(
+                                      data: m['content'] ?? '',
+                                      styleSheet: MarkdownStyleSheet(
+                                        p: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+                                        strong: const TextStyle(color: ManagerTheme.brandGold, fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                   ),
                                 );
