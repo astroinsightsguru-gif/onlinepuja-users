@@ -650,16 +650,15 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
     final t = _selectedThread!;
     final isAi = t['is_ai_handling'] == true;
 
-    return Column(
-      children: [
-        // Safe spacing for top floating shell launcher (31 HUBS on left, Online / Lang on right)
-        if (isMobile)
-          SizedBox(height: MediaQuery.of(context).padding.top + 44),
-
-        // Premium Single Unified Chat Header
-        _buildSingleChatHeader(isMobile: isMobile),
-        _buildChatSubHeaderBar(t),
-        const Divider(height: 1, color: Color(0xFF222D34)),
+    return SafeArea(
+      top: isMobile,
+      bottom: false,
+      child: Column(
+        children: [
+          // Premium Single Unified Chat Header
+          _buildSingleChatHeader(isMobile: isMobile),
+          _buildChatSubHeaderBar(t),
+          const Divider(height: 1, color: Color(0xFF222D34)),
 
         // 🛑 Emergency AI Kill-Switch / Human Takeover Alert Banner
         if (!isAi)
@@ -816,8 +815,9 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
         // Clean Modern Message Input Bar
         _buildComposerBar(),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildMediaAttachmentCard({
     required String mediaUrl,
@@ -1326,31 +1326,52 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
 
   Widget _buildIntelligentPillStrip() {
     final t = _selectedThread!;
-    final name = t['name']?.toString() ?? 'Devotee';
+    final jid = t['remote_jid']?.toString() ?? '';
+    final isGroup = jid.endsWith('@g.us');
+    final name = t['name']?.toString() ?? (isGroup ? 'Group Members' : 'Devotee');
     final gotra = t['gotra']?.toString() ?? 'Kashyap';
 
-    final templates = [
-      {
-        'label': '🪔 Sankalp Darshan',
-        'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, काशी विश्वनाथ धाम एवं दशाश्वमेध घाट पर आपके ($gotra गोत्र) के नाम से वैदिक संकल्प संपन्न किया गया है। लाइव गर्भगृह दर्शन वीडियो संलग्न है। 🔱',
-      },
-      {
-        'label': '🔱 Astrological Guidance',
-        'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आपके ($gotra गोत्र) हेतु ग्रह गोचर शुभ फलदायी हैं। नवग्रह शांति एवं रुद्राभिषेक से विशेष सुख-समृद्धि प्राप्त होगी। 🚩',
-      },
-      {
-        'label': '💳 Dakshina Proposal',
-        'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आप अपनी पूजा की दक्षिणा एवं पावन संकल्प का विवरण यहाँ देख सकते हैं: https://onlinepuja.live/puja/category/list',
-      },
-      {
-        'label': '📦 Prasad Consignment',
-        'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आपका सिद्ध महाप्रसाद (काशी भस्म, रुद्राक्ष एवं गंगाजल) भारतीय डाक (Speed Post) द्वारा प्रेषित कर दिया गया है। काशी से सादर मंगलकामनाएं!',
-      },
-      {
-        'label': '🕉️ Gotra Verification',
-        'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, कृपया अपने परिवार के सदस्यों के नाम एवं पावन गोत्र साझा करें ताकि विद्वान वेदपाठी ब्राह्मणों द्वारा संकल्प में उनका पाठ किया जा सके।',
-      },
-    ];
+    final List<Map<String, String>> templates = isGroup
+        ? [
+            {
+              'label': '📢 Community Announcement',
+              'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\nसमस्त धर्मप्रेमी भक्तजनों को काशी विश्वनाथ धाम से पावन प्रातःकालीन मंगलकामनाएं। आज के विशेष वैदिक अनुष्ठान एवं दर्शन का विवरण प्रस्तुत है। 🔱\n\nहर हर महादेव 🚩',
+            },
+            {
+              'label': '🪔 Daily Aarti Live',
+              'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\nकाशी विश्वनाथ धाम एवं दशाश्वमेध घाट संध्या महाआरती का सीधा दर्शन: https://onlinepuja.live 🪔\n\nहर हर महादेव 🚩',
+            },
+            {
+              'label': '🔱 Vedic Wisdom & Upay',
+              'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\nआज का पावन विचार: धर्म की रक्षा से ही समाज और परिवार में शांति व समृद्धि का वास होता है। गौ सेवा एवं अन्नदान ही सबसे बड़ा पुण्य है। 🚩',
+            },
+            {
+              'label': '📦 Kashi Mahaprasad',
+              'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\nकाशी विश्वनाथ धाम का सिद्ध महाप्रसाद (रुद्राक्ष, भस्म एवं गंगाजल) अपने घर मंगाने हेतु संपर्क करें: https://onlinepuja.live/puja/category/list 🔱',
+            },
+          ]
+        : [
+            {
+              'label': '🪔 Sankalp Darshan',
+              'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, काशी विश्वनाथ धाम एवं दशाश्वमेध घाट पर आपके ($gotra गोत्र) के नाम से वैदिक संकल्प संपन्न किया गया है। लाइव गर्भगृह दर्शन वीडियो संलग्न है। 🔱',
+            },
+            {
+              'label': '🔱 Astrological Guidance',
+              'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आपके ($gotra गोत्र) हेतु ग्रह गोचर शुभ फलदायी हैं। नवग्रह शांति एवं रुद्राभिषेक से विशेष सुख-समृद्धि प्राप्त होगी। 🚩',
+            },
+            {
+              'label': '💳 Dakshina Proposal',
+              'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आप अपनी पूजा की दक्षिणा एवं पावन संकल्प का विवरण यहाँ देख सकते हैं: https://onlinepuja.live/puja/category/list',
+            },
+            {
+              'label': '📦 Prasad Consignment',
+              'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आपका सिद्ध महाप्रसाद (काशी भस्म, रुद्राक्ष एवं गंगाजल) भारतीय डाक (Speed Post) द्वारा प्रेषित कर दिया गया है। काशी से सादर मंगलकामनाएं!',
+            },
+            {
+              'label': '🕉️ Gotra Verification',
+              'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, कृपया अपने परिवार के सदस्यों के नाम एवं पावन गोत्र साझा करें ताकि विद्वान वेदपाठी ब्राह्मणों द्वारा संकल्प में उनका पाठ किया जा सके।',
+            },
+          ];
 
     return Container(
       color: const Color(0xFF111B21),

@@ -570,51 +570,53 @@ class _ManagerShellState extends State<ManagerShell> {
             ),
 
           // Top Left Command Launcher Pill (⌘ 31 HUBS)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 6,
-            left: 12,
-            child: InkWell(
-              onTap: () => _showMasterHubLauncher(context, session),
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
+          if (allowedDestinations[_currentIndex]['key'] != 'whatsapp')
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 6,
+              left: 12,
+              child: InkWell(
+                onTap: () => _showMasterHubLauncher(context, session),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
                     ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.dashboard_customize_rounded, color: Color(0xFF0B0F19), size: 14),
-                    SizedBox(width: 5),
-                    Text(
-                      '31 HUBS',
-                      style: TextStyle(
-                        color: Color(0xFF0B0F19),
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.6,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.dashboard_customize_rounded, color: Color(0xFF0B0F19), size: 14),
+                      SizedBox(width: 5),
+                      Text(
+                        '31 HUBS',
+                        style: TextStyle(
+                          color: Color(0xFF0B0F19),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
           // Top Floating Bar (Language Switcher + User Profile Pill)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 6,
-            right: 12,
+          if (allowedDestinations[_currentIndex]['key'] != 'whatsapp')
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 6,
+              right: 12,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -703,7 +705,7 @@ class _ManagerShellState extends State<ManagerShell> {
         ],
       ),
 
-      // Scrollable Bottom Bar
+      // Scrollable Bottom Bar with Pinned 31 HUBS Launcher Dock
       bottomNavigationBar: Container(
         height: 64,
         decoration: BoxDecoration(
@@ -719,70 +721,114 @@ class _ManagerShellState extends State<ManagerShell> {
             ),
           ],
         ),
-        child: ListView.builder(
-          controller: _navScrollController,
-          scrollDirection: Axis.horizontal,
-          itemCount: allowedDestinations.length,
-          itemBuilder: (ctx, i) {
-            final dest = allowedDestinations[i];
-            final isSelected = _currentIndex == i;
-            final badgeCount = (dest['key'] == 'dialer') ? callProvider.pendingQueue.length : 0;
-            final labelKey = dest['key'] as String? ?? '';
-            final label = lang.t(labelKey);
-
-            return InkWell(
-              onTap: () => _onTabSelected(i),
+        child: Row(
+          children: [
+            // Pinned 31 HUBS Dock Button
+            InkWell(
+              onTap: () => _showMasterHubLauncher(context, session),
               child: Container(
-                width: 80,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+                child: const Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Icon(
-                          dest['icon'] as IconData,
-                          color: isSelected ? dest['color'] as Color : Colors.white54,
-                          size: isSelected ? 22 : 19,
-                        ),
-                        if (badgeCount > 0)
-                          Positioned(
-                            right: -6,
-                            top: -4,
-                            child: Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: const BoxDecoration(
-                                color: Colors.redAccent,
-                                shape: BoxShape.circle,
-                              ),
-                              constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                              child: Text(
-                                '$badgeCount',
-                                style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
+                    Icon(Icons.dashboard_customize_rounded, color: Color(0xFF0B0F19), size: 18),
+                    SizedBox(height: 2),
                     Text(
-                      label,
+                      '31 HUBS',
                       style: TextStyle(
-                        color: isSelected ? dest['color'] as Color : Colors.white54,
-                        fontSize: 9.5,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: Color(0xFF0B0F19),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.4,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-            );
-          },
+            ),
+            const VerticalDivider(width: 1, color: Color(0xFF1E293B)),
+            Expanded(
+              child: ListView.builder(
+                controller: _navScrollController,
+                scrollDirection: Axis.horizontal,
+                itemCount: allowedDestinations.length,
+                itemBuilder: (ctx, i) {
+                  final dest = allowedDestinations[i];
+                  final isSelected = _currentIndex == i;
+                  final badgeCount = (dest['key'] == 'dialer') ? callProvider.pendingQueue.length : 0;
+                  final labelKey = dest['key'] as String? ?? '';
+                  final label = lang.t(labelKey);
+
+                  return InkWell(
+                    onTap: () => _onTabSelected(i),
+                    child: Container(
+                      width: 80,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Icon(
+                                dest['icon'] as IconData,
+                                color: isSelected ? dest['color'] as Color : Colors.white54,
+                                size: isSelected ? 22 : 19,
+                              ),
+                              if (badgeCount > 0)
+                                Positioned(
+                                  right: -6,
+                                  top: -4,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.redAccent,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                                    child: Text(
+                                      '$badgeCount',
+                                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              color: isSelected ? dest['color'] as Color : Colors.white54,
+                              fontSize: 9.5,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
