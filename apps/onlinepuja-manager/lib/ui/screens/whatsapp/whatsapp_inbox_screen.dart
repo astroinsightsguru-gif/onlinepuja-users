@@ -568,7 +568,7 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.filter_list_off_rounded, color: Colors.white.withValues(alpha: 0.25), size: 36),
+                                Icon(Icons.search_off_rounded, color: Colors.white.withValues(alpha: 0.35), size: 36),
                                 const SizedBox(height: 10),
                                 const Text('No conversations match this filter', style: TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600)),
                                 const SizedBox(height: 6),

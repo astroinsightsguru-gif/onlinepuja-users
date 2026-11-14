@@ -97,32 +97,39 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
 
     setState(() => _isLoading = true);
 
-    final session = context.read<ManagerAuthSession>();
-    final result = await session.loginWithPassword(
-      email: email,
-      password: password,
-      setPin: _enableQuickPin && _pinCtrl.text.length == 4 ? _pinCtrl.text : null,
-    );
+    try {
+      final session = context.read<ManagerAuthSession>();
+      final result = await session.loginWithPassword(
+        email: email,
+        password: password,
+        setPin: _enableQuickPin && _pinCtrl.text.length == 4 ? _pinCtrl.text : null,
+      ).timeout(const Duration(seconds: 12));
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-    if (result.success) {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        if (_rememberPassword) {
-          await prefs.setString('op_saved_email', email);
-          await prefs.setString('op_saved_pass', password);
-          await prefs.setBool('op_remember_pass', true);
-        } else {
-          await prefs.remove('op_saved_pass');
-          await prefs.setBool('op_remember_pass', false);
-        }
-      } catch (_) {}
+      if (result.success) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          if (_rememberPassword) {
+            await prefs.setString('op_saved_email', email);
+            await prefs.setString('op_saved_pass', password);
+            await prefs.setBool('op_remember_pass', true);
+          } else {
+            await prefs.remove('op_saved_pass');
+            await prefs.setBool('op_remember_pass', false);
+          }
+        } catch (_) {}
 
-      _showSnack('Superadmin session authorized 🙏', isError: false);
-    } else {
-      _showSnack(result.message, isError: true);
+        _showSnack('Superadmin session authorized 🙏', isError: false);
+      } else {
+        _showSnack(result.message, isError: true);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSnack('Login request error: $e', isError: true);
+      }
     }
   }
 
@@ -258,6 +265,8 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: const Color(0xFF1E293B),
+                        disabledBackgroundColor: const Color(0xFFE2E8F0),
+                        disabledForegroundColor: const Color(0xFF475569),
                         padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -523,15 +532,27 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ManagerTheme.brandGold,
                       foregroundColor: const Color(0xFF0B0F19),
+                      disabledBackgroundColor: ManagerTheme.brandGold.withValues(alpha: 0.6),
+                      disabledForegroundColor: const Color(0xFF0B0F19),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       elevation: 4,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     child: _isLoading
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF0B0F19)),
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2.2, color: Color(0xFF0B0F19)),
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Authorizing Superadmin...',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF0B0F19)),
+                              ),
+                            ],
                           )
                         : const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
