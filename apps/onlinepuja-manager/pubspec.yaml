@@ -2,7 +2,7 @@ name: onlinepuja_manager
 description: "OnlinePuja Manager - Executive pocket command center for banners, live revenue, pujas, AI brain and push broadcasts."
 publish_to: 'none'
 
-version: 1.0.4+5
+version: 1.0.5+10
 
 environment:
   sdk: ^3.5.0
