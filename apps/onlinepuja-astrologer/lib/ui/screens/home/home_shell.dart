@@ -13,6 +13,7 @@ import '../call/call_session_screen.dart';
 import '../chat/chat_session_screen.dart';
 import '../orders/orders_fulfillment_screen.dart';
 import '../profile/profile_screen.dart';
+import '../social/astrologer_social_growth_screen.dart';
 import '../wallet/wallet_screen.dart';
 import 'availability_screen.dart';
 import 'requests_screen.dart';
@@ -817,6 +818,94 @@ class _HomeShellState extends State<HomeShell> {
           ),
           const SizedBox(height: 16),
 
+          // 🚀 AI Social Media Growth Hub Card
+          PartnerCard(
+            padding: const EdgeInsets.all(16),
+            gradient: dark
+                ? const LinearGradient(
+                    colors: [Color(0xFF1E1B4B), Color(0xFF0F172A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : const LinearGradient(
+                    colors: [Color(0xFFFFF7ED), Color(0xFFFEF3C7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+            borderColor: PartnerTheme.gold.withValues(alpha: 0.5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            gradient: PartnerTheme.saffronGradient,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 18),
+                        ),
+                        const SizedBox(width: 10),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AI सोशल मीडिया ग्रोथ हब',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                            ),
+                            Text(
+                              'Auto-Grow FB, Instagram & YouTube',
+                              style: TextStyle(fontSize: 10.5, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: PartnerTheme.emerald.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'AUTOPILOT ON',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PartnerTheme.emerald),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '1-Click Login से अपने Facebook, Instagram एवं YouTube को कनेक्ट करें। AI Brain आपके नाम, फोटो व QR कोड के साथ दैनिक रील्स (Reels) एवं महा उपाय पोस्टर्स बनाकर फॉलोअर्स बढ़ाएगा।',
+                  style: TextStyle(fontSize: 11.5, color: dark ? Colors.white70 : Colors.black87, height: 1.35),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: PartnerTheme.gold,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+                    label: const Text(
+                      'ग्रोथ स्टूडियो खोलें (Open Studio)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                    ),
+                    onPressed: () => Navigator.pushNamed(context, AstrologerSocialGrowthScreen.route),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Astrologer Performance Grid
           Text(
             AppStrings.practiceSummary,
@@ -1010,6 +1099,15 @@ class _HomeShellState extends State<HomeShell> {
               onTap: () {
                 Navigator.pop(context);
                 setState(() => _tab = 3);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.rocket_launch_rounded, color: PartnerTheme.gold),
+              title: const Text('AI Social Growth Hub'),
+              subtitle: const Text('Auto-Grow FB, Insta & YouTube'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AstrologerSocialGrowthScreen.route);
               },
             ),
             ListTile(

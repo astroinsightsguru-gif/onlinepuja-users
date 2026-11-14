@@ -11,67 +11,155 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppWebhookController extends Controller
 {
+    /**
+     * Unified Webhook Handler for Evolution API v2
+     * Listens for MESSAGES_UPSERT, saves all inbound/outbound chats,
+     * respects Human Takeover (Kill AI), and auto-triggers Vedic Acharya AI.
+     */
     public function handle(Request $request, EvolutionWaService $wa)
     {
         try {
-            $data = $request->all();
-            Log::info("Evolution WhatsApp Webhook Received", ['event' => $data['event'] ?? 'unknown']);
-
-            // Only process incoming messages (not sent by us)
-            $msgData = $data['data'] ?? [];
-            $key = $msgData['key'] ?? [];
-            $isFromMe = $key['fromMe'] ?? false;
-            $remoteJid = $key['remoteJid'] ?? '';
-
-            if ($isFromMe || empty($remoteJid) || str_contains($remoteJid, '@g.us')) {
-                // Ignore outgoing messages or group chats
-                return response()->json(['status' => 'ignored']);
+            $data = $request->json()->all() ?: $request->all();
+            if (empty($data)) {
+                $raw = json_decode($request->getContent(), true);
+                if (is_array($raw)) $data = $raw;
             }
 
-            // Extract Sender Mobile
+            $event = strtolower(str_replace('_', '.', (string)($data['event'] ?? '')));
+            Log::info("Evolution WhatsApp Webhook Received", ['event' => $event]);
+
+            // Only process message upserts
+            if ($event !== 'messages.upsert' && $event !== 'messages_upsert') {
+                return response()->json(['status' => 200, 'message' => 'Event acknowledged: ' . $event]);
+            }
+
+            $d = $data['data'] ?? $data;
+            $key = $d['key'] ?? [];
+            $remoteJid = trim((string)($key['remoteJid'] ?? ''));
+            $msgId = trim((string)($key['id'] ?? ''));
+
+            // Ignore broadcast / newsletter feeds
+            if (empty($remoteJid) || str_contains($remoteJid, 'status@broadcast') || str_contains($remoteJid, '@newsletter')) {
+                return response()->json(['status' => 200, 'message' => 'Broadcast or newsletter ignored']);
+            }
+
+            $isGroup = str_contains($remoteJid, '@g.us');
+            $fromMe = (bool)($key['fromMe'] ?? false);
+            $pushName = trim((string)($d['pushName'] ?? ($isGroup ? 'WhatsApp Group' : 'Devotee')));
             $phone = explode('@', $remoteJid)[0];
-            $cleanPhone = $wa->cleanNumber($phone);
+            $cleanPhone = $wa->cleanNumber($remoteJid);
 
-            // Extract Message Text
-            $text = '';
-            if (!empty($msgData['message']['conversation'])) {
-                $text = trim($msgData['message']['conversation']);
-            } elseif (!empty($msgData['message']['extendedTextMessage']['text'])) {
-                $text = trim($msgData['message']['extendedTextMessage']['text']);
+            // Deduplicate webhooks if already processed
+            if (!empty($msgId)) {
+                $exists = DB::table('whatsapp_messages')->where('whatsapp_msg_id', $msgId)->exists();
+                if ($exists) {
+                    return response()->json(['status' => 200, 'message' => 'Message already processed']);
+                }
             }
 
-            if (empty($text)) {
-                return response()->json(['status' => 'no_text']);
+            // Extract message body
+            $msg = $d['message'] ?? [];
+            if (!empty($msg['reactionMessage']) || !empty($d['reaction'])) {
+                // Drop reactions so they are not saved as chat bubbles
+                return response()->json(['status' => 200, 'message' => 'Reaction ignored']);
+            }
+
+            $text = trim((string)(
+                $msg['conversation'] ??
+                $msg['extendedTextMessage']['text'] ??
+                $msg['imageMessage']['caption'] ??
+                $msg['videoMessage']['caption'] ??
+                $msg['documentMessage']['caption'] ??
+                ''
+            ));
+
+            $hasMedia = !empty($msg['imageMessage']) || !empty($msg['videoMessage']) || !empty($msg['documentMessage']) || !empty($msg['audioMessage']);
+            $mediaType = !empty($msg['videoMessage']) ? 'video' : (!empty($msg['imageMessage']) ? 'image' : (!empty($msg['documentMessage']) ? 'document' : (!empty($msg['audioMessage']) ? 'audio' : null)));
+
+            if (empty($text) && !$hasMedia) {
+                // Drop empty protocol stubs
+                return response()->json(['status' => 200, 'message' => 'Empty content ignored']);
+            }
+
+            if ($text === '[reaction]' || str_starts_with($text, '[reaction') || str_starts_with($text, '[protocol') || str_starts_with($text, '[album')) {
+                return response()->json(['status' => 200, 'message' => 'Protocol/reaction ignored']);
+            }
+
+            $now = Carbon::now();
+
+            // 1. Thread Tracking & Human Takeover State
+            $thread = DB::table('whatsapp_threads')->where('remote_jid', $remoteJid)->first();
+            $isAiHandling = $thread ? (bool)$thread->is_ai_handling : true;
+
+            if ($fromMe) {
+                // If typed manually from the physical phone (7007158014), auto-pause AI bot (Human Takeover)
+                $isAiHandling = false;
+            }
+
+            DB::table('whatsapp_threads')->updateOrInsert(
+                ['remote_jid' => $remoteJid],
+                [
+                    'phone' => $phone,
+                    'name' => ($thread && !empty($thread->name) && $thread->name !== 'Devotee') ? $thread->name : $pushName,
+                    'last_message' => $text ?: ($hasMedia ? '📎 Media message' : ''),
+                    'last_message_at' => $now,
+                    'unread_count' => $fromMe ? 0 : DB::raw('unread_count + 1'),
+                    'is_ai_handling' => $isAiHandling,
+                    'updated_at' => $now,
+                ]
+            );
+
+            // 2. Persist Inbound or Outbound Message
+            DB::table('whatsapp_messages')->insert([
+                'thread_jid' => $remoteJid,
+                'whatsapp_msg_id' => $msgId ?: null,
+                'direction' => $fromMe ? 'outbound' : 'inbound',
+                'message' => $text ?: ($hasMedia ? '📎 Media message' : ''),
+                'media_type' => $mediaType,
+                'status' => $fromMe ? 'sent' : 'delivered',
+                'is_ai_generated' => false,
+                'timestamp' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            // If message was sent from physical phone or is a group community chat, do not auto-reply
+            if ($fromMe || $isGroup) {
+                return response()->json(['status' => 200, 'message' => 'Outbound or group message synced']);
+            }
+
+            // 3. HUMAN TAKEOVER GUARD: If manager turned off AI for this thread, DO NOT AUTO-REPLY!
+            if (!$isAiHandling) {
+                Log::info("AI Auto-reply muted for thread {$remoteJid} (Human Takeover Active)");
+                return response()->json(['status' => 200, 'message' => 'Human takeover active, AI muted']);
             }
 
             $lower = mb_strtolower($text);
 
-            // 1. OPT-OUT HANDLER (STOP / रोकें / UNSUBSCRIBE)
+            // 4. OPT-OUT HANDLER (STOP / रोकें / UNSUBSCRIBE)
             if (in_array($lower, ['stop', 'unsubscribe', 'रोकें', 'बंद करो', 'बंद करें', 'cancel'])) {
                 DB::table('whatsapp_optouts')->updateOrInsert(
                     ['phone' => $cleanPhone],
                     ['reason' => 'user_stop', 'created_at' => now()]
                 );
 
-                $wa->sendText(
-                    $cleanPhone,
-                    "प्रणाम 🙏\n\nआपकी प्रार्थना स्वीकार कर ली गई है। आपका दैनिक पंचांग व राशिफल प्रसारण बंद कर दिया गया है।\n\nपुनः शुरू करने हेतु किसी भी समय *START* लिखकर भेजें। 🕉️"
-                );
-                return response()->json(['status' => 'opted_out']);
+                $optOutReply = "🕉️ *ॐ नमः शिवाय* 🙏\n\nआपकी प्रार्थना स्वीकार कर ली गई है। आपका दैनिक पंचांग व राशिफल प्रसारण बंद कर दिया गया है।\n\nपुनः शुरू करने हेतु किसी भी समय *START* लिखकर भेजें। हर हर महादेव! 🚩";
+                $wa->sendText($cleanPhone, $optOutReply);
+                $this->saveAiReply($remoteJid, $optOutReply);
+                return response()->json(['status' => 200, 'action' => 'opted_out']);
             }
 
-            // 2. RE-SUBSCRIBE (START / शुरू करें)
+            // 5. RE-SUBSCRIBE (START / शुरू करें)
             if (in_array($lower, ['start', 'restart', 'शुरू करें', 'चालू करें'])) {
                 DB::table('whatsapp_optouts')->where('phone', $cleanPhone)->delete();
 
-                $wa->sendText(
-                    $cleanPhone,
-                    "हर हर महादेव! 🙏\n\nआपका दैनिक पंचांग व राशिफल पुनः सक्रिय कर दिया गया है। अब प्रतिदिन प्रातः ०६:३० बजे आपको शुभ मुहूर्त व दैनिक भविष्यफल प्राप्त होगा। 🕉️"
-                );
-                return response()->json(['status' => 'opted_in']);
+                $optInReply = "🕉️ *ॐ नमः शिवाय* 🙏\n\nआपका दैनिक पंचांग व राशिफल पुनः सक्रिय कर दिया गया है। अब प्रतिदिन प्रातः ०६:३० बजे आपको शुभ मुहूर्त व दैनिक भविष्यफल प्राप्त होगा। हर हर महादेव! 🔱🚩";
+                $wa->sendText($cleanPhone, $optInReply);
+                $this->saveAiReply($remoteJid, $optInReply);
+                return response()->json(['status' => 200, 'action' => 'opted_in']);
             }
 
-            // 3. RASHI HOROSCOPE LOOKUP (मेष, वृषभ, मिथुन, etc.)
+            // 6. RASHI HOROSCOPE LOOKUP (मेष, वृषभ, मिथुन, कर्क, सिंह, कन्या, तुला, वृश्चिक, धनु, मकर, कुंभ, मीन)
             $rashiDetails = [
                 'मेष' => ['name' => 'मेष (Aries)', 'element' => 'अग्नि', 'lord' => 'मंगल', 'lucky' => '9, लाल', 'prediction' => 'आज कार्यक्षेत्र में नया उत्साह रहेगा। रुके हुए कार्य गति पकड़ेंगे। परिवार का सहयोग मिलेगा।', 'upay' => 'हनुमान चालीसा का पाठ करें एवं शिवलिंग पर लाल पुष्प अर्पित करें।'],
                 'वृषभ' => ['name' => 'वृषभ (Taurus)', 'element' => 'पृथ्वी', 'lord' => 'शुक्र', 'lucky' => '6, सफेद', 'prediction' => 'आर्थिक लाभ के योग बन रहे हैं। वाणी में मधुरता रखें, व्यापार में नई साझेदारी संभव है।', 'upay' => 'मां लक्ष्मी को मिश्री का भोग लगाएं एवं सुगंधित इत्र का प्रयोग करें।'],
@@ -89,21 +177,21 @@ class WhatsAppWebhookController extends Controller
 
             foreach ($rashiDetails as $rashiKey => $r) {
                 if (str_contains($lower, mb_strtolower($rashiKey))) {
-                    $reply = "🔮 *{$r['name']} — आज का विस्तृत राशिफल* 🕉️\n\n" .
+                    $rashiReply = "🕉️ *ॐ नमः शिवाय* 🙏\n\n🔮 *{$r['name']} — आज का विस्तृत राशिफल* 🔱\n\n" .
                         "⭐ *तत्व:* {$r['element']} | *स्वामी:* {$r['lord']}\n" .
                         "✨ *लकी अंक व रंग:* {$r['lucky']}\n\n" .
                         "📜 *दैनिक भविष्यफल:*\n{$r['prediction']}\n\n" .
                         "🌿 *वैदिक अचूक उपाय:*\n{$r['upay']}\n\n" .
-                        "🪔 *विशेष पूजा संकल्प:*\nग्रह दोष शांति व परिवार कल्याण हेतु काशी विश्वनाथ में रुद्राभिषेक पूजा बुक करें:\n👉 https://onlinepuja.live/pujas\n\n" .
-                        "_(अन्य राशि जानने हेतु राशि का नाम लिखकर भेजें)_";
+                        "🪔 *विशेष पूजा संकल्प:*\nग्रह दोष शांति व परिवार कल्याण हेतु काशी विश्वनाथ में रुद्राभिषेक पूजा बुक करें:\n👉 https://onlinepuja.live/puja/category/list\n\n" .
+                        "हर हर महादेव! 🔱🚩";
 
-                    $wa->sendText($cleanPhone, $reply);
-                    return response()->json(['status' => 'rashi_replied']);
+                    $wa->sendText($cleanPhone, $rashiReply);
+                    $this->saveAiReply($remoteJid, $rashiReply);
+                    return response()->json(['status' => 200, 'action' => 'rashi_replied']);
                 }
             }
 
-            // 4. AUTONOMOUS CONVERSATIONAL VEDIC ACHARYA CLOSER (Multi-turn Gemini AI)
-            $pushName = $msgData['pushName'] ?? 'Devotee';
+            // 7. AUTONOMOUS CONVERSATIONAL VEDIC ACHARYA CLOSER (Multi-turn Gemini AI)
             $aiReply = \App\Services\VedicAcharyaAiService::processIncomingMessage(
                 $remoteJid,
                 $cleanPhone,
@@ -112,38 +200,57 @@ class WhatsAppWebhookController extends Controller
             );
 
             if (!empty($aiReply)) {
+                // Ensure devotional opening constraint
+                if (!str_starts_with($aiReply, '🕉️ *ॐ नमः शिवाय* 🙏')) {
+                    $aiReply = "🕉️ *ॐ नमः शिवाय* 🙏\n\n" . $aiReply;
+                }
+
                 $wa->sendText($cleanPhone, $aiReply);
-
-                // Persist message record
-                $now = now();
-                DB::table('whatsapp_messages')->insert([
-                    'thread_jid' => $remoteJid,
-                    'direction' => 'outbound',
-                    'message' => $aiReply,
-                    'status' => 'sent',
-                    'is_ai_generated' => true,
-                    'timestamp' => $now,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-
-                return response()->json(['status' => 'ai_replied']);
+                $this->saveAiReply($remoteJid, $aiReply);
+                return response()->json(['status' => 200, 'action' => 'ai_replied']);
             }
 
-            // 5. DEFAULT POLITE DEVOTIONAL FALLBACK
-            $reply = "हर हर महादेव! 🙏 प्रणाम।\n\n" .
-                "OnlinePuja.live सेवा केंद्र में आपका स्वागत है। आप निम्न में से क्या जानना चाहते हैं?\n\n" .
+            // 8. DEFAULT POLITE DEVOTIONAL FALLBACK
+            $defaultReply = "🕉️ *ॐ नमः शिवाय* 🙏\n\n" .
+                "OnlinePuja.live काशी विश्वनाथ सेवा केंद्र में आपका स्वागत है। आप निम्न में से क्या जानना चाहते हैं?\n\n" .
                 "• अपनी राशि का नाम लिखकर भेजें (उदा. *मेष*, *सिंह*, *तुला*)\n" .
                 "• पूजा बुकिंग हेतु लिखें: *PUJA*\n" .
                 "• जन्म कुंडली हेतु लिखें: *KUNDLI*\n" .
                 "• दैनिक पंचांग रोकने हेतु लिखें: *STOP*\n\n" .
-                "शुभम् भवतु! 🕉️";
+                "हर हर महादेव! 🔱🚩";
 
-            $wa->sendText($cleanPhone, $reply);
-            return response()->json(['status' => 'menu_replied']);
+            $wa->sendText($cleanPhone, $defaultReply);
+            $this->saveAiReply($remoteJid, $defaultReply);
+            return response()->json(['status' => 200, 'action' => 'menu_replied']);
+
         } catch (\Throwable $e) {
             Log::error("WhatsApp Webhook Exception: " . $e->getMessage());
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            return response()->json(['status' => 500, 'error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Helper to save AI outbound reply to database and update thread
+     */
+    protected function saveAiReply(string $remoteJid, string $reply): void
+    {
+        $now = Carbon::now();
+
+        DB::table('whatsapp_messages')->insert([
+            'thread_jid' => $remoteJid,
+            'direction' => 'outbound',
+            'message' => $reply,
+            'status' => 'sent',
+            'is_ai_generated' => true,
+            'timestamp' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        DB::table('whatsapp_threads')->where('remote_jid', $remoteJid)->update([
+            'last_message' => $reply,
+            'last_message_at' => $now,
+            'updated_at' => $now,
+        ]);
     }
 }

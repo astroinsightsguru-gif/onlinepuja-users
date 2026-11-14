@@ -40,6 +40,9 @@ class EvolutionWaService
      */
     public function cleanNumber(string $rawNumber): string
     {
+        if (str_ends_with($rawNumber, '@g.us') || str_contains($rawNumber, '@g.us')) {
+            return $rawNumber; // WhatsApp Group JID must be preserved in full for Evolution API
+        }
         $clean = preg_replace('/[^0-9]/', '', $rawNumber);
         if (strlen($clean) === 10) {
             $clean = '91' . $clean; // Default to India (+91)

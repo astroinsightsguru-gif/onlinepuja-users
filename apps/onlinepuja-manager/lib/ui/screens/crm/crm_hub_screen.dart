@@ -138,9 +138,11 @@ class _CrmHubScreenState extends State<CrmHubScreen> with SingleTickerProviderSt
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     items: pandits.map((p) {
+                      final pName = p['name']?.toString() ?? 'Vedic Pandit';
+                      final pPhone = p['phone']?.toString() ?? '';
                       return DropdownMenuItem<int>(
                         value: p['id'] as int,
-                        child: Text(' ()'),
+                        child: Text('$pName ($pPhone)'),
                       );
                     }).toList(),
                     onChanged: (val) {
@@ -337,140 +339,6 @@ class _CrmHubScreenState extends State<CrmHubScreen> with SingleTickerProviderSt
       context,
       contact,
       onOpenChat: widget.onOpenChat,
-    );
-    return;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: ManagerTheme.surfaceDark,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (_, scrollController) {
-            final isDevotee = contact['role'] == 'devotee';
-            return SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 28,
-                        backgroundColor: ManagerTheme.brandGold.withValues(alpha: 0.2),
-                        child: Text(
-                          (contact['name']?.toString() ?? 'D')[0].toUpperCase(),
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: ManagerTheme.brandGold),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              contact['name']?.toString() ?? '',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: isDevotee ? Colors.blue.withValues(alpha: 0.2) : Colors.orange.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                isDevotee ? 'Devotee / Yajman' : 'Astrologer / Acharya',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDevotee ? Colors.lightBlueAccent : Colors.orangeAccent,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  const Divider(color: ManagerTheme.surfaceBorder),
-                  const SizedBox(height: 12),
-                  _buildProfileRow(Icons.phone_rounded, 'WhatsApp / Phone', '+${contact['phone'] ?? 'N/A'}'),
-                  _buildProfileRow(Icons.email_rounded, 'Email', contact['email']?.toString() ?? 'Not provided'),
-                  _buildProfileRow(Icons.location_on_rounded, 'City / Region', contact['city']?.toString() ?? 'India'),
-                  if (contact['gotra'] != null)
-                    _buildProfileRow(Icons.account_balance_rounded, 'Sacred Gotra', contact['gotra'].toString()),
-                  if (isDevotee) ...[
-                    _buildProfileRow(Icons.auto_stories_rounded, 'Total Pujas Performed', '${contact['orders_count'] ?? 0} Pujas'),
-                    _buildProfileRow(Icons.currency_rupee_rounded, 'Lifetime GMV Spent', '₹${_formatNum(contact['total_gmv'])}'),
-                  ] else ...[
-                    _buildProfileRow(Icons.school_rounded, 'Skill & Expertise', contact['skill']?.toString() ?? 'Vedic Jyotish'),
-                    _buildProfileRow(Icons.timer_rounded, 'Consultation Rate', '₹${contact['rate_per_min'] ?? 0}/min'),
-                    _buildProfileRow(Icons.circle, 'Availability', (contact['status'] ?? 'offline').toUpperCase()),
-                  ],
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366),
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      icon: const Icon(Icons.chat_bubble_rounded),
-                      label: const Text('Open WhatsApp Chat', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        if (widget.onOpenChat != null) {
-                          final phone = contact['phone']?.toString() ?? '';
-                          final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
-                          final jid = clean.length == 10 ? '91$clean@s.whatsapp.net' : '$clean@s.whatsapp.net';
-                          widget.onOpenChat!(jid, contact['name'] ?? 'Contact', phone);
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildProfileRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: ManagerTheme.brandGold),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 130,
-            child: Text(label, style: const TextStyle(fontSize: 13, color: Colors.white54)),
-          ),
-          Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500)),
-          ),
-        ],
-      ),
     );
   }
 
@@ -908,10 +776,18 @@ class _CrmHubScreenState extends State<CrmHubScreen> with SingleTickerProviderSt
                                           onPressed: () => _addNoteDialog(l),
                                         ),
                                         PopupMenuButton<String>(
-                                          tooltip: 'Move Stage',
+                                          tooltip: 'Lead Actions',
                                           icon: const Icon(Icons.arrow_forward_rounded, size: 18, color: ManagerTheme.brandGold),
-                                          onSelected: (newSt) => _updateLeadStage(l['id'], newSt),
+                                          onSelected: (newSt) {
+                                            if (newSt == 'assign_pandit') {
+                                              _assignPanditDialog(l);
+                                            } else {
+                                              _updateLeadStage(l['id'], newSt);
+                                            }
+                                          },
                                           itemBuilder: (ctx) => [
+                                            const PopupMenuItem(value: 'assign_pandit', child: Text('🔱 Assign Varanasi Pandit...')),
+                                            const PopupMenuDivider(),
                                             const PopupMenuItem(value: 'new', child: Text('Move to: NEW')),
                                             const PopupMenuItem(value: 'contacted', child: Text('Move to: CONTACTED')),
                                             const PopupMenuItem(value: 'qualified', child: Text('Move to: QUALIFIED')),

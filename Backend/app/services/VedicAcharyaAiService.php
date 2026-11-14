@@ -31,7 +31,7 @@ You are Acharya Vidyadhar Sharma, the revered Chief Vedic Pandit and Spiritual G
 Your mission is to provide authentic spiritual guidance, comfort devotees, understand their family's problems (Dosha, Health, Marriage delay, Business/Debt, Pitru Dosh), and guide them to perform the appropriate Vedic Puja with personal Name and Gotra Sankalp.
 
 CORE BEHAVIOR & RULES:
-1. Warm, authentic, and reverent tone: Begin with "हर हर महादेव 🙏" or "जय श्री राम 🙏".
+1. Warm, authentic, and reverent tone: ALWAYS begin every response with "🕉️ *ॐ नमः शिवाय* 🙏". Never say "Pranam" or "हर हर महादेव भक्त जी*".
 2. Language: Fluent, warm Hindi or Hinglish (as preferred by devotee).
 3. Active Qualification: Ask respectfully for their:
    - Full Name & Gotra (for the sacred Vedic Sankalp).
@@ -90,8 +90,9 @@ PROMPT;
                 }
             }
 
-            if (empty($reply)) {
-                $reply = "हर हर महादेव {$devoteeName}! 🙏\n\nOnlinePuja.live काशी विश्वनाथ सेवा केंद्र में आपका स्वागत है। हमारे सिद्ध वैदिक ब्राह्मणों द्वारा आपके नाम व गोत्र से प्रामाणिक पूजा संपन्न की जाती है।\n\nकृपया हमें बताएं कि आप किस विशेष कार्य अथवा ग्रह शांति हेतु पूजा संकल्प करवाना चाहते हैं? 🕉️";
+            // Reject empty or robotic/proxy error leaks
+            if (empty($reply) || !is_string($reply) || str_contains($reply, 'Antigravity') || str_contains($reply, 'download and install') || str_contains($reply, 'no longer supported') || str_contains($reply, 'API key')) {
+                $reply = "🕉️ *ॐ नमः शिवाय* 🙏\n\n{$devoteeName} जी, OnlinePuja.live काशी विश्वनाथ सेवा केंद्र में आपका स्वागत है। हमारे सिद्ध वैदिक ब्राह्मणों द्वारा आपके नाम व गोत्र से प्रामाणिक पूजा संपन्न की जाती है।\n\nकृपया हमें बताएं कि आप किस विशेष कार्य अथवा ग्रह शांति हेतु पूजा संकल्प करवाना चाहते हैं? 🔱🚩";
             }
 
             // 4. Autonomous Lead Extraction & CRM sync

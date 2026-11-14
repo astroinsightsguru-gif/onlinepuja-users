@@ -568,140 +568,6 @@ class _ManagerShellState extends State<ManagerShell> {
                 ),
               ),
             ),
-
-          // Top Left Command Launcher Pill (⌘ 31 HUBS)
-          if (allowedDestinations[_currentIndex]['key'] != 'whatsapp')
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 6,
-              left: 12,
-              child: InkWell(
-                onTap: () => _showMasterHubLauncher(context, session),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.dashboard_customize_rounded, color: Color(0xFF0B0F19), size: 14),
-                      SizedBox(width: 5),
-                      Text(
-                        '31 HUBS',
-                        style: TextStyle(
-                          color: Color(0xFF0B0F19),
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-          // Top Floating Bar (Language Switcher + User Profile Pill)
-          if (allowedDestinations[_currentIndex]['key'] != 'whatsapp')
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 6,
-              right: 12,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // User Profile & Role Pill
-                InkWell(
-                  onTap: () => _showUserMenu(context, session),
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A).withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: session.isSuperAdmin
-                            ? ManagerTheme.brandGold.withValues(alpha: 0.6)
-                            : const Color(0xFF38BDF8).withValues(alpha: 0.6),
-                        width: 1.2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.35),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircleAvatar(
-                          radius: 8,
-                          backgroundColor: session.isSuperAdmin ? ManagerTheme.brandGold : const Color(0xFF38BDF8),
-                          child: Text(
-                            session.name.isNotEmpty ? session.name[0].toUpperCase() : 'U',
-                            style: const TextStyle(color: Color(0xFF0B0F19), fontSize: 8, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          session.name.split(' ').first,
-                          style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.arrow_drop_down, color: Colors.white54, size: 14),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                // 🇮🇳 Floating Language Switcher (हिन्दी ⇄ English)
-                InkWell(
-                  onTap: () => lang.toggleLanguage(),
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A).withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: ManagerTheme.brandGold.withValues(alpha: 0.6), width: 1.2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.35),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          lang.isHindi ? '🇮🇳 हिन्दी' : '🇬🇧 EN',
-                          style: const TextStyle(color: ManagerTheme.brandGold, fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.swap_horiz_rounded, color: ManagerTheme.brandGold, size: 14),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
 
@@ -827,6 +693,71 @@ class _ManagerShellState extends State<ManagerShell> {
                   );
                 },
               ),
+            ),
+            const VerticalDivider(width: 1, color: Color(0xFF1E293B)),
+            // Right Pinned User Profile & Lang Controls
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Quick Language Toggle
+                InkWell(
+                  onTap: () => lang.toggleLanguage(),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: ManagerTheme.brandGold.withValues(alpha: 0.35), width: 0.8),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.translate_rounded, color: ManagerTheme.brandGold, size: 14),
+                        const SizedBox(height: 2),
+                        Text(
+                          lang.isHindi ? 'हिन्दी' : 'EN',
+                          style: const TextStyle(
+                            color: ManagerTheme.brandGold,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // User Menu Pill
+                InkWell(
+                  onTap: () => _showUserMenu(context, session),
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(2, 8, 8, 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 10,
+                          backgroundColor: session.isSuperAdmin ? ManagerTheme.brandGold : const Color(0xFF38BDF8),
+                          child: Text(
+                            session.name.isNotEmpty ? session.name[0].toUpperCase() : 'U',
+                            style: const TextStyle(color: Color(0xFF0B0F19), fontSize: 9, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          session.name.split(' ').first,
+                          style: const TextStyle(color: Colors.white70, fontSize: 8.5, fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

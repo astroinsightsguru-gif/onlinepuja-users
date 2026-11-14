@@ -13,6 +13,7 @@ import 'ui/screens/home/home_shell.dart';
 import 'ui/screens/home/requests_screen.dart';
 import 'ui/screens/orders/orders_fulfillment_screen.dart';
 import 'ui/screens/profile/profile_screen.dart';
+import 'ui/screens/social/astrologer_social_growth_screen.dart';
 import 'ui/screens/splash_screen.dart';
 import 'ui/screens/wallet/wallet_screen.dart';
 
@@ -43,6 +44,7 @@ class OnlinePujaPartnerApp extends StatelessWidget {
         OrdersFulfillmentScreen.route: (_) => const OrdersFulfillmentScreen(),
         ProfileScreen.route: (_) => const ProfileScreen(),
         WalletScreen.route: (_) => const WalletScreen(),
+        AstrologerSocialGrowthScreen.route: (_) => const AstrologerSocialGrowthScreen(),
       },
       onGenerateRoute: (settings) {
         final args = settings.arguments;

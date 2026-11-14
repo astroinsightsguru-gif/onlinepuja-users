@@ -663,9 +663,15 @@ Route::prefix('manager')->group(function () {
     Route::get('whatsapp/messages/{jid}', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getWhatsappMessages'])->where('jid', '.*');
     Route::post('whatsapp/send', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'sendWhatsappMessage']);
     Route::post('whatsapp/toggle-ai', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'toggleWhatsappAi']);
+    Route::post('whatsapp/stage', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'updateWhatsappStage']);
     Route::post('whatsapp/webhook', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'handleWhatsappWebhook']);
     Route::get('whatsapp/pair-code', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getWhatsappPairingCode']);
     Route::post('whatsapp/restart', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'restartWhatsappInstance']);
+    Route::get('campaigns/whatsapp/qr', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getWhatsappStatus']);
+    Route::post('growth/whatsapp-devotee-blast', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'whatsappDevoteeBlast']);
+    Route::get('campaigns/b2b/cockpit', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getB2bLeads']);
+    Route::post('campaigns/b2b/mark-contacted', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'updateB2bLeadStatus']);
+    Route::post('kundli/generate-pdf', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generateKundliPdf']);
 
     // Lead Pipeline Management
     Route::get('leads', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getLeads']);
@@ -793,5 +799,17 @@ Route::match(['get', 'post'], 'social/webhook', function (\Illuminate\Http\Reque
 
 // 🕉️ WhatsApp 2-Way Interactive Bot Webhook (Evolution API)
 Route::match(['get', 'post'], 'whatsapp/webhook', [\App\Http\Controllers\API\WhatsAppWebhookController::class, 'handle'])->name('api.whatsapp.webhook');
+
+// 🚀 Astrologer Personal Social Media Growth OS & AI Co-pilot
+Route::prefix('partner/social')->group(function () {
+    Route::get('status', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'getStatus']);
+    Route::post('connect', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'connectPlatform']);
+    Route::post('disconnect', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'disconnectPlatform']);
+    Route::post('toggle-autopilot', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'toggleAutopilot']);
+    Route::get('creatives', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'getCreatives']);
+    Route::post('generate-creative', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'generateCreative']);
+    Route::post('publish-creative', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'publishCreative']);
+});
+
 
 

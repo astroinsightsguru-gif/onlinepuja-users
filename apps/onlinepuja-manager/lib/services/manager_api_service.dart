@@ -1440,7 +1440,7 @@ class ManagerApiService {
   // 📱 41. Fetch WhatsApp QR Code or Connection State
   Future<Map<String, dynamic>?> fetchWhatsAppQr() async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/campaigns/whatsapp/qr')).timeout(const Duration(seconds: 12));
+      final res = await http.get(Uri.parse('$baseUrl/whatsapp/status?request_qr=true')).timeout(const Duration(seconds: 12));
       if (res.statusCode == 200) {
         return Map<String, dynamic>.from(jsonDecode(res.body));
       }

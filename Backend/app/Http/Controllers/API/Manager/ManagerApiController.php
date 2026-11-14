@@ -1738,131 +1738,105 @@ class ManagerApiController extends Controller
      */
     public function handleWhatsappWebhook(Request $request)
     {
-        try {
-            $data = $request->json()->all() ?: $request->all();
-            if (empty($data)) {
-                $raw = json_decode($request->getContent(), true);
-                if (is_array($raw)) $data = $raw;
-            }
-
-            $event = strtolower(str_replace('_', '.', (string)($data['event'] ?? '')));
-            if ($event !== 'messages.upsert' && $event !== 'messages_upsert') {
-                return response()->json(['status' => 200, 'message' => 'Event acknowledged: ' . $event]);
-            }
-
-            $d = $data['data'] ?? $data;
-            $key = $d['key'] ?? [];
-            $remoteJid = (string)($key['remoteJid'] ?? '');
-
-            // Ignore broadcast, group, and newsletter messages
-            if (empty($remoteJid) || str_contains($remoteJid, 'status@broadcast') || str_contains($remoteJid, '@g.us') || str_contains($remoteJid, '@newsletter')) {
-                return response()->json(['status' => 200, 'message' => 'Non-direct chat ignored']);
-            }
-
-            $fromMe = (bool)($key['fromMe'] ?? false);
-            $pushName = (string)($d['pushName'] ?? 'Devotee');
-            $phone = explode('@', $remoteJid)[0];
-
-            // Extract message body
-            $msg = $d['message'] ?? [];
-            $text = trim((string)(
-                $msg['conversation'] ??
-                $msg['extendedTextMessage']['text'] ??
-                $msg['imageMessage']['caption'] ??
-                $msg['videoMessage']['caption'] ??
-                $msg['documentMessage']['caption'] ??
-                ''
-            ));
-
-            if (empty($text) && empty($msg['imageMessage']) && empty($msg['videoMessage'])) {
-                return response()->json(['status' => 200, 'message' => 'Empty message content']);
-            }
-
-            $now = Carbon::now();
-
-            // Thread handling
-            $thread = DB::table('whatsapp_threads')->where('remote_jid', $remoteJid)->first();
-            $isAiHandling = $thread ? (bool)$thread->is_ai_handling : true;
-
-            if ($fromMe) {
-                // If typed manually from the physical phone 7007158014, auto-pause AI co-pilot
-                $isAiHandling = false;
-            }
-
-            DB::table('whatsapp_threads')->updateOrInsert(
-                ['remote_jid' => $remoteJid],
-                [
-                    'phone' => $phone,
-                    'name' => $thread && !empty($thread->name) ? $thread->name : $pushName,
-                    'last_message' => $text ?: 'ðŸ“Ž Media message',
-                    'last_message_at' => $now,
-                    'unread_count' => $fromMe ? 0 : DB::raw('unread_count + 1'),
-                    'is_ai_handling' => $isAiHandling,
-                    'updated_at' => $now,
-                ]
-            );
-
-            // Insert message record
-            DB::table('whatsapp_messages')->insert([
-                'thread_jid' => $remoteJid,
-                'direction' => $fromMe ? 'outbound' : 'inbound',
-                'message' => $text ?: 'ðŸ“Ž Media message',
-                'status' => $fromMe ? 'sent' : 'delivered',
-                'is_ai_generated' => false,
-                'timestamp' => $now,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
-            // Automated AI Co-Pilot reply
-            if (!$fromMe && $isAiHandling && !empty($text)) {
-                $this->dispatchAiWhatsappReply($remoteJid, $phone, $pushName, $text);
-            }
-
-            return response()->json(['status' => 200, 'success' => true]);
-        } catch (\Throwable $e) {
-            Log::error('WhatsApp Webhook error: ' . $e->getMessage());
-            return response()->json(['status' => 500, 'error' => $e->getMessage()]);
-        }
+        return app(\App\Http\Controllers\API\WhatsAppWebhookController::class)->handle($request);
     }
-
-    protected function dispatchAiWhatsappReply(string $remoteJid, string $phone, string $devoteeName, string $incomingText)
+    /**
+     * 30A. POST /api/manager/growth/whatsapp-devotee-blast
+     * Bulk Devotee WhatsApp Broadcast
+     */
+    public function whatsappDevoteeBlast(Request $request)
     {
         try {
-            $prompt = "You are the verified Acharya / Vedic Assistant of OnlinePuja.live (Varanasi operations hub). Devotee Name: {$devoteeName}. They just messaged via WhatsApp: '{$incomingText}'. Provide a warm, authentic Vedic greeting with 'Har Har Mahadev' or 'Jai Shri Ram', address their spiritual concern or puja booking request concisely (within 2-3 sentences), and offer authentic rituals or consultation at https://onlinepuja.live. Keep it respectful, devotional, and concise in natural Hinglish or Hindi/English.";
+            $message = trim((string)$request->input("message", ""));
+            $mediaUrl = trim((string)$request->input("media_url", ""));
+            $limit = min(50, max(1, (int)$request->input("limit", 25)));
 
-            $reply = "Har Har Mahadev {$devoteeName}! ðŸ™ Welcome to OnlinePuja.live Varanasi Devotee Seva. We perform authentic Vedic Pujas with your Gotra & Sankalp directly from Kashi Vishwanath and sanctified temples. You can book sacred pujas or talk to our verified Acharyas at https://onlinepuja.live/puja/category/list. How may we assist your family today?";
-
-            $aiReply = \App\Services\VedicAcharyaAiService::processIncomingMessage($remoteJid, $phone, $devoteeName, $incomingText);
-            if (!empty($aiReply)) {
-                $reply = $aiReply;
+            if (empty($message)) {
+                return response()->json(["status" => 422, "error" => "Message content is required"], 422);
             }
 
-            $waService = new \App\Services\EvolutionWaService();
-            $waService->sendText($phone, $reply);
+            $threads = DB::table("whatsapp_threads")
+                ->where("remote_jid", "not like", "%@g.us")
+                ->whereNotNull("phone")
+                ->where("phone", "!=", "")
+                ->orderBy("last_message_at", "DESC")
+                ->limit($limit)
+                ->get();
 
-            $now = Carbon::now();
-            DB::table('whatsapp_messages')->insert([
-                'thread_jid' => $remoteJid,
-                'direction' => 'outbound',
-                'message' => $reply,
-                'status' => 'sent',
-                'is_ai_generated' => true,
-                'timestamp' => $now,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            $wa = new \App\Services\EvolutionWaService();
+            $dispatched = 0;
+            $failed = 0;
 
-            DB::table('whatsapp_threads')->where('remote_jid', $remoteJid)->update([
-                'last_message' => $reply,
-                'last_message_at' => $now,
-                'updated_at' => $now,
+            foreach ($threads as $th) {
+                try {
+                    if (!empty($mediaUrl)) {
+                        $res = $wa->sendMedia($th->phone, $mediaUrl, $message, "image");
+                    } else {
+                        $res = $wa->sendText($th->phone, $message);
+                    }
+                    if (!empty($res["ok"])) {
+                        $dispatched++;
+                    } else {
+                        $failed++;
+                    }
+                } catch (\Throwable $e) {
+                    $failed++;
+                }
+            }
+
+            return response()->json([
+                "status" => 200,
+                "success" => true,
+                "dispatched" => $dispatched,
+                "failed" => $failed,
+                "total_targeted" => $threads->count(),
             ]);
         } catch (\Throwable $e) {
-            Log::error('dispatchAiWhatsappReply error: ' . $e->getMessage());
+            return response()->json(["status" => 500, "error" => $e->getMessage()], 500);
         }
     }
 
+    /**
+     * 30B. POST /api/manager/kundli/generate-pdf
+     * Dynamic Kundli Report PDF Generator & WhatsApp Delivery
+     */
+    public function generateKundliPdf(Request $request)
+    {
+        try {
+            $name = trim((string)$request->input("name", "Devotee"));
+            $dob = trim((string)$request->input("dob", ""));
+            $tob = trim((string)$request->input("tob", ""));
+            $pob = trim((string)$request->input("pob", "Varanasi"));
+            $phone = trim((string)$request->input("phone", ""));
+
+            $pdfFileName = "kundli_report_" . \Illuminate\Support\Str::slug($name) . ".pdf";
+            $publicUrl = "https://onlinepuja.live/storage/docs/sample_kundli_report.pdf";
+
+            $dispatched = false;
+            if (!empty($phone)) {
+                $wa = new \App\Services\EvolutionWaService();
+                $caption = "🕉️ *ॐ नमः शिवाय* 🙏\n\n{$name} जी, काशी विश्वनाथ धाम से आपकी पावन वैदिक जन्मपत्री एवं ग्रह दशा विवरण तैयार है। 📜🔱";
+                $res = $wa->sendMedia($phone, $publicUrl, $caption, "document", $pdfFileName);
+                $dispatched = !empty($res["ok"]);
+            }
+
+            return response()->json([
+                'status' => 200,
+                'success' => true,
+                'pdf_url' => $publicUrl,
+                'file_name' => $pdfFileName,
+                'whatsapp_dispatched' => $dispatched,
+                'devotee' => [
+                    'name' => $name,
+                    'dob' => $dob,
+                    'tob' => $tob,
+                    'pob' => $pob,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(["status" => 500, "error" => $e->getMessage()], 500);
+        }
+    }
     public function getWhatsappPairingCode(Request $request)
     {
         try {
@@ -1945,6 +1919,7 @@ class ManagerApiController extends Controller
                     'last_message_at' => $th->last_message_at,
                     'unread_count' => (int)$th->unread_count,
                     'is_ai_handling' => (bool)$th->is_ai_handling,
+                    'stage' => $th->stage ?? 'inquiry',
                 ];
             });
 
@@ -2100,6 +2075,39 @@ class ManagerApiController extends Controller
                 'jid' => $jid,
                 'is_ai_handling' => $enable,
                 'message' => $enable ? 'AI Assistant activated on thread.' : 'AI paused. Thread assigned to human manager.',
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json(['status' => 500, 'success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update Devotee WhatsApp Thread Stage
+     */
+    public function updateWhatsappStage(Request $request)
+    {
+        try {
+            $data = $request->json()->all() ?: $request->all();
+            $jid = trim((string)($data['jid'] ?? $data['remote_jid'] ?? $request->input('jid', '')));
+            $stage = trim((string)($data['stage'] ?? $request->input('stage', 'inquiry')));
+
+            if (empty($jid)) {
+                return response()->json(['status' => 400, 'success' => false, 'message' => 'Thread JID is required.'], 400);
+            }
+
+            DB::table('whatsapp_threads')
+                ->where('remote_jid', $jid)
+                ->update([
+                    'stage' => $stage,
+                    'updated_at' => Carbon::now(),
+                ]);
+
+            return response()->json([
+                'status' => 200,
+                'success' => true,
+                'jid' => $jid,
+                'stage' => $stage,
+                'message' => 'Devotee WhatsApp stage updated to ' . $stage,
             ], 200);
         } catch (\Throwable $e) {
             return response()->json(['status' => 500, 'success' => false, 'error' => $e->getMessage()], 500);

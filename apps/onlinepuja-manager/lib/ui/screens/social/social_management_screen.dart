@@ -422,8 +422,8 @@ class _SocialManagementScreenState extends State<SocialManagementScreen>
       backgroundColor: ManagerTheme.bgDark,
       body: Column(
         children: [
-          // 0. Space for top floating shell pills (31 HUBS on left, Online + Hindi on right)
-          SizedBox(height: topPadding + 44),
+          // 0. Standard Clean Status Bar Spacing
+          SizedBox(height: topPadding),
 
           // 1. In-Screen Header Bar (Zero overlap!)
           Container(
@@ -1541,8 +1541,6 @@ class _SocialManagementScreenState extends State<SocialManagementScreen>
   // TAB 4: SOVEREIGN ENGINE & CONNECTED CHANNELS HUB (Matches Z-Agents)
   // =============================================================
   Widget _buildEngineHubTab() {
-    final accounts = (_analytics?['connected_accounts'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
