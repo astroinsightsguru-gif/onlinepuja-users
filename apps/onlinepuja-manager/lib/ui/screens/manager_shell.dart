@@ -39,7 +39,6 @@ class ManagerShell extends StatefulWidget {
 class _ManagerShellState extends State<ManagerShell> {
   int _currentIndex = 0;
   bool _isPostCallSheetOpen = false;
-  final ScrollController _navScrollController = ScrollController();
 
   final List<Map<String, dynamic>> _rawDestinations = [
     {
@@ -172,26 +171,7 @@ class _ManagerShellState extends State<ManagerShell> {
     },
   ];
 
-  @override
-  void dispose() {
-    _navScrollController.dispose();
-    super.dispose();
-  }
 
-  void _onTabSelected(int index) {
-    setState(() => _currentIndex = index);
-
-    if (_navScrollController.hasClients) {
-      final screenWidth = MediaQuery.of(context).size.width;
-      const itemWidth = 80.0;
-      final targetOffset = (index * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
-      _navScrollController.animateTo(
-        targetOffset.clamp(0.0, _navScrollController.position.maxScrollExtent),
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-      );
-    }
-  }
 
   void _showUserMenu(BuildContext context, ManagerAuthSession session) {
     showModalBottomSheet(
@@ -404,6 +384,100 @@ class _ManagerShellState extends State<ManagerShell> {
                 ],
               ),
             ),
+
+            // Executive Header Toolbar: Profile + Language Switch + Logout
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B).withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF334155), width: 0.8),
+                ),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _showUserMenu(context, session);
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircleAvatar(
+                            radius: 14,
+                            backgroundColor: session.isSuperAdmin ? ManagerTheme.brandGold : const Color(0xFF38BDF8),
+                            child: Text(
+                              session.name.isNotEmpty ? session.name[0].toUpperCase() : 'U',
+                              style: const TextStyle(color: Color(0xFF0B0F19), fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                session.name,
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                session.role.toUpperCase(),
+                                style: TextStyle(
+                                  color: session.isSuperAdmin ? ManagerTheme.brandGold : const Color(0xFF38BDF8),
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Consumer<LanguageProvider>(
+                      builder: (_, langProv, __) => InkWell(
+                        onTap: () => langProv.toggleLanguage(),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: ManagerTheme.brandGold.withValues(alpha: 0.4), width: 0.8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.translate_rounded, color: ManagerTheme.brandGold, size: 13),
+                              const SizedBox(width: 4),
+                              Text(
+                                langProv.isHindi ? 'हिन्दी' : 'English',
+                                style: const TextStyle(color: ManagerTheme.brandGold, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 18),
+                      tooltip: 'Log Out',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await session.logout();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const Divider(color: Color(0xFF1E293B), height: 1),
             Expanded(
               child: ListView.builder(
@@ -571,195 +645,143 @@ class _ManagerShellState extends State<ManagerShell> {
         ],
       ),
 
-      // Scrollable Bottom Bar with Pinned 31 HUBS Launcher Dock
+      // World-Class 5-Tab Bottom Navigation Dock
       bottomNavigationBar: Container(
-        height: 64,
         decoration: BoxDecoration(
-          color: const Color(0xFF0B141A),
+          color: const Color(0xFF0F172A),
           border: const Border(
             top: BorderSide(color: Color(0xFF1E293B), width: 1),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
+              color: Colors.black.withValues(alpha: 0.35),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
           ],
         ),
-        child: Row(
-          children: [
-            // Pinned 31 HUBS Dock Button
-            InkWell(
-              onTap: () => _showMasterHubLauncher(context, session),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
-                      blurRadius: 6,
-                    ),
-                  ],
-                ),
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.dashboard_customize_rounded, color: Color(0xFF0B0F19), size: 18),
-                    SizedBox(height: 2),
-                    Text(
-                      '31 HUBS',
-                      style: TextStyle(
-                        color: Color(0xFF0B0F19),
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const VerticalDivider(width: 1, color: Color(0xFF1E293B)),
-            Expanded(
-              child: ListView.builder(
-                controller: _navScrollController,
-                scrollDirection: Axis.horizontal,
-                itemCount: allowedDestinations.length,
-                itemBuilder: (ctx, i) {
-                  final dest = allowedDestinations[i];
-                  final isSelected = _currentIndex == i;
-                  final badgeCount = (dest['key'] == 'dialer') ? callProvider.pendingQueue.length : 0;
-                  final labelKey = dest['key'] as String? ?? '';
-                  final label = lang.t(labelKey);
-
-                  return InkWell(
-                    onTap: () => _onTabSelected(i),
-                    child: Container(
-                      width: 80,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Icon(
-                                dest['icon'] as IconData,
-                                color: isSelected ? dest['color'] as Color : Colors.white54,
-                                size: isSelected ? 22 : 19,
-                              ),
-                              if (badgeCount > 0)
-                                Positioned(
-                                  right: -6,
-                                  top: -4,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(3),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.redAccent,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                                    child: Text(
-                                      '$badgeCount',
-                                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            label,
-                            style: TextStyle(
-                              color: isSelected ? dest['color'] as Color : Colors.white54,
-                              fontSize: 9.5,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const VerticalDivider(width: 1, color: Color(0xFF1E293B)),
-            // Right Pinned User Profile & Lang Controls
-            Row(
-              mainAxisSize: MainAxisSize.min,
+        child: SafeArea(
+          top: false,
+          child: Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                // Quick Language Toggle
-                InkWell(
-                  onTap: () => lang.toggleLanguage(),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: ManagerTheme.brandGold.withValues(alpha: 0.35), width: 0.8),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.translate_rounded, color: ManagerTheme.brandGold, size: 14),
-                        const SizedBox(height: 2),
-                        Text(
-                          lang.isHindi ? 'हिन्दी' : 'EN',
-                          style: const TextStyle(
-                            color: ManagerTheme.brandGold,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                _buildTabItem(
+                  index: 0,
+                  icon: Icons.radar_rounded,
+                  label: lang.isHindi ? 'रडार' : 'Radar',
+                  activeColor: ManagerTheme.brandGold,
                 ),
-                // User Menu Pill
-                InkWell(
-                  onTap: () => _showUserMenu(context, session),
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(2, 8, 8, 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircleAvatar(
-                          radius: 10,
-                          backgroundColor: session.isSuperAdmin ? ManagerTheme.brandGold : const Color(0xFF38BDF8),
-                          child: Text(
-                            session.name.isNotEmpty ? session.name[0].toUpperCase() : 'U',
-                            style: const TextStyle(color: Color(0xFF0B0F19), fontSize: 9, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          session.name.split(' ').first,
-                          style: const TextStyle(color: Colors.white70, fontSize: 8.5, fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
+                _buildTabItem(
+                  index: 1,
+                  icon: Icons.phone_in_talk_rounded,
+                  label: lang.isHindi ? 'डायलर' : 'Dialer',
+                  activeColor: const Color(0xFF25D366),
+                  badgeCount: callProvider.pendingQueue.length,
+                ),
+                _buildTabItem(
+                  index: 2,
+                  icon: Icons.chat_bubble_rounded,
+                  label: lang.isHindi ? 'व्हाट्सएप' : 'WhatsApp',
+                  activeColor: const Color(0xFF25D366),
+                ),
+                _buildTabItem(
+                  index: 3,
+                  icon: Icons.people_alt_rounded,
+                  label: lang.isHindi ? 'भक्तजन' : 'Devotees',
+                  activeColor: ManagerTheme.brandGold,
+                ),
+                _buildTabItem(
+                  index: 4,
+                  icon: Icons.grid_view_rounded,
+                  label: lang.isHindi ? '31 हब्स' : '31 Hubs',
+                  activeColor: const Color(0xFFA78BFA),
+                  isLauncher: true,
+                  onTap: () => _showMasterHubLauncher(context, session),
                 ),
               ],
             ),
-          ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabItem({
+    required int index,
+    required IconData icon,
+    required String label,
+    required Color activeColor,
+    int badgeCount = 0,
+    bool isLauncher = false,
+    VoidCallback? onTap,
+  }) {
+    final isSelected = !isLauncher && _currentIndex == index;
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap ?? () => setState(() => _currentIndex = index),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(
+                      icon,
+                      color: isSelected
+                          ? activeColor
+                          : (isLauncher ? const Color(0xFFA78BFA).withValues(alpha: 0.8) : Colors.white54),
+                      size: isSelected ? 23 : 21,
+                    ),
+                    if (badgeCount > 0)
+                      Positioned(
+                        right: -8,
+                        top: -5,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEF4444),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFEF4444).withValues(alpha: 0.4),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                          child: Text(
+                            badgeCount > 99 ? '99+' : '$badgeCount',
+                            style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? activeColor : (isLauncher ? const Color(0xFFA78BFA).withValues(alpha: 0.8) : Colors.white54),
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    letterSpacing: 0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

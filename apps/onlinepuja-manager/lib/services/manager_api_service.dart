@@ -797,11 +797,16 @@ class ManagerApiService {
     try {
       String url = '$baseUrl/whatsapp/threads';
       if (search.isNotEmpty) url += '?search=${Uri.encodeComponent(search)}';
-      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body);
-        if (decoded['threads'] is List) {
-          return List<Map<String, dynamic>>.from(decoded['threads']);
+        if (decoded is Map && decoded['threads'] is List) {
+          return (decoded['threads'] as List).map((t) {
+            if (t is Map) {
+              return Map<String, dynamic>.from(t);
+            }
+            return <String, dynamic>{};
+          }).where((m) => m.isNotEmpty).toList();
         }
       }
     } catch (_) {}
@@ -811,11 +816,16 @@ class ManagerApiService {
   // 30. Fetch WhatsApp Messages for Thread
   Future<List<Map<String, dynamic>>> fetchWhatsappMessages(String jid) async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/whatsapp/messages/${Uri.encodeComponent(jid)}')).timeout(const Duration(seconds: 8));
+      final res = await http.get(Uri.parse('$baseUrl/whatsapp/messages/${Uri.encodeComponent(jid)}')).timeout(const Duration(seconds: 15));
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body);
-        if (decoded['messages'] is List) {
-          return List<Map<String, dynamic>>.from(decoded['messages']);
+        if (decoded is Map && decoded['messages'] is List) {
+          return (decoded['messages'] as List).map((m) {
+            if (m is Map) {
+              return Map<String, dynamic>.from(m);
+            }
+            return <String, dynamic>{};
+          }).where((m) => m.isNotEmpty).toList();
         }
       }
     } catch (_) {}

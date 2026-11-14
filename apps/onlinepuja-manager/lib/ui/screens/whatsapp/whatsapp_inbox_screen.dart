@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../providers/call_provider.dart';
+import '../../../providers/language_provider.dart';
 import '../../../services/manager_api_service.dart';
 import '../../../theme/manager_theme.dart';
 
@@ -315,6 +316,23 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
         ],
       ),
       actions: [
+        Consumer<LanguageProvider>(
+          builder: (_, lang, __) => TextButton(
+            onPressed: () => lang.toggleLanguage(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFF202C33),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ManagerTheme.brandGold.withValues(alpha: 0.4), width: 0.8),
+              ),
+              child: Text(
+                lang.isHindi ? 'HI' : 'EN',
+                style: const TextStyle(color: ManagerTheme.brandGold, fontWeight: FontWeight.bold, fontSize: 11),
+              ),
+            ),
+          ),
+        ),
         IconButton(
           icon: const Icon(Icons.refresh_rounded, color: Colors.white70, size: 20),
           tooltip: 'Refresh Threads',
@@ -502,18 +520,65 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
           // Thread List
           Expanded(
             child: _isLoadingThreads
-                ? const Center(child: CircularProgressIndicator(color: ManagerTheme.brandGold, strokeWidth: 2))
+                ? _buildThreadSkeletonList()
                 : _filteredThreads.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.inbox_rounded, color: Colors.white.withValues(alpha: 0.2), size: 36),
-                            const SizedBox(height: 8),
-                            const Text('No conversations match filter', style: TextStyle(color: Colors.white38, fontSize: 13)),
-                          ],
-                        ),
-                      )
+                    ? (_threads.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 32),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF25D366).withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF25D366), size: 36),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  const Text(
+                                    'No Devotee Chats Loaded',
+                                    style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  const Text(
+                                    'Tap below to sync live devotee chats from the WhatsApp gateway.',
+                                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton.icon(
+                                    onPressed: _loadThreads,
+                                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                                    label: const Text('Sync Devotee Chats'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF005C4B),
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.filter_list_off_rounded, color: Colors.white.withValues(alpha: 0.25), size: 36),
+                                const SizedBox(height: 10),
+                                const Text('No conversations match this filter', style: TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 6),
+                                TextButton(
+                                  onPressed: () => setState(() => _activeFilter = 'all'),
+                                  child: const Text('Show All Conversations', style: TextStyle(color: Color(0xFF25D366), fontSize: 12)),
+                                ),
+                              ],
+                            ),
+                          ))
                     : ListView.separated(
                         itemCount: _filteredThreads.length,
                         separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFF222D34)),
@@ -523,22 +588,36 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
                           final hasGotra = th['gotra'] != null && th['gotra'].toString().isNotEmpty && th['gotra'].toString().toLowerCase() != 'unknown';
                           final isAi = th['is_ai_handling'] == true;
                           final unread = (th['unread_count'] is num) ? (th['unread_count'] as num).toInt() : 0;
-                          final name = th['name']?.toString() ?? 'Devotee';
+                          final jid = th['remote_jid']?.toString() ?? '';
+                          final isGroup = jid.endsWith('@g.us');
+                          String displayName = th['name']?.toString() ?? '';
+                          final phone = th['phone']?.toString() ?? '';
+                          if (displayName.isEmpty || displayName == 'Você' || displayName.toLowerCase() == 'voce') {
+                            if (phone.isNotEmpty && phone != 'null') {
+                              displayName = phone.startsWith('+') ? phone : '+$phone';
+                            } else {
+                              displayName = isGroup ? 'WhatsApp Community' : 'Devotee';
+                            }
+                          }
+                          final lastMsg = th['last_message']?.toString() ?? '';
+                          final timeStr = _formatRelativeTime(th['last_message_at']?.toString());
 
                           return ListTile(
                             selected: isSelected,
                             selectedTileColor: const Color(0xFF202C33),
                             dense: true,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                             leading: Stack(
                               children: [
                                 CircleAvatar(
                                   radius: 20,
-                                  backgroundColor: const Color(0xFF2A3942),
-                                  child: Text(
-                                    name.isNotEmpty ? name[0].toUpperCase() : 'D',
-                                    style: const TextStyle(color: ManagerTheme.brandGold, fontWeight: FontWeight.bold, fontSize: 14),
-                                  ),
+                                  backgroundColor: isGroup ? const Color(0xFF1E293B) : const Color(0xFF2A3942),
+                                  child: isGroup
+                                      ? const Icon(Icons.groups_rounded, color: Color(0xFF38BDF8), size: 19)
+                                      : Text(
+                                          displayName.isNotEmpty ? displayName[0].toUpperCase() : 'D',
+                                          style: const TextStyle(color: ManagerTheme.brandGold, fontWeight: FontWeight.bold, fontSize: 14),
+                                        ),
                                 ),
                                 if (isAi)
                                   Positioned(
@@ -550,7 +629,7 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
                                         color: Color(0xFF0F766E),
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.smart_toy_rounded, size: 9, color: Colors.white),
+                                      child: const Icon(Icons.smart_toy_rounded, size: 8, color: Colors.white),
                                     ),
                                   ),
                               ],
@@ -559,14 +638,18 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    name,
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: Colors.white),
+                                    displayName,
+                                    style: TextStyle(
+                                      fontWeight: unread > 0 ? FontWeight.w700 : FontWeight.w600,
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 if (hasGotra)
                                   Container(
-                                    margin: const EdgeInsets.only(left: 4),
+                                    margin: const EdgeInsets.symmetric(horizontal: 4),
                                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                     decoration: BoxDecoration(
                                       color: ManagerTheme.brandGold.withValues(alpha: 0.15),
@@ -574,41 +657,53 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
                                       border: Border.all(color: ManagerTheme.brandGold.withValues(alpha: 0.3), width: 0.6),
                                     ),
                                     child: Text(
-                                      th['gotra'],
-                                      style: const TextStyle(fontSize: 9.5, color: ManagerTheme.brandGold, fontWeight: FontWeight.w600),
+                                      '🕉️ ${th['gotra']}',
+                                      style: const TextStyle(fontSize: 9, color: ManagerTheme.brandGold, fontWeight: FontWeight.w600),
                                     ),
                                   ),
-                              ],
-                            ),
-                            subtitle: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    th['last_message']?.toString() ?? '',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                if (timeStr.isNotEmpty)
+                                  Text(
+                                    timeStr,
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      color: unread > 0 ? Colors.white : Colors.white54,
-                                      fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.normal,
+                                      fontSize: 10.5,
+                                      color: unread > 0 ? const Color(0xFF25D366) : Colors.white38,
+                                      fontWeight: unread > 0 ? FontWeight.bold : FontWeight.normal,
                                     ),
                                   ),
-                                ),
                               ],
                             ),
-                            trailing: unread > 0
-                                ? Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF25D366),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Row(
+                                children: [
+                                  Expanded(
                                     child: Text(
-                                      '$unread',
-                                      style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
+                                      lastMsg,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        color: unread > 0 ? Colors.white70 : Colors.white54,
+                                        fontWeight: unread > 0 ? FontWeight.w500 : FontWeight.normal,
+                                      ),
                                     ),
-                                  )
-                                : null,
+                                  ),
+                                  if (unread > 0)
+                                    Container(
+                                      margin: const EdgeInsets.only(left: 6),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF25D366),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        '$unread',
+                                        style: const TextStyle(color: Color(0xFF0B141A), fontSize: 10, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
                             onTap: () => _selectThread(th),
                           );
                         },
@@ -641,6 +736,74 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             color: isSelected ? Colors.white : Colors.white70,
           ),
+        ),
+      ),
+    );
+  }
+
+  String _formatRelativeTime(String? raw) {
+    if (raw == null || raw.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(raw);
+      final now = DateTime.now();
+      final diff = now.difference(dt);
+      if (diff.inMinutes < 1) return 'Just now';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+      if (diff.inHours < 24 && dt.day == now.day) {
+        final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+        final minute = dt.minute.toString().padLeft(2, '0');
+        final period = dt.hour >= 12 ? 'PM' : 'AM';
+        return '$hour:$minute $period';
+      }
+      if (diff.inDays == 1 || (diff.inHours < 48 && dt.day == now.day - 1)) return 'Yesterday';
+      return '${dt.day}/${dt.month}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Widget _buildThreadSkeletonList() {
+    return ListView.separated(
+      itemCount: 6,
+      separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFF222D34)),
+      itemBuilder: (_, __) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: Color(0xFF202C33),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 140,
+                    height: 13,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF202C33),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Container(
+                    width: double.infinity,
+                    height: 11,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF182229),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
