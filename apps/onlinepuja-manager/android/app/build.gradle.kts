@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "live.onlinepuja.manager"
-    compileSdk = 36
+    compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -17,13 +17,14 @@ android {
     defaultConfig {
         applicationId = "live.onlinepuja.manager"
         minSdk = flutter.minSdkVersion
-        targetSdk = 34
+        targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     signingConfigs {
         getByName("debug") {
+            // Guarantee APK signature compatibility across all Android OS versions
             enableV1Signing = true
             enableV2Signing = true
         }
@@ -45,3 +46,4 @@ kotlin {
 flutter {
     source = "../.."
 }
+
