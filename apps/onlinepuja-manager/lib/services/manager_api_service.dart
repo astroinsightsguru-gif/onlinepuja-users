@@ -654,6 +654,66 @@ class ManagerApiService {
     }
   }
 
+  // 24e. Broadcast 9:16 Sacred Reel Fanout (YouTube Shorts + Instagram Reels + Facebook Reels)
+  Future<Map<String, dynamic>?> broadcastReelFanout({
+    String topic = 'Kashi Vishwanath Aarti',
+    String hook = 'Har Har Mahadev',
+    String script = '',
+    bool publishNow = false,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/social/broadcast-reel'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'topic': topic,
+          'hook': hook,
+          'script': script,
+          'publish_now': publishNow,
+        }),
+      ).timeout(const Duration(seconds: 60));
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 24f. Synthesize 1080p Master Devotional Video (Aarti/Stotram) to YouTube Channel
+  Future<Map<String, dynamic>?> synthesizeMasterDevotionalVideo({
+    String type = 'aarti',
+    bool publish = true,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/social/synthesize-master-video'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'type': type,
+          'publish': publish,
+        }),
+      ).timeout(const Duration(seconds: 120));
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 24g. Test Connected Social Channel Health
+  Future<Map<String, dynamic>?> testSocialChannel(int accountId) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/social/channels/$accountId/test'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 15));
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   // 25. Fetch Master Bookings Ledger
   Future<List<Map<String, dynamic>>> fetchMasterBookings({String? type, String? status}) async {
     try {
@@ -797,6 +857,23 @@ class ManagerApiService {
         body: jsonEncode({
           'jid': jid,
           'is_ai_handling': enable,
+        }),
+      ).timeout(const Duration(seconds: 8));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 32b. Persist Devotee Pipeline Stage
+  Future<bool> updateWhatsappStage({required String jid, required String stage}) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/whatsapp/stage'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'jid': jid,
+          'stage': stage,
         }),
       ).timeout(const Duration(seconds: 8));
       return res.statusCode == 200;
@@ -1526,6 +1603,96 @@ class ManagerApiService {
         headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
         body: jsonEncode({'id': id}),
       ).timeout(const Duration(seconds: 10));
+
+      final decoded = jsonDecode(res.body);
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+    return {'ok': false, 'error': 'Server communication error'};
+  }
+
+  // 📈 49. Fetch Real Keyword Intelligence & Clusters
+  Future<Map<String, dynamic>?> fetchKeywordIntel({int limit = 60, String? cluster}) async {
+    try {
+      var uri = Uri.parse('$baseUrl/growth/keyword-intel?limit=$limit');
+      if (cluster != null && cluster.isNotEmpty) {
+        uri = Uri.parse('$baseUrl/growth/keyword-intel?limit=$limit&cluster=${Uri.encodeComponent(cluster)}');
+      }
+      final res = await http.get(uri).timeout(const Duration(seconds: 12));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded is Map) {
+          return Map<String, dynamic>.from(decoded);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 📈 50. Fetch Multi-Horizon Predictive Traffic Forecast
+  Future<Map<String, dynamic>?> fetchTrafficForecast({int days = 60}) async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/growth/traffic-forecast?days=$days')).timeout(const Duration(seconds: 12));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded is Map && decoded['data'] != null) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 📈 51. Fetch Live Growth Goal Audits
+  Future<Map<String, dynamic>?> fetchGoalStatus() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/growth/goal-status')).timeout(const Duration(seconds: 12));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded is Map && decoded['data'] != null) {
+          return Map<String, dynamic>.from(decoded['data']);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 📈 52. Trigger Autonomous Remediation Catchup
+  Future<Map<String, dynamic>?> triggerCatchup() async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/growth/trigger-catchup'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 25));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded is Map) {
+          return Map<String, dynamic>.from(decoded);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 💬 53. Dispatch WhatsApp Devotee Blast with Anti-Ban Presence
+  Future<Map<String, dynamic>> dispatchWhatsappDevoteeBlast({
+    required String message,
+    String? mediaUrl,
+    int limit = 25,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/growth/whatsapp-devotee-blast'),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({
+          'message': message,
+          if (mediaUrl != null && mediaUrl.isNotEmpty) 'media_url': mediaUrl,
+          'limit': limit,
+        }),
+      ).timeout(const Duration(seconds: 35));
 
       final decoded = jsonDecode(res.body);
       if (decoded is Map) {

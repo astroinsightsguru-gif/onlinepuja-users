@@ -810,7 +810,7 @@ class _LiveRadarScreenState extends State<LiveRadarScreen> {
                     onPressed: () async {
                       final cleanPhone = visitor.devoteePhone!.replaceAll(RegExp(r'[^0-9]'), '');
                       final msg = Uri.encodeComponent(
-                        'Pranam ${visitor.devoteeName ?? "Ji"}, OnlinePuja Varanasi sanctum here. We noticed you were viewing ${visitor.pageTitle}. How may our Purohit team assist with your Sankalp?',
+                        '🕉️ *ॐ नमः शिवाय* 🙏\n\n${visitor.devoteeName ?? "Devotee"} जी, OnlinePuja Varanasi sanctum here. We noticed you were viewing ${visitor.pageTitle}. How may our Purohit team assist with your Sankalp?',
                       );
                       final waUrl = Uri.parse('https://wa.me/$cleanPhone?text=$msg');
                       if (await canLaunchUrl(waUrl)) {

@@ -52,7 +52,7 @@ class _AstrologersHubScreenState extends State<AstrologersHubScreen> {
     final phone = (astro['phone'] ?? '').toString().replaceAll(RegExp(r'[^0-9]'), '');
     final name = astro['name'] ?? 'Panditji';
 
-    final text = 'Pranam $name! 🙏 Har Har Mahadev.\n\n'
+    final text = '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, Har Har Mahadev.\n\n'
         'We have a sacred devotee Sankalp consultation request for Kashi Vishwanath Dham. '
         'Kindly confirm your availability for an upcoming phone/video Sankalp path.';
 

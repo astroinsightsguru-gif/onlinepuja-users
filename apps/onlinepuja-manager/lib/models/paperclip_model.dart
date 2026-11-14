@@ -38,11 +38,11 @@ class PaperclipMetricsModel {
 
   factory PaperclipMetricsModel.fromJson(Map<String, dynamic> json) {
     return PaperclipMetricsModel(
-      totalAgents: json['totalAgents'] as int? ?? 0,
-      activeMissions: json['activeMissions'] as int? ?? 0,
-      completedMissions: json['completedMissions'] as int? ?? 0,
-      blockedMissions: json['blockedMissions'] as int? ?? 0,
-      totalIssues: json['totalIssues'] as int? ?? 0,
+      totalAgents: (json['totalAgents'] as num?)?.toInt() ?? 0,
+      activeMissions: (json['activeMissions'] as num?)?.toInt() ?? 0,
+      completedMissions: (json['completedMissions'] as num?)?.toInt() ?? 0,
+      blockedMissions: (json['blockedMissions'] as num?)?.toInt() ?? 0,
+      totalIssues: (json['totalIssues'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -107,8 +107,8 @@ class PaperclipAgentModel {
       model: modelName,
       avatarUrl: json['avatarUrl'] as String?,
       urlKey: json['urlKey'] as String?,
-      budgetMonthlyCents: json['budgetMonthlyCents'] as int? ?? 0,
-      spentMonthlyCents: json['spentMonthlyCents'] as int? ?? 0,
+      budgetMonthlyCents: (json['budgetMonthlyCents'] as num?)?.toInt() ?? 0,
+      spentMonthlyCents: (json['spentMonthlyCents'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -205,7 +205,7 @@ class PaperclipIssueModel {
       status: (json['status'] as String? ?? 'todo').toLowerCase(),
       priority: (json['priority'] as String? ?? 'medium').toLowerCase(),
       assigneeAgentId: json['assigneeAgentId'] as String?,
-      issueNumber: json['issueNumber'] as int? ?? 0,
+      issueNumber: (json['issueNumber'] as num?)?.toInt() ?? 0,
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'] as String) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt'] as String) : null,
     );
@@ -382,7 +382,7 @@ class PaperclipHeartbeatRunModel {
       outputTokens: parseTokens(json['outputTokens']),
       summary: result['summary'] as String?,
       livenessReason: json['livenessReason'] as String?,
-      logBytes: json['logBytes'] as int? ?? 0,
+      logBytes: (json['logBytes'] as num?)?.toInt() ?? 0,
       model: usage['model'] as String?,
     );
   }

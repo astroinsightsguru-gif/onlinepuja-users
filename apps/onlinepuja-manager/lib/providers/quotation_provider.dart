@@ -10,45 +10,7 @@ class QuotationProvider extends ChangeNotifier {
   List<PujaQuoteModel> get quotes => _quotes;
 
   QuotationProvider({required this.apiService}) {
-    _initSampleQuotes();
-  }
-
-  void _initSampleQuotes() {
-    _quotes = [
-      PujaQuoteModel(
-        id: 'PQ-2026-081',
-        devoteeName: 'Rajesh Sharma',
-        devoteePhone: '9810123456',
-        gotra: 'Bharadwaj',
-        templeLocation: 'Kashi Vishwanath, Varanasi',
-        pujaTitle: 'Shravan Somwar Mahamrityunjaya Rudrabhishek',
-        items: [
-          PujaQuoteItem(description: '5 Vedic Acharyas Honorarium (Rudri Path)', amount: 5500),
-          PujaQuoteItem(description: 'Pure Desi Ghee, Belpatra, Bhasma & Sugarcane Juice', amount: 2100),
-          PujaQuoteItem(description: 'Temple Trust Sankalp Registration', amount: 1100),
-          PujaQuoteItem(description: 'Speed Post Ganga Jal & Kashi Prasad AWB', amount: 250),
-        ],
-        discount: 500,
-        createdAt: DateTime.now().subtract(const Duration(hours: 4)),
-        status: 'sent',
-      ),
-      PujaQuoteModel(
-        id: 'PQ-2026-082',
-        devoteeName: 'Vikramaditya Roy',
-        devoteePhone: '9748112233',
-        gotra: 'Sandilya',
-        templeLocation: 'Maa Kamakhya Temple, Guwahati',
-        pujaTitle: 'Kamakhya Tantrokta Vighna Vinashak Yagya',
-        items: [
-          PujaQuoteItem(description: '3 Senior Tantra Acharyas Dakshina', amount: 7500),
-          PujaQuoteItem(description: 'Special Raktavastra, Sindoor & Yagya Dravya', amount: 3500),
-          PujaQuoteItem(description: 'Silver Kamakhya Yantra & Sanctified Prasad', amount: 1500),
-        ],
-        discount: 0,
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        status: 'paid',
-      ),
-    ];
+    _quotes = [];
   }
 
   void addQuote(PujaQuoteModel quote) {
@@ -58,7 +20,8 @@ class QuotationProvider extends ChangeNotifier {
 
   String formatWhatsAppProposal(PujaQuoteModel q) {
     final buffer = StringBuffer();
-    buffer.writeln('🕉️ *OnlinePuja.live — Sanctified Vedic Proposal*');
+    buffer.writeln('🕉️ *ॐ नमः शिवाय* 🙏\n');
+    buffer.writeln('*OnlinePuja.live — Sanctified Vedic Proposal*');
     buffer.writeln('Ref: #${q.id}');
     buffer.writeln('Devotee: *${q.devoteeName}* (Gotra: ${q.gotra})');
     buffer.writeln('Sacred Kshetra: *${q.templeLocation}*');
@@ -77,8 +40,10 @@ class QuotationProvider extends ChangeNotifier {
 
     buffer.writeln('\n🙏 *Total Dakshina:* ₹${q.grandTotal.toStringAsFixed(0)}');
     buffer.writeln('👉 *Instant Payment & Sankalp Booking:* ${q.paymentLink ?? "https://onlinepuja.live/pay?ref=${q.id}"}');
-    buffer.writeln('\n_${q.notes}_');
-    buffer.writeln('\n_Har Har Mahadev · OnlinePuja.live Varanasi_');
+    if (q.notes.isNotEmpty) {
+      buffer.writeln('\n_${q.notes}_');
+    }
+    buffer.writeln('\n_हर हर महादेव 🔱 · OnlinePuja.live Varanasi_');
 
     return buffer.toString();
   }
@@ -88,16 +53,22 @@ class QuotationProvider extends ChangeNotifier {
     String cleanPhone = quote.devoteePhone.replaceAll(RegExp(r'[^0-9]'), '');
     if (cleanPhone.length == 10) cleanPhone = '91$cleanPhone';
 
-    final uri = Uri.parse('whatsapp://send?phone=$cleanPhone&text=${Uri.encodeComponent(text)}');
+    // 1. Direct dispatch via Evolution API v2 gateway
+    try {
+      await apiService.sendWhatsappMessage(
+        jid: '$cleanPhone@s.whatsapp.net',
+        phone: cleanPhone,
+        message: text,
+      );
+    } catch (_) {}
+
+    // 2. Also offer browser / app fallback
+    final uri = Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent(text)}');
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-        return true;
-      } else {
-        final webUri = Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent(text)}');
-        await launchUrl(webUri, mode: LaunchMode.externalApplication);
-        return true;
       }
+      return true;
     } catch (_) {
       return false;
     }

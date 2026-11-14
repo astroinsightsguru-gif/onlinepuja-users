@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../providers/call_provider.dart';
 import '../../../services/manager_api_service.dart';
 import '../../../theme/manager_theme.dart';
@@ -29,19 +31,60 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
   String _searchQuery = '';
   String _activeFilter = 'all'; // 'all', 'unread', 'gotra', 'ai'
   bool _isSending = false;
+  Timer? _pollingTimer;
 
   @override
   void initState() {
     super.initState();
     _loadGatewayStatus();
     _loadThreads();
+    _startPolling();
   }
 
   @override
   void dispose() {
+    _pollingTimer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (mounted && _selectedThread != null && !_isLoadingMessages && !_isSending) {
+        _pollCurrentThreadMessages();
+      }
+    });
+  }
+
+  Future<void> _pollCurrentThreadMessages() async {
+    if (_selectedThread == null) return;
+    final jid = _selectedThread!['remote_jid']?.toString() ?? '';
+    final msgs = await _api.fetchWhatsappMessages(jid);
+    if (mounted && _selectedThread != null && _selectedThread!['remote_jid'] == jid) {
+      final seen = <String>{};
+      final cleanMsgs = <Map<String, dynamic>>[];
+      for (final m in msgs) {
+        final text = m['message']?.toString() ?? '';
+        if (text == '[reaction]' || text.startsWith('[reaction') || text.startsWith('[album') || text.startsWith('[protocol')) {
+          continue;
+        }
+        final key = m['whatsapp_msg_id']?.toString() ??
+            m['id']?.toString() ??
+            '${m['message']}_${m['created_at']}';
+        if (!seen.contains(key)) {
+          seen.add(key);
+          cleanMsgs.add(m);
+        }
+      }
+      if (cleanMsgs.length != _messages.length) {
+        setState(() {
+          _messages = cleanMsgs;
+        });
+        _scrollToBottom();
+      }
+    }
   }
 
   Future<void> _loadGatewayStatus() async {
@@ -80,9 +123,26 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
     final jid = thread['remote_jid']?.toString() ?? '';
     final msgs = await _api.fetchWhatsappMessages(jid);
 
+    // Deduplicate and filter out dummy reactions/protocols on arrival
+    final seen = <String>{};
+    final cleanMsgs = <Map<String, dynamic>>[];
+    for (final m in msgs) {
+      final text = m['message']?.toString() ?? '';
+      if (text == '[reaction]' || text.startsWith('[reaction') || text.startsWith('[album') || text.startsWith('[protocol')) {
+        continue;
+      }
+      final key = m['whatsapp_msg_id']?.toString() ??
+          m['id']?.toString() ??
+          '${m['message']}_${m['created_at']}';
+      if (!seen.contains(key)) {
+        seen.add(key);
+        cleanMsgs.add(m);
+      }
+    }
+
     if (mounted) {
       setState(() {
-        _messages = msgs;
+        _messages = cleanMsgs;
         _isLoadingMessages = false;
       });
       _scrollToBottom();
@@ -184,14 +244,13 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
     final currentText = _messageController.text.trim();
     if (currentText.isEmpty) return;
 
-    final devoteeName = _selectedThread?['name']?.toString() ?? 'Devotee';
     String polished = currentText;
 
-    if (!polished.toLowerCase().contains('pranam') && !polished.toLowerCase().contains('namaste')) {
-      polished = 'Pranam $devoteeName ji! 🙏 $polished';
+    if (!polished.contains('ॐ नमः शिवाय')) {
+      polished = '🕉️ *ॐ नमः शिवाय* 🙏\n\n$polished';
     }
-    if (!polished.toLowerCase().contains('har har mahadev') && !polished.toLowerCase().contains('shubh')) {
-      polished = '$polished\nHar Har Mahadev 🔱';
+    if (!polished.toLowerCase().contains('har har mahadev') && !polished.contains('हर हर महादेव')) {
+      polished = '$polished\n\nहर हर महादेव 🚩';
     }
 
     _messageController.text = polished;
@@ -200,7 +259,14 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
 
   List<Map<String, dynamic>> get _filteredThreads {
     return _threads.where((t) {
-      if (_activeFilter == 'unread') {
+      final jid = t['remote_jid']?.toString() ?? '';
+      final isGroup = jid.endsWith('@g.us');
+
+      if (_activeFilter == 'direct') {
+        if (isGroup) return false;
+      } else if (_activeFilter == 'groups') {
+        if (!isGroup) return false;
+      } else if (_activeFilter == 'unread') {
         final unread = (t['unread_count'] is num) ? (t['unread_count'] as num).toInt() : 0;
         if (unread <= 0) return false;
       } else if (_activeFilter == 'gotra') {
@@ -419,9 +485,13 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
               children: [
                 _buildFilterChip('all', 'All'),
                 const SizedBox(width: 6),
+                _buildFilterChip('direct', 'Devotees 👤'),
+                const SizedBox(width: 6),
                 _buildFilterChip('unread', 'Unread'),
                 const SizedBox(width: 6),
                 _buildFilterChip('gotra', 'With Gotra 🕉️'),
+                const SizedBox(width: 6),
+                _buildFilterChip('groups', 'Groups 👥'),
                 const SizedBox(width: 6),
                 _buildFilterChip('ai', 'AI Bot 🤖'),
               ],
@@ -582,8 +652,13 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
 
     return Column(
       children: [
+        // Safe spacing for top floating shell launcher (31 HUBS on left, Online / Lang on right)
+        if (isMobile)
+          SizedBox(height: MediaQuery.of(context).padding.top + 44),
+
         // Premium Single Unified Chat Header
         _buildSingleChatHeader(isMobile: isMobile),
+        _buildChatSubHeaderBar(t),
         const Divider(height: 1, color: Color(0xFF222D34)),
 
         // 🛑 Emergency AI Kill-Switch / Human Takeover Alert Banner
@@ -697,10 +772,22 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
                                   ),
                                   const SizedBox(height: 3),
                                 ],
-                                SelectableText(
-                                  msg['message']?.toString() ?? '',
-                                  style: const TextStyle(color: Colors.white, fontSize: 13.5, height: 1.3),
-                                ),
+
+                                // Multi-Modal Media Rendering (Image / Video / Audio / Document)
+                                if (msg['media_url'] != null && msg['media_url'].toString().isNotEmpty) ...[
+                                  _buildMediaAttachmentCard(
+                                    mediaUrl: msg['media_url'].toString(),
+                                    mediaType: msg['media_type']?.toString() ?? 'image',
+                                    isOutbound: isOutbound,
+                                  ),
+                                  const SizedBox(height: 6),
+                                ],
+
+                                if (msg['message'] != null && msg['message'].toString().isNotEmpty)
+                                  SelectableText(
+                                    msg['message'].toString(),
+                                    style: const TextStyle(color: Colors.white, fontSize: 13.5, height: 1.3),
+                                  ),
                                 const SizedBox(height: 3),
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -732,18 +819,166 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
     );
   }
 
+  Widget _buildMediaAttachmentCard({
+    required String mediaUrl,
+    required String mediaType,
+    required bool isOutbound,
+  }) {
+    final cleanType = mediaType.toLowerCase();
+
+    if (cleanType == 'image') {
+      return InkWell(
+        onTap: () async {
+          final uri = Uri.parse(mediaUrl);
+          if (await canLaunchUrl(uri)) launchUrl(uri);
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 240, maxHeight: 200),
+            color: Colors.black26,
+            child: Image.network(
+              mediaUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                padding: const EdgeInsets.all(12),
+                color: Colors.black38,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.broken_image_rounded, color: Colors.white60, size: 20),
+                    SizedBox(width: 8),
+                    Text('View Image', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (cleanType == 'video') {
+      return InkWell(
+        onTap: () async {
+          final uri = Uri.parse(mediaUrl);
+          if (await canLaunchUrl(uri)) launchUrl(uri);
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 240,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.black38,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: ManagerTheme.brandGold.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: ManagerTheme.brandGold,
+                ),
+                child: const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 22),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Sacred Sankalp Video', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                    SizedBox(height: 2),
+                    Text('Tap to watch HD Reel', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (cleanType == 'document') {
+      return InkWell(
+        onTap: () async {
+          final uri = Uri.parse(mediaUrl);
+          if (await canLaunchUrl(uri)) launchUrl(uri);
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 240,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.black38,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent, size: 28),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Puja / Kundli Document', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                    SizedBox(height: 2),
+                    Text('Tap to open PDF', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Audio Note Fallback
+    return InkWell(
+      onTap: () async {
+        final uri = Uri.parse(mediaUrl);
+        if (await canLaunchUrl(uri)) launchUrl(uri);
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.black38,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.audiotrack_rounded, color: Color(0xFF25D366), size: 18),
+            SizedBox(width: 8),
+            Text('Audio Message (PTT)', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            SizedBox(width: 6),
+            Icon(Icons.open_in_new_rounded, color: Colors.white38, size: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSingleChatHeader({required bool isMobile}) {
     final t = _selectedThread!;
-    final name = t['name']?.toString() ?? 'Devotee';
+    final jid = t['remote_jid']?.toString() ?? '';
+    final isGroup = jid.endsWith('@g.us');
+    final name = (t['name'] != null && t['name'].toString().isNotEmpty && t['name'].toString() != 'Você')
+        ? t['name'].toString()
+        : (isGroup ? 'WhatsApp Group' : 'Devotee');
     final phone = t['phone']?.toString() ?? '';
     final gotra = t['gotra']?.toString() ?? '';
-    final hasGotra = gotra.isNotEmpty && gotra.toLowerCase() != 'unknown';
-    final isAi = t['is_ai_handling'] == true;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       color: const Color(0xFF111B21),
       child: SafeArea(
+        top: false,
         bottom: false,
         child: Row(
           children: [
@@ -756,7 +991,7 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
               ),
             if (isMobile) const SizedBox(width: 8),
 
-            // Devotee Avatar & Presence
+            // Devotee / Group Avatar
             InkWell(
               onTap: () => _showDevoteeDossierSheet(context),
               borderRadius: BorderRadius.circular(20),
@@ -764,11 +999,13 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
                 children: [
                   CircleAvatar(
                     radius: 19,
-                    backgroundColor: const Color(0xFF2A3942),
-                    child: Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : 'D',
-                      style: const TextStyle(color: ManagerTheme.brandGold, fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
+                    backgroundColor: isGroup ? const Color(0xFF1E293B) : const Color(0xFF2A3942),
+                    child: isGroup
+                        ? const Icon(Icons.groups_rounded, color: ManagerTheme.brandGold, size: 20)
+                        : Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : 'D',
+                            style: const TextStyle(color: ManagerTheme.brandGold, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
                   ),
                   Positioned(
                     right: 0,
@@ -788,7 +1025,7 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
             ),
             const SizedBox(width: 10),
 
-            // Devotee Name & Sacred Metadata
+            // Contact / Group Name & Subtitle
             Expanded(
               child: InkWell(
                 onTap: () => _showDevoteeDossierSheet(context),
@@ -797,70 +1034,255 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            name,
-                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (hasGotra) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: ManagerTheme.brandGold.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: ManagerTheme.brandGold.withValues(alpha: 0.3), width: 0.6),
-                            ),
-                            child: Text(
-                              gotra,
-                              style: const TextStyle(fontSize: 9.5, color: ManagerTheme.brandGold, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 1),
                     Text(
-                      '+$phone',
-                      style: const TextStyle(fontSize: 11, color: Colors.white54),
+                      name,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: Colors.white),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      softWrap: false,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isGroup
+                          ? '👥 WhatsApp Community Group'
+                          : (phone.isNotEmpty ? (phone.startsWith('+') ? phone : '+$phone') : 'Direct Devotee'),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isGroup ? const Color(0xFF38BDF8) : Colors.white60,
+                        fontWeight: isGroup ? FontWeight.w600 : FontWeight.normal,
+                        letterSpacing: 0.3,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      softWrap: false,
                     ),
                   ],
                 ),
               ),
             ),
 
-            // Call Devotee Button
-            IconButton(
-              icon: const Icon(Icons.phone_rounded, color: Color(0xFF25D366), size: 19),
-              tooltip: 'Call Devotee',
-              onPressed: () {
-                final callProvider = Provider.of<CallProvider>(context, listen: false);
-                callProvider.startCall(
-                  phoneNumber: phone,
-                  customerName: name,
-                  gotra: gotra,
-                  pujaInterest: 'WhatsApp Inquiry',
-                );
-              },
-            ),
-
-            // Sleek Micro AI Toggle (No giant buttons)
-            _buildMicroAiChip(isAi),
+            // Call Devotee Button (Only for direct individual devotee with valid phone number)
+            if (!isGroup && phone.isNotEmpty && phone.length <= 15)
+              IconButton(
+                icon: const Icon(Icons.phone_rounded, color: Color(0xFF25D366), size: 20),
+                tooltip: 'Call Devotee',
+                onPressed: () {
+                  final callProvider = Provider.of<CallProvider>(context, listen: false);
+                  callProvider.startCall(
+                    phoneNumber: phone,
+                    customerName: name,
+                    gotra: gotra,
+                    pujaInterest: 'WhatsApp Inquiry',
+                  );
+                },
+              ),
 
             // Devotee Dossier Info Button (Mobile only)
             if (isMobile)
               IconButton(
-                icon: const Icon(Icons.info_outline_rounded, color: Colors.white70, size: 19),
+                icon: const Icon(Icons.info_outline_rounded, color: Colors.white70, size: 20),
                 tooltip: 'Devotee Vedic Dossier',
                 onPressed: () => _showDevoteeDossierSheet(context),
               ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildChatSubHeaderBar(Map<String, dynamic> t) {
+    final jid = t['remote_jid']?.toString() ?? '';
+    final isGroup = jid.endsWith('@g.us');
+    final gotra = t['gotra']?.toString() ?? '';
+    final hasGotra = gotra.isNotEmpty && gotra.toLowerCase() != 'unknown';
+    final pujaName = t['puja_name']?.toString() ?? '';
+    final hasPuja = pujaName.isNotEmpty;
+    final stage = t['stage']?.toString() ?? (isGroup ? 'Group Community' : 'Gotra Verified');
+    final isAi = t['is_ai_handling'] == true;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: const BoxDecoration(
+        color: Color(0xFF182229),
+        border: Border(bottom: BorderSide(color: Color(0xFF222D34), width: 0.8)),
+      ),
+      child: Row(
+        children: [
+          if (isGroup)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4), width: 0.8),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.forum_rounded, size: 11, color: Color(0xFF38BDF8)),
+                  SizedBox(width: 4),
+                  Text('Community Channel', style: TextStyle(fontSize: 10, color: Color(0xFF38BDF8), fontWeight: FontWeight.bold)),
+                ],
+              ),
+            )
+          else ...[
+            _buildStageSelectorChip(stage),
+            const SizedBox(width: 6),
+            _buildMicroAiChip(isAi),
+          ],
+          const SizedBox(width: 8),
+          if (!isGroup && hasGotra)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: ManagerTheme.brandGold.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: ManagerTheme.brandGold.withValues(alpha: 0.35), width: 0.8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('🕉️ ', style: TextStyle(fontSize: 9.5)),
+                  Text(
+                    'Gotra: $gotra',
+                    style: const TextStyle(fontSize: 10, color: ManagerTheme.brandGold, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          if (hasPuja) ...[
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                '🪔 $pujaName',
+                style: const TextStyle(fontSize: 10, color: Colors.white70),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ] else
+            const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF25D366).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.bolt_rounded, color: Color(0xFF25D366), size: 11),
+                SizedBox(width: 3),
+                Text(
+                  'Evolution v2',
+                  style: TextStyle(fontSize: 9.5, color: Color(0xFF25D366), fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStageSelectorChip(String currentStage) {
+    return InkWell(
+      onTap: _showStagePickerSheet,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0284C7).withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFF38BDF8),
+            width: 0.8,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.stars_rounded, size: 12, color: Color(0xFF38BDF8)),
+            const SizedBox(width: 4),
+            Text(
+              currentStage,
+              style: const TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF7DD3FC),
+              ),
+            ),
+            const SizedBox(width: 2),
+            const Icon(Icons.arrow_drop_down, size: 14, color: Color(0xFF38BDF8)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showStagePickerSheet() {
+    if (_selectedThread == null) return;
+    final stages = [
+      {'key': 'inquiry', 'label': 'Inquiry / First Touch', 'color': Colors.blue},
+      {'key': 'gotra_verified', 'label': 'Gotra Verified', 'color': Colors.amber},
+      {'key': 'sankalp_booked', 'label': 'Sankalp Booked', 'color': const Color(0xFF10B981)},
+      {'key': 'puja_live', 'label': 'Puja Live Streaming', 'color': Colors.purpleAccent},
+      {'key': 'prasad_shipped', 'label': 'Prasad Shipped (AWB)', 'color': const Color(0xFF25D366)},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.alt_route_rounded, color: ManagerTheme.brandGold, size: 18),
+                    SizedBox(width: 8),
+                    Text('Update Devotee Pipeline Stage', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...stages.map((s) {
+                  final color = s['color'] as Color;
+                  return ListTile(
+                    dense: true,
+                    leading: Icon(Icons.check_circle_outline_rounded, color: color, size: 18),
+                    title: Text(s['label'] as String, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                    onTap: () async {
+                      final chosen = s['label'] as String;
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _selectedThread!['stage'] = chosen;
+                      });
+                      final jid = _selectedThread!['remote_jid']?.toString() ?? '';
+                      if (jid.isNotEmpty) {
+                        _api.updateWhatsappStage(jid: jid, stage: chosen);
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('✓ Devotee transitioned to: $chosen (Saved)'),
+                          backgroundColor: color,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -910,23 +1332,23 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
     final templates = [
       {
         'label': '🪔 Sankalp Darshan',
-        'text': 'Pranam $name ji! 🙏 Panditji will perform your Sankalp in $gotra Gotra with Vedic rituals at Kashi Vishwanath Dham. We will send you the live sanctum darshan video.',
+        'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, काशी विश्वनाथ धाम एवं दशाश्वमेध घाट पर आपके ($gotra गोत्र) के नाम से वैदिक संकल्प संपन्न किया गया है। लाइव गर्भगृह दर्शन वीडियो संलग्न है। 🔱',
       },
       {
         'label': '🔱 Astrological Guidance',
-        'text': 'Har Har Mahadev $name ji! Planetary transits indicate auspicious alignment for your Gotra ($gotra). Performing Navagraha Shanti brings immense peace.',
+        'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आपके ($gotra गोत्र) हेतु ग्रह गोचर शुभ फलदायी हैं। नवग्रह शांति एवं रुद्राभिषेक से विशेष सुख-समृद्धि प्राप्त होगी। 🚩',
       },
       {
         'label': '💳 Dakshina Proposal',
-        'text': 'Pranam $name ji! You can review your customized Puja Dakshina and complete your sacred booking securely here: https://onlinepuja.live/puja/category/list',
+        'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आप अपनी पूजा की दक्षिणा एवं पावन संकल्प का विवरण यहाँ देख सकते हैं: https://onlinepuja.live/puja/category/list',
       },
       {
         'label': '📦 Prasad Consignment',
-        'text': 'Pranam $name ji! Your sanctified Prasad (Bhasma, Belpatra & Raksha Sutra) has been dispatched via India Post Speed Post. Blessed regards from Varanasi!',
+        'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आपका सिद्ध महाप्रसाद (काशी भस्म, रुद्राक्ष एवं गंगाजल) भारतीय डाक (Speed Post) द्वारा प्रेषित कर दिया गया है। काशी से सादर मंगलकामनाएं!',
       },
       {
         'label': '🕉️ Gotra Verification',
-        'text': 'Namaste $name ji! Kindly share your sacred Gotra and the full names of family members to be chanted during the Sankalp path.',
+        'text': '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, कृपया अपने परिवार के सदस्यों के नाम एवं पावन गोत्र साझा करें ताकि विद्वान वेदपाठी ब्राह्मणों द्वारा संकल्प में उनका पाठ किया जा सके।',
       },
     ];
 
@@ -1054,38 +1476,307 @@ class _WhatsAppInboxScreenState extends State<WhatsAppInboxScreen> {
               children: [
                 Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
                 const SizedBox(height: 12),
-                const Text('Vedic Quick Inserts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+                const Text('Sacred Media & Omnichannel Inserts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
                 const SizedBox(height: 10),
                 ListTile(
-                  leading: const CircleAvatar(backgroundColor: Color(0xFF0F766E), child: Icon(Icons.description_rounded, color: Colors.white, size: 18)),
-                  title: const Text('Custom Puja Dakshina Quote', style: TextStyle(color: Colors.white, fontSize: 13.5)),
-                  subtitle: const Text('Insert customized Dakshina quote & Razorpay link', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  leading: const CircleAvatar(backgroundColor: ManagerTheme.brandGold, child: Icon(Icons.stars_rounded, color: Colors.black, size: 20)),
+                  title: const Text('🪔 Send Sacred Dakshina Proposal', style: TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Pick Puja (Dev Deepawali, Rudrabhishek) & Dakshina (₹1,501 / ₹5,100)', style: TextStyle(color: Colors.white54, fontSize: 11)),
                   onTap: () {
                     Navigator.pop(ctx);
-                    _messageController.text = 'Pranam $name ji! 🙏 Panditji has prepared your sacred Puja Dakshina proposal:\n• Dakshina: ₹5,100\n• 5 Vedic Pandits\n• Kashi Sanctum Samagri Included\nComplete booking: https://onlinepuja.live/pujas';
+                    _showDakshinaProposalDialog();
                   },
                 ),
                 ListTile(
-                  leading: const CircleAvatar(backgroundColor: Color(0xFF1D4ED8), child: Icon(Icons.videocam_rounded, color: Colors.white, size: 18)),
-                  title: const Text('Sanctum Live Darshan Video Link', style: TextStyle(color: Colors.white, fontSize: 13.5)),
-                  subtitle: const Text('Send devotee exclusive high-definition Sankalp video', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  leading: const CircleAvatar(backgroundColor: Color(0xFF1D4ED8), child: Icon(Icons.videocam_rounded, color: Colors.white, size: 20)),
+                  title: const Text('📹 Send Sacred Sankalp Video (HD MP4)', style: TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Attach Dev Diwali / Kashi Aarti reel proof directly via Evolution API', style: TextStyle(color: Colors.white54, fontSize: 11)),
                   onTap: () {
                     Navigator.pop(ctx);
-                    _messageController.text = 'Har Har Mahadev $name ji! 🙏 Here is your sacred Sankalp Darshan recorded live at the sanctum sanctorum: https://onlinepuja.live/darshan/live-archive';
+                    _showSendMediaDialog('video');
                   },
                 ),
                 ListTile(
-                  leading: const CircleAvatar(backgroundColor: Color(0xFFB45309), child: Icon(Icons.local_shipping_rounded, color: Colors.white, size: 18)),
-                  title: const Text('Prasad Tracking Consignment AWB', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+                  leading: const CircleAvatar(backgroundColor: Color(0xFF0F766E), child: Icon(Icons.add_photo_alternate_rounded, color: Colors.white, size: 20)),
+                  title: const Text('📸 Send Bilvapatra / Sanctum Photo', style: TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Send darshan photo from Kashi Vishwanath altar', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showSendMediaDialog('image');
+                  },
+                ),
+                ListTile(
+                  leading: const CircleAvatar(backgroundColor: Colors.redAccent, child: Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 20)),
+                  title: const Text('📜 Send Kundli / Puja Report PDF', style: TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Attach consecrated horoscope & ritual certificate', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showSendMediaDialog('document');
+                  },
+                ),
+                ListTile(
+                  leading: const CircleAvatar(backgroundColor: Color(0xFFB45309), child: Icon(Icons.local_shipping_rounded, color: Colors.white, size: 20)),
+                  title: const Text('📦 Prasad Tracking Consignment AWB', style: TextStyle(color: Colors.white, fontSize: 13.5)),
                   subtitle: const Text('Send India Post Speed Post consignment tracking', style: TextStyle(color: Colors.white54, fontSize: 11)),
                   onTap: () {
                     Navigator.pop(ctx);
-                    _messageController.text = 'Pranam $name ji! Your consecrated Prasad has been dispatched via India Post Speed Post. AWB Consignment: IN847291038IN. Track here: https://www.indiapost.gov.in';
+                    _messageController.text = '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आपका सिद्ध महाप्रसाद भारतीय डाक (Speed Post) द्वारा प्रेषित कर दिया गया है। Consignment AWB: IN847291038IN। ट्रैकिंग: https://www.indiapost.gov.in';
                   },
                 ),
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  void _showDakshinaProposalDialog() {
+    final t = _selectedThread!;
+    final name = t['name']?.toString() ?? 'Devotee';
+    final gotra = t['gotra']?.toString() ?? 'Kashyap';
+
+    String selectedPuja = 'कार्तिक पूर्णिमा 108 दीपदान महासंकल्प';
+    String bookingSlug = 'dev-deepawali-108-deepdaan-kashi';
+    int selectedAmount = 1501;
+
+    final pujas = [
+      {'title': 'कार्तिक पूर्णिमा 108 दीपदान महासंकल्प', 'slug': 'dev-deepawali-108-deepdaan-kashi', 'defaultAmount': 1501},
+      {'title': 'काशी विश्वनाथ रुद्राभिषेक महासंकल्प', 'slug': 'kashi-vishwanath-rudrabhishek', 'defaultAmount': 2100},
+      {'title': 'महामृत्युंजय मंत्र जप अनुष्ठान', 'slug': 'mahamrityunjaya-jaap-kashi', 'defaultAmount': 3100},
+      {'title': 'दशाश्वमेध घाट गंगा आरती दीपदान', 'slug': 'ganga-aarti-sankalp-varanasi', 'defaultAmount': 1100},
+    ];
+
+    final amounts = [1100, 1501, 2100, 3100, 5100, 11000];
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final proposalText = '🕉️ *ॐ नमः शिवाय* 🙏'
+                '${(name.isNotEmpty && name != "Devotee") ? " $name ji!" : ""}\n\n'
+                'काशी के विद्वान वेदपाठी पुरोहितों द्वारा आपके एवं आपके परिवार ($gotra गोत्र) के कल्याण हेतु विशेष संकल्प:\n\n'
+                '🪔 अनुष्ठान: $selectedPuja\n'
+                '🔱 तीर्थ: दशाश्वमेध एवं मणिकर्णिका घाट, काशी\n'
+                '💰 दक्षिणा: ₹${selectedAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}/- (सहित संकल्प, लाइव वीडियो एवं सिद्ध प्रसाद)\n\n'
+                '👇 आज ही अपना पावन संकल्प बुक करें:\n'
+                'https://onlinepuja.live/puja/$bookingSlug?d=$selectedAmount\n\n'
+                'हर हर महादेव! 🔱';
+
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Row(
+                children: [
+                  Icon(Icons.stars_rounded, color: ManagerTheme.brandGold, size: 22),
+                  SizedBox(width: 8),
+                  Text('Sacred Dakshina Proposal', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Select Puja Ritual', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    ...pujas.map((p) {
+                      final isSel = selectedPuja == p['title'];
+                      return InkWell(
+                        onTap: () {
+                          setDialogState(() {
+                            selectedPuja = p['title'] as String;
+                            bookingSlug = p['slug'] as String;
+                            selectedAmount = p['defaultAmount'] as int;
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSel ? ManagerTheme.brandGold.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: isSel ? ManagerTheme.brandGold : Colors.white12),
+                          ),
+                          child: Text(
+                            p['title'] as String,
+                            style: TextStyle(color: isSel ? Colors.white : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 10),
+
+                    const Text('Select Dakshina Amount (₹)', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: amounts.map((amt) {
+                        final isSel = selectedAmount == amt;
+                        return ChoiceChip(
+                          label: Text('₹$amt'),
+                          selected: isSel,
+                          selectedColor: ManagerTheme.brandGold,
+                          labelStyle: TextStyle(color: isSel ? Colors.black : Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                          backgroundColor: const Color(0xFF0F172A),
+                          onSelected: (_) => setDialogState(() => selectedAmount = amt),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F172A),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(proposalText, style: const TextStyle(color: Colors.white70, fontSize: 11, height: 1.4)),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ManagerTheme.brandGold,
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(dialogCtx);
+                    _sendMessage(proposalText);
+                  },
+                  child: const Text('Send to WhatsApp', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSendMediaDialog(String mediaType) {
+    final t = _selectedThread!;
+    final jid = t['remote_jid']?.toString() ?? '';
+    final phone = t['phone']?.toString() ?? '';
+    final name = t['name']?.toString() ?? 'Devotee';
+
+    String defaultUrl = 'https://onlinepuja.live/storage/reels/dev_diwali_cinematic_master_reel.mp4';
+    String defaultCaption = 'हर हर महादेव $name जी! 🙏 दशाश्वमेध घाट, काशी से आपके परिवार के कल्याण हेतु पावन संकल्प दर्शन। 🪔';
+
+    if (mediaType == 'image') {
+      defaultUrl = 'https://onlinepuja.live/storage/images/onlinepuja-logo-web.png';
+      defaultCaption = '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, काशी विश्वनाथ धाम से पावन दर्शन एवं बिल्वपत्र अर्पण। 🔱';
+    } else if (mediaType == 'document') {
+      defaultUrl = 'https://onlinepuja.live/storage/docs/sample_kundli_report.pdf';
+      defaultCaption = '🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, आपके परिवार की वैदिक जन्मपत्री एवं अनुष्ठान प्रमाण पत्र संलग्न है। 📜';
+    }
+
+    final urlCtrl = TextEditingController(text: defaultUrl);
+    final captionCtrl = TextEditingController(text: defaultCaption);
+    bool isSendingMedia = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  Icon(
+                    mediaType == 'video' ? Icons.videocam_rounded : (mediaType == 'image' ? Icons.photo_rounded : Icons.picture_as_pdf_rounded),
+                    color: ManagerTheme.brandGold,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Text('Dispatch ${mediaType.toUpperCase()} via WhatsApp', style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: urlCtrl,
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      decoration: InputDecoration(
+                        labelText: '${mediaType.toUpperCase()} Media URL',
+                        labelStyle: const TextStyle(color: ManagerTheme.brandGold, fontSize: 12),
+                        filled: true,
+                        fillColor: const Color(0xFF0F172A),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: captionCtrl,
+                      maxLines: 3,
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      decoration: InputDecoration(
+                        labelText: 'Devotional Caption',
+                        labelStyle: const TextStyle(color: Colors.white70, fontSize: 12),
+                        filled: true,
+                        fillColor: const Color(0xFF0F172A),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSendingMedia ? null : () => Navigator.pop(dialogCtx),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: isSendingMedia
+                      ? null
+                      : () async {
+                          setDialogState(() => isSendingMedia = true);
+                          final messenger = ScaffoldMessenger.of(context);
+                          final nav = Navigator.of(dialogCtx);
+                          final ok = await _api.sendWhatsappMessage(
+                            jid: jid,
+                            phone: phone,
+                            message: captionCtrl.text.trim(),
+                            mediaUrl: urlCtrl.text.trim(),
+                            mediaType: mediaType,
+                          );
+                          setDialogState(() => isSendingMedia = false);
+                          if (mounted) {
+                            nav.pop();
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(ok ? '✓ $mediaType dispatched via Evolution API!' : 'Failed to send media.'),
+                                backgroundColor: ok ? ManagerTheme.brandEmerald : Colors.redAccent,
+                              ),
+                            );
+                            if (ok) {
+                              _pollCurrentThreadMessages();
+                            }
+                          }
+                        },
+                  child: isSendingMedia
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      : const Text('Dispatch Now', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
         );
       },
     );

@@ -147,7 +147,7 @@ class _DialerScreenState extends State<DialerScreen> with SingleTickerProviderSt
 
   Future<void> _openDevoteeWhatsApp(String phone, String name) async {
     final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    final uri = Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent('Pranam $name ji! 🙏 Greetings from OnlinePuja Temple Services.')}');
+    final uri = Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent('🕉️ *ॐ नमः शिवाय* 🙏\n\n$name जी, Greetings from OnlinePuja Varanasi Sanctum.')}');
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);

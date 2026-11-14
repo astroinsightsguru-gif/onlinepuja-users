@@ -4,6 +4,7 @@ import '../campaigns/campaign_automation_screen.dart';
 import '../studio/banner_puja_studio_screen.dart';
 import '../agents/ai_agents_hub_screen.dart';
 import 'growth_broadcast_screen.dart';
+import 'traffic_forecast_screen.dart';
 import '../bookings/master_bookings_screen.dart';
 import '../social/social_management_screen.dart';
 import '../blogs/blogs_management_screen.dart';
@@ -20,6 +21,7 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
   int _selectedModule = 0;
 
   final List<Map<String, dynamic>> _modules = [
+    {'title': 'Forecast & Keywords', 'icon': Icons.auto_graph_rounded, 'screen': const TrafficForecastScreen()},
     {'title': 'Campaigns', 'icon': Icons.campaign_rounded, 'screen': const CampaignAutomationScreen()},
     {'title': 'AI Studio', 'icon': Icons.auto_fix_high_rounded, 'screen': const BannerPujaStudioScreen()},
     {'title': 'AI Swarm', 'icon': Icons.psychology_rounded, 'screen': const AiAgentsHubScreen()},

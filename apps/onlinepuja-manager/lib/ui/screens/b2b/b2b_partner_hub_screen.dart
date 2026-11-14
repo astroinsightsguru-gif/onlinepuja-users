@@ -80,7 +80,7 @@ class _B2bPartnerHubScreenState extends State<B2bPartnerHubScreen> {
     final businessName = lead['business_name'] ?? 'Partner';
     final partnerCode = lead['partner_code'] ?? 'B2B-OP';
 
-    final text = 'Pranam $businessName team! 🙏 Greetings from OnlinePuja.live.\n\n'
+    final text = '🕉️ *ॐ नमः शिवाय* 🙏\n\n$businessName team, Greetings from OnlinePuja.live.\n\n'
         'We invite your agency to partner with us for the upcoming Dev Deepawali 2026 (24 Nov) in Varanasi. '
         'Hotels and boats are 100% booked, but you can offer your travelers 108 Deepdaan & Sacred Rudrabhishek performed live at Dashashwamedh & Manikarnika Ghats.\n\n'
         '• Your Margin: 25% Net Profit on every devotee booking\n'

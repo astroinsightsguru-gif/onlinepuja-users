@@ -304,7 +304,8 @@ class _LeadsPipelineScreenState extends State<LeadsPipelineScreen> {
                     icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF25D366), size: 18),
                     tooltip: 'WhatsApp',
                     onPressed: () {
-                      final uri = Uri.parse('whatsapp://send?phone=91${lead.phone}&text=Pranam%20${Uri.encodeComponent(lead.name)}!');
+                      final msg = '🕉️ *ॐ नमः शिवाय* 🙏\n\n${lead.name} जी, Greetings from OnlinePuja Varanasi Sanctum.';
+                      final uri = Uri.parse('whatsapp://send?phone=91${lead.phone}&text=${Uri.encodeComponent(msg)}');
                       launchUrl(uri, mode: LaunchMode.externalApplication);
                     },
                   ),

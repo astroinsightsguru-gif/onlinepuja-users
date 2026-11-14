@@ -75,6 +75,23 @@
       color: #94A3B8;
     }
   </style>
+  <script>
+    // Force cache purge on manager update
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let r of registrations) {
+          r.unregister();
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(keys) {
+        for (let k of keys) {
+          caches.delete(k);
+        }
+      });
+    }
+  </script>
 </head>
 <body>
   <div id="loading-container">
