@@ -276,6 +276,8 @@ Route::post('productDetailsStatus/update/{id}', [ProductDetailController::class,
 //------------------------------------------------CUSTOMER API--------------------------------------------------//
 // New
 Route::post('kundali/addnew', [KundaliController::class, 'addKundaliNew'])->name('api.addKundaliNew');
+Route::post('kundli/generate-free-pdf', [\App\Http\Controllers\API\KundliApiController::class, 'generateFreePdf'])->name('api.generateFreePdf');
+Route::get('kundli/generate-free-pdf', [\App\Http\Controllers\API\KundliApiController::class, 'generateFreePdf']);
 Route::post('kundali/getKundaliReport', [KundaliMatchingController::class, 'getKundaliReport'])->name('api.getKundaliReport');
 //Kundali
 Route::post('kundali/add', [KundaliController::class, 'addKundali'])->name('api.addKundali');

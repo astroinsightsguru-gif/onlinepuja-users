@@ -217,6 +217,34 @@ class WhatsAppWebhookController extends Controller
                 }
             }
 
+            // 6.5 AUTONOMOUS 10-PAGE FREE KUNDALI CONVERSATIONAL PIPELINE
+            $kundliFlow = \App\Services\FreeKundaliEngine::handleConversationalRequest(
+                $remoteJid,
+                $cleanPhone,
+                $pushName,
+                $text
+            );
+
+            if (!empty($kundliFlow)) {
+                if ($kundliFlow['action'] === 'deliver_pdf') {
+                    $wa->sendMedia(
+                        $cleanPhone,
+                        $kundliFlow['url'],
+                        $kundliFlow['caption'],
+                        'document',
+                        $kundliFlow['fileName']
+                    );
+                    $this->saveAiReply($remoteJid, $kundliFlow['caption'] . "\n\n📎 Attached PDF: " . $kundliFlow['url']);
+                    return response()->json(['status' => 200, 'action' => 'kundli_pdf_delivered']);
+                }
+
+                if ($kundliFlow['action'] === 'prompt_details') {
+                    $wa->sendText($cleanPhone, $kundliFlow['reply']);
+                    $this->saveAiReply($remoteJid, $kundliFlow['reply']);
+                    return response()->json(['status' => 200, 'action' => 'kundli_details_prompted']);
+                }
+            }
+
             // 7. AUTONOMOUS CONVERSATIONAL VEDIC ACHARYA CLOSER (Multi-turn Gemini AI)
             $aiReply = \App\Services\VedicAcharyaAiService::processIncomingMessage(
                 $remoteJid,
