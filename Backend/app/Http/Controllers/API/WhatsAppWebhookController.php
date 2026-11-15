@@ -123,6 +123,32 @@ class WhatsAppWebhookController extends Controller
                 'updated_at' => $now,
             ]);
 
+            // 2.5 Auto-Sync Inbound Devotee Lead into Leads CRM Table (Meta Ads / WhatsApp CTWA)
+            if (!$fromMe && !$isGroup) {
+                $candidatePhone = $cleanPhone ?: $phone;
+                $cleanedPhone = $wa->cleanNumber($candidatePhone);
+                if (strlen($cleanedPhone) >= 10 && strlen($cleanedPhone) <= 13) {
+                    $existingLead = DB::table('leads')
+                        ->where('phone', $cleanedPhone)
+                        ->orWhere('phone', substr($cleanedPhone, -10))
+                        ->first();
+
+                    if (!$existingLead) {
+                        DB::table('leads')->insert([
+                            'name' => (!empty($pushName) && $pushName !== 'Devotee') ? $pushName : 'WhatsApp Devotee',
+                            'phone' => $cleanedPhone,
+                            'source' => 'meta_ads_whatsapp',
+                            'stage' => 'new',
+                            'priority' => 'hot',
+                            'notes' => 'Inbound WhatsApp lead: ' . mb_substr($text, 0, 100),
+                            'last_contacted_at' => $now,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ]);
+                    }
+                }
+            }
+
             // If message was sent from physical phone or is a group community chat, do not auto-reply
             if ($fromMe || $isGroup) {
                 return response()->json(['status' => 200, 'message' => 'Outbound or group message synced']);

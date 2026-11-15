@@ -68,6 +68,15 @@ class WhatsAppDailyPanchangCommand extends Command
             ->get();
         $candidates = $candidates->merge($leads);
 
+        // From WhatsApp Threads (inbound devotee chats & Meta ad leads)
+        $threads = DB::table('whatsapp_threads')
+            ->where('remote_jid', 'not like', '%@g.us')
+            ->whereNotNull('phone')
+            ->where('phone', '!=', '')
+            ->select('id', 'name', 'phone')
+            ->get();
+        $candidates = $candidates->merge($threads);
+
         // Deduplicate and filter opt-outs & invalid numbers
         $uniqueDevotees = collect();
         $seenNumbers = [];
@@ -113,7 +122,7 @@ class WhatsAppDailyPanchangCommand extends Command
 
         foreach ($uniqueDevotees->take($limit) as $idx => $devotee) {
             // Personalized greeting
-            $personalized = "प्रणाम {$devotee->name} जी 🙏\n\n" . $payload;
+            $personalized = "🕉️ *ॐ नमः शिवाय* 🙏\n\n" . $payload;
 
             $res = $wa->sendText($devotee->phone, $personalized);
             if ($res['ok'] ?? false) {
@@ -151,25 +160,103 @@ class WhatsAppDailyPanchangCommand extends Command
     /**
      * Synthesize authentic Vedic Hindi Panchang & 12-Rashi predictions
      */
+
+    protected function translateTithiToHindi(string $tithi): string
+    {
+        $map = [
+            "Pratipada" => "प्रतिपदा", "Dvitiya" => "द्वितीया", "Tritiya" => "तृतीया",
+            "Chaturthi" => "चतुर्थी", "Panchami" => "पंचमी", "Shashthi" => "षष्ठी",
+            "Saptami" => "सप्तमी", "Ashtami" => "अष्टमी", "Navami" => "नवमी",
+            "Dashami" => "दशमी", "Ekadashi" => "एकादशी", "Dvadashi" => "द्वादशी",
+            "Trayodashi" => "त्रयोदशी", "Chaturdashi" => "चतुर्दशी", "Purnima" => "पूर्णिमा",
+            "Amavasya" => "अमावस्या", "Shukla Paksha" => "शुक्ल पक्ष", "Krishna Paksha" => "कृष्ण पक्ष"
+        ];
+        return strtr($tithi, $map);
+    }
+
+    protected function translateNakshatraToHindi(string $nak): string
+    {
+        $map = [
+            "Ashwini" => "अश्विनी", "Bharani" => "भरणी", "Krittika" => "कृत्तिका",
+            "Rohini" => "रोहिणी", "Mrigashira" => "मृगशिरा", "Ardra" => "आर्द्रा",
+            "Punarvasu" => "पुनर्वसु", "Pushya" => "पुष्य", "Ashlesha" => "आश्लेषा",
+            "Magha" => "मघा", "Purva Phalguni" => "पूर्वा फाल्गुनी", "Uttara Phalguni" => "उत्तरा फाल्गुनी",
+            "Hasta" => "हस्त", "Chitra" => "चित्रा", "Swati" => "स्वाति",
+            "Vishakha" => "विशाखा", "Anuradha" => "अनुराधा", "Jyeshtha" => "ज्येष्ठा",
+            "Mula" => "मूल", "Purva Ashadha" => "पूर्वाषाढ़ा", "Uttara Ashadha" => "उत्तराषाढ़ा",
+            "Shravana" => "श्रवण", "Dhanishta" => "धनिष्ठा", "Shatabhisha" => "शतभिषा",
+            "Purva Bhadrapada" => "पूर्वाभाद्रपद", "Uttara Bhadrapada" => "उत्तराभाद्रपद", "Revati" => "रेवती"
+        ];
+        return $map[$nak] ?? $nak;
+    }
+
     protected function generateDailyDevotionalPayload(): string
     {
         $now = Carbon::now('Asia/Kolkata');
         $dateFormatted = $now->translatedFormat('d F Y, l');
 
+        // Day of Week Deity & Auspicious Alignment
+        $dayOfWeek = $now->dayOfWeek; // 0 = Sunday, 1 = Monday, etc.
+        $dayDeities = [
+            0 => ['day' => 'रविवार', 'deity' => 'भगवान सूर्य नारायण', 'mantra' => 'ॐ सूर्याय नमः', 'blessing' => 'आरोग्य, तेज व मान-सम्मान'],
+            1 => ['day' => 'सोमवार', 'deity' => 'देवाधिदेव महादेव', 'mantra' => 'ॐ नमः शिवाय', 'blessing' => 'मानसिक शांति, आरोग्य व संकट मुक्ति'],
+            2 => ['day' => 'मंगलवार', 'deity' => 'श्री संकटमोचन हनुमान', 'mantra' => 'ॐ हं हनुमते नमः', 'blessing' => 'भय मुक्ति, साहस व कार्य सिद्धि'],
+            3 => ['day' => 'बुधवार', 'deity' => 'प्रथम पूज्य श्री गणेश', 'mantra' => 'ॐ गं गणपतये नमः', 'blessing' => 'विघ्न नाश, बुद्धि व व्यापार वृद्धि'],
+            4 => ['day' => 'गुरुवार', 'deity' => 'श्री हरि विष्णु व देवगुरु', 'mantra' => 'ॐ नमो भगवते वासुदेवाय', 'blessing' => 'ज्ञान, सौभाग्य व वैवाहिक सुख'],
+            5 => ['day' => 'शुक्रवार', 'deity' => 'मां महालक्ष्मी व आद्यशक्ति', 'mantra' => 'ॐ श्रीं महालक्ष्म्यै नमः', 'blessing' => 'स्थिर धन, ऐश्वर्य व समृद्धि'],
+            6 => ['day' => 'शनिवार', 'deity' => 'कर्मफलदाता शनिदेव', 'mantra' => 'ॐ शं शनैश्चराय नमः', 'blessing' => 'ग्रह बाधा निवारण व न्याय रक्षा'],
+        ];
+        $currentDeity = $dayDeities[$dayOfWeek] ?? $dayDeities[1];
+
+        // Today or Upcoming Festival Check
+        $festivalNotice = "";
+        try {
+            $todayFest = DB::table('hindu_festivals')->whereDate('date', $now->toDateString())->first();
+            if ($todayFest) {
+                $festivalNotice = "🎉 *आज का पावन महापर्व:* {$todayFest->name} ({$todayFest->deity}) 🪔\n";
+            }
+        } catch (\Throwable $e) {}
+
         // Vedic Panchang core calculation
-        $tithis = ['प्रतिपदा', 'द्वितीया', 'तृतीया', 'चतुर्थी', 'पंचमी', 'षष्ठी', 'सप्तमी', 'अष्टमी', 'नवमी', 'दशमी', 'एकादशी', 'द्वादशी', 'त्रयोदशी', 'चतुर्दशी', 'पूर्णिमा / अमावस्या'];
-        $nakshatras = ['अश्विनी', 'भरणी', 'कृत्तिका', 'रोहिणी', 'मृगशिरा', 'आर्द्रा', 'पुनर्वसु', 'पुष्य', 'आश्लेषा', 'मघा', 'पूर्वा फाल्गुनी', 'उत्तरा फाल्गुनी', 'हस्त', 'चित्रा', 'स्वाति', 'विशाखा', 'अनुराधा', 'ज्येष्ठा', 'मूल', 'पूर्वाषाढ़ा', 'उत्तराषाढ़ा', 'श्रवण', 'धनिष्ठा', 'शतभिषा', 'पूर्वाभाद्रपद', 'उत्तराभाद्रपद', 'रेवती'];
+        // Astronomical Vedic Calculation for Varanasi (Lat: 25.3176, Lon: 82.9739)
+        try {
+            $panchang = \App\Services\VedicAstrologyEngine::calculatePanchang(
+                $now->format('Y-m-d'),
+                $now->format('H:i'),
+                25.3176,
+                82.9739
+            );
+            $chog = \App\Services\VedicAstrologyEngine::calculateChoghadiya(
+                $now->format('Y-m-d'),
+                25.3176,
+                82.9739
+            );
 
-        $dayOfYear = $now->dayOfYear;
-        $tithi = $tithis[$dayOfYear % count($tithis)];
-        $nakshatra = $nakshatras[$dayOfYear % count($nakshatras)];
-        $paksha = ($dayOfYear % 30 < 15) ? 'शुक्ल पक्ष' : 'कृष्ण पक्ष';
+            $sunrise = $panchang['sunrise'] ?? '06:14 AM';
+            $sunset = $panchang['sunset'] ?? '05:12 PM';
+            $rahuKaal = $panchang['rahukaal'] ?? '10:20 AM – 11:43 AM';
+            $abhijit = $chog['abhijitMuhurat'] ?? '11:21 AM – 12:05 PM';
+            $rawTithi = $panchang['tithi'] ?? 'Chaturthi (Shukla Paksha)';
+            $tithi = $this->translateTithiToHindi($rawTithi);
+            $nakshatra = $this->translateNakshatraToHindi($panchang['nakshatra'] ?? 'Mula');
+            $samvat = $panchang['vikram_samvat'] ?? '2083';
+            $masa = $panchang['masa'] ?? 'Margashirsha';
 
-        $sunrise = '06:18 AM';
-        $sunset = '05:44 PM';
-        $abhijit = '11:43 AM – 12:28 PM';
-        $rahuKaal = '09:18 AM – 10:40 AM';
-        $choghadiya = 'शुभ: 07:40 - 09:05 | अमृत: 01:15 - 02:40 | लाभ: 02:40 - 04:05';
+            // Filter auspicious choghadiya slots only
+            $shubhSlots = [];
+            foreach (($chog['choghadiya'] ?? []) as $slot) {
+                if (!empty($slot['isAuspicious'])) {
+                    $slotName = strtr($slot['name'], ['Labh' => 'लाभ', 'Amrit' => 'अमृत', 'Shubh' => 'शुभ', 'Char' => 'चर']);
+                    $shubhSlots[] = "{$slotName}: {$slot['startTime']} - {$slot['endTime']}";
+                }
+            }
+            $choghadiya = !empty($shubhSlots) ? implode(' | ', array_slice($shubhSlots, 0, 3)) : 'शुभ मुहूर्त: 08:58 AM - 10:20 AM';
+        } catch (\Throwable $e) {
+            $sunrise = '06:14 AM'; $sunset = '05:12 PM';
+            $rahuKaal = '10:20 AM – 11:43 AM'; $abhijit = '11:21 AM – 12:05 PM';
+            $tithi = 'शुक्ल पक्ष चतुर्थी'; $nakshatra = 'मूल'; $samvat = '2083';
+            $choghadiya = 'लाभ: 07:36 AM - 08:58 AM | अमृत: 08:58 AM - 10:20 AM';
+        }
 
         $rashis = [
             ['name' => 'मेष (Aries)', 'lucky' => '9, लाल', 'upay' => 'हनुमान चालीसा का पाठ करें'],
@@ -187,16 +274,24 @@ class WhatsAppDailyPanchangCommand extends Command
         ];
 
         $lines = [];
-        $lines[] = "🕉️ *श्री दैनिक पंचांग एवं १२ राशि भविष्यफल*";
+        $lines[] = "━━━━━━━ ✦ 🕉️ ✦ ━━━━━━━";
+        $lines[] = "✨ *श्री दैनिक वैदिक पंचांग एवं १२ राशि भविष्यफल* ✨";
+        $lines[] = "🛕 *श्री काशी विश्वनाथ धाम, वाराणसी*";
+        $lines[] = "━━━━━━━ ✦ 🕉️ ✦ ━━━━━━━";
+        if (!empty($festivalNotice)) {
+            $lines[] = $festivalNotice;
+        }
         $lines[] = "📅 *{$dateFormatted}*";
-        $lines[] = "विक्रम संवत २०८३ • {$paksha} • {$tithi}";
+        $lines[] = "🚩 *वार देवता:* {$currentDeity['deity']} ({$currentDeity['day']} विशेष)";
+        $lines[] = "📿 *दैनिक महामंत्र:* {$currentDeity['mantra']}";
+        $lines[] = "विक्रम संवत {$samvat} • {$tithi}";
         $lines[] = "";
         $lines[] = "🌅 *सूर्योदय:* {$sunrise} | *सूर्यास्त:* {$sunset}";
         $lines[] = "✨ *नक्षत्र:* {$nakshatra}";
         $lines[] = "⚡ *अभिजित मुहूर्त:* {$abhijit} *(सर्वोत्तम कार्य सिद्धि समय)*";
         $lines[] = "⚠️ *राहुकाल:* {$rahuKaal} *(शुभ कार्य वर्जित)*";
         $lines[] = "";
-        $lines[] = "🔮 *आज का संक्षिप्त १२ राशि भविष्यफल:*";
+        $lines[] = "━━━━━━━ ✦ 🔮 ✦ ━━━━━━━\n⭐ *आज का १२ राशि फल एवं दैनिक अचूक उपाय:*";
         foreach ($rashis as $r) {
             $lines[] = "• *{$r['name']}:* लकी {$r['lucky']} | उपाय: {$r['upay']}";
         }
@@ -204,10 +299,11 @@ class WhatsAppDailyPanchangCommand extends Command
         $lines[] = "🌿 *आज का शुभ चौघड़िया:*";
         $lines[] = "{$choghadiya}";
         $lines[] = "";
-        $lines[] = "🪔 *आज का पावन संकल्प:*";
+        $lines[] = "━━━━━━━ ✦ 🪔 ✦ ━━━━━━━\n🛕 *आज का पावन काशी विश्वनाथ संकल्प:*";
         $lines[] = "काशी विश्वनाथ व दशाश्वमेध घाट पर अपने गोत्र संकल्प से दीपदान व रुद्राभिषेक पूजा बुक करें:";
         $lines[] = "👉 https://onlinepuja.live/pujas";
         $lines[] = "";
+        
         $lines[] = "_(दैनिक पंचांग रोकने हेतु STOP लिखकर भेजें)_";
 
         return implode("\n", $lines);
