@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>सम्पूर्ण वैदिक जन्म कुण्डली - {{ $name }}</title>
+    <title>Complete Vedic Horoscope - {{ $name }}</title>
     <style>
         @page {
             size: A4 portrait;
             margin: 10mm 14mm 10mm 14mm;
         }
         body {
-            font-family: 'DejaVu Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'Helvetica', 'Arial', sans-serif;
             font-size: 10.5px;
             color: #1F2937;
             background-color: #FFFFFF;
@@ -37,13 +37,14 @@
             color: #B45309;
             font-weight: bold;
             margin-bottom: 2px;
+            letter-spacing: 0.5px;
         }
         .brand-title {
             font-size: 20px;
             font-weight: 800;
             color: #92400E;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             margin: 0;
         }
         .subtitle {
@@ -75,7 +76,7 @@
             background: #FEF3C7;
             border-left: 4px solid #D97706;
             padding: 4px 8px;
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: bold;
             color: #78350F;
             margin-top: 10px;
@@ -139,11 +140,6 @@
             margin-top: 15px;
             border-radius: 8px;
         }
-        .sacred-icon {
-            font-size: 32px;
-            color: #D97706;
-            margin-bottom: 6px;
-        }
         .devotee-card {
             background: #FEF3C7;
             border: 1px solid #F59E0B;
@@ -161,7 +157,7 @@
             font-weight: bold;
             color: #78350F;
             display: inline-block;
-            width: 130px;
+            width: 140px;
         }
         .card-val {
             color: #1F2937;
@@ -192,150 +188,149 @@
     <!-- ================= PAGE 1: COVER & JATAKA VIVARANA ================= -->
     <div class="page">
         <div class="header">
-            <div class="shloka">॥ ॐ श्री गणेशाय नमः • ॐ नमः शिवाय • ॐ नमो भगवते वासुदेवाय ॥</div>
+            <div class="shloka">OM SHREE GANESHAYA NAMAHA • OM NAMAH SHIVAYA • OM NAMO BHAGAVATE VASUDEVAYA</div>
             <div class="brand-title">OnlinePuja.live</div>
-            <div class="subtitle">श्री काशी विश्वनाथ धाम, वाराणसी • सम्पूर्ण वैदिक जन्म पत्रिका (Drik Ganita)</div>
+            <div class="subtitle">Shree Kashi Vishwanath Dham, Varanasi • Certified Drik Ganita Vedic Horoscope</div>
         </div>
 
         <div class="cover-box">
-            <div class="sacred-icon">🕉️ 🔱 🪔</div>
-            <h1 style="color: #92400E; font-size: 22px; margin: 4px 0;">सम्पूर्ण वैदिक जन्म कुण्डली</h1>
-            <p style="color: #B45309; font-size: 11px; margin: 2px 0 12px 0;">चित्रपक्षीय लाहिड़ी अयनांश (Lahiri Ayanamsha: {{ $ayanamsha }}°) पर आधारित प्रामाणिक जन्म विवरण</p>
+            <h1 style="color: #92400E; font-size: 22px; margin: 4px 0;">COMPLETE VEDIC BIRTH HOROSCOPE</h1>
+            <p style="color: #B45309; font-size: 11px; margin: 2px 0 12px 0;">Computed with Chitra Paksha Lahiri Ayanamsha ({{ $ayanamsha }}°) Precision Mathematics</p>
 
             <div class="devotee-card">
-                <div class="card-row"><span class="card-label">जातक का नाम:</span> <span class="card-val" style="color: #B91C1C; font-size: 12px;">{{ $name }}</span></div>
-                <div class="card-row"><span class="card-label">जन्म तिथि:</span> <span class="card-val">{{ date('d F Y', strtotime($dob)) }}</span></div>
-                <div class="card-row"><span class="card-label">जन्म समय:</span> <span class="card-val">{{ date('h:i A', strtotime($tob)) }} (IST)</span></div>
-                <div class="card-row"><span class="card-label">जन्म स्थान:</span> <span class="card-val">{{ $pob }}</span></div>
-                <div class="card-row"><span class="card-label">अक्षांश / रेखांश:</span> <span class="card-val">{{ round($lat, 4) }}° N, {{ round($lon, 4) }}° E</span></div>
-                <div class="card-row"><span class="card-label">जन्म लग्न:</span> <span class="card-val">{{ $lagna['sign'] }} ({{ $lagna['degree'] }}°)</span></div>
-                <div class="card-row"><span class="card-label">चन्द्र राशि:</span> <span class="card-val">{{ $panchang['moonSign'] }}</span></div>
-                <div class="card-row"><span class="card-label">जन्म नक्षत्र:</span> <span class="card-val">{{ $panchang['nakshatra'] }} (चरण {{ $panchang['nakshatraPada'] }})</span></div>
+                <div class="card-row"><span class="card-label">Devotee Name:</span> <span class="card-val" style="color: #B91C1C; font-size: 12px;">{{ $name }}</span></div>
+                <div class="card-row"><span class="card-label">Date of Birth:</span> <span class="card-val">{{ date('d F Y', strtotime($dob)) }}</span></div>
+                <div class="card-row"><span class="card-label">Time of Birth:</span> <span class="card-val">{{ date('h:i A', strtotime($tob)) }} (IST)</span></div>
+                <div class="card-row"><span class="card-label">Place of Birth:</span> <span class="card-val">{{ $pob }}</span></div>
+                <div class="card-row"><span class="card-label">Coordinates:</span> <span class="card-val">{{ round($lat, 4) }} deg N, {{ round($lon, 4) }} deg E</span></div>
+                <div class="card-row"><span class="card-label">Ascendant (Lagna):</span> <span class="card-val">{{ $lagna['sign'] }} ({{ $lagna['degree'] }} deg)</span></div>
+                <div class="card-row"><span class="card-label">Moon Sign (Rashi):</span> <span class="card-val">{{ $panchang['moonSign'] }}</span></div>
+                <div class="card-row"><span class="card-label">Birth Nakshatra:</span> <span class="card-val">{{ $panchang['nakshatra'] }} (Pada {{ $panchang['nakshatraPada'] }})</span></div>
             </div>
         </div>
 
-        <div class="section-title">जन्म कालीन पंचांग विवरण (Birth Panchang Coordinates)</div>
+        <div class="section-title">Birth Panchang Coordinates (Jātaka Vivaraṇa)</div>
         <table>
             <tr>
-                <th width="20%">वैदिक तिथि</th>
+                <th width="20%">Vedic Tithi</th>
                 <td width="30%"><strong>{{ $panchang['tithi'] }}</strong></td>
-                <th width="20%">नक्षत्र व स्वामी</th>
-                <td width="30%"><strong>{{ $panchang['nakshatra'] }}</strong> ({{ $panchang['nakshatraLord'] }})</td>
+                <th width="20%">Nakshatra & Lord</th>
+                <td width="30%"><strong>{{ $panchang['nakshatra'] }}</strong> (Lord: {{ $panchang['nakshatraLord'] }})</td>
             </tr>
             <tr>
-                <th>चन्द्र राशि</th>
+                <th>Moon Sign (Rashi)</th>
                 <td><strong>{{ $panchang['moonSign'] }}</strong></td>
-                <th>राशि स्वामी</th>
+                <th>Rashi Lord</th>
                 <td>{{ $panchang['moonSignLord'] }}</td>
             </tr>
             <tr>
-                <th>दैनिक योग</th>
+                <th>Nitya Yoga</th>
                 <td>{{ $panchang['yoga'] }}</td>
-                <th>करण</th>
+                <th>Karana</th>
                 <td>{{ $panchang['karana'] }}</td>
             </tr>
             <tr>
-                <th>विक्रम संवत्</th>
+                <th>Vikram Samvat</th>
                 <td>{{ $panchang['vikramSamvat'] }}</td>
-                <th>अयनांश गणना</th>
-                <td>चित्रपक्षीय लाहिड़ी ({{ $ayanamsha }}°)</td>
+                <th>Ayanamsha</th>
+                <td>Chitra Paksha Lahiri ({{ $ayanamsha }} deg)</td>
             </tr>
         </table>
 
         <div class="remedy-box">
-            <strong>🛕 श्री काशी विश्वनाथ संकल्प घोषणा:</strong><br>
-            यह कुण्डली वैदिक ऋषि पाराशर होरा शास्त्र के सिद्धांतों पर आधारित है। जातक के कर्म, भाग्य, स्वास्थ्य, वैवाहिक सुख एवं ग्रह दशाओं का पूर्ण विश्लेषण आगामी पृष्ठों में प्रस्तुत है।
+            <strong>Kashi Vishwanath Sankalp Proclamation:</strong><br>
+            This horoscope is prepared according to the classical principles of Maharishi Parashara Brihat Hora Shastra. The comprehensive analysis of life destiny, planetary coordinates, dashas, doshas, and Vedic remedies is presented in the following pages.
         </div>
 
-        <div class="footer">पृष्ठ १ / १० • OnlinePuja.live • प्रमाणित वैदिक कुण्डली प्रणाली</div>
+        <div class="footer">Page 1 of 10 • OnlinePuja.live • Certified Vedic Horoscope System</div>
     </div>
 
     <!-- ================= PAGE 2: AVAKHADA CHAKRA ================= -->
     <div class="page">
         <div class="page-header-strip">
             <div class="left">OnlinePuja.live • {{ $name }}</div>
-            <div class="right">पृष्ठ २ / १० • अवकहड़ा चक्र एवं अष्टकूट तत्व</div>
+            <div class="right">Page 2 of 10 • Avakhada Chakra & Ashtakoota Fundamentals</div>
         </div>
 
-        <div class="section-title">अवकहड़ा चक्र एवं मूल तत्व (Avakhada Chakra & Primary Matrix)</div>
-        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">अवकहड़ा चक्र जातक के जन्म नक्षत्र एवं चन्द्र राशि के आधार पर मानसिक स्वभाव, शारीरिक प्रकृति एवं कुल गुणों का निर्धारण करता है:</p>
+        <div class="section-title">Avakhada Chakra & Primary Cosmic Matrix</div>
+        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">The Avakhada Chakra defines the innate psychological constitution, physical vitality, and natural temperament according to the birth Nakshatra and Moon placement:</p>
 
         <table>
             <tr>
-                <th width="25%">वर्ण (Varna)</th>
+                <th width="25%">Varna</th>
                 <td width="25%"><strong>{{ $avakhada['varna'] }}</strong></td>
-                <th width="25%">वश्य (Vashya)</th>
+                <th width="25%">Vashya</th>
                 <td width="25%"><strong>{{ $avakhada['vashya'] }}</strong></td>
             </tr>
             <tr>
-                <th>योनि (Yoni)</th>
+                <th>Yoni</th>
                 <td><strong>{{ $avakhada['yoni'] }}</strong></td>
-                <th>गण (Gana)</th>
+                <th>Gana</th>
                 <td><strong>{{ $avakhada['gana'] }}</strong></td>
             </tr>
             <tr>
-                <th>नाड़ी (Nadi)</th>
+                <th>Nadi</th>
                 <td><strong>{{ $avakhada['nadi'] }}</strong></td>
-                <th>तत्व (Element)</th>
+                <th>Element (Tatva)</th>
                 <td><strong>{{ $avakhada['element'] }}</strong></td>
             </tr>
             <tr>
-                <th>जन्म लग्न</th>
+                <th>Ascendant (Lagna)</th>
                 <td><strong>{{ $avakhada['lagnaSign'] }}</strong></td>
-                <th>लग्न स्वामी</th>
+                <th>Lagna Lord</th>
                 <td><strong>{{ $avakhada['lagnaLord'] }}</strong></td>
             </tr>
             <tr>
-                <th>चन्द्र राशि स्वामी</th>
+                <th>Moon Sign Lord</th>
                 <td><strong>{{ $avakhada['rashiLord'] }}</strong></td>
-                <th>सूर्य राशि</th>
-                <td><strong>{{ $planets['Sun (सूर्य)']['sign'] }}</strong></td>
+                <th>Sun Sign (Surya)</th>
+                <td><strong>{{ $planets['Sun (Surya)']['sign'] }}</strong></td>
             </tr>
         </table>
 
-        <div class="section-title">अष्टकूट गुण विश्लेषण एवं स्वभाव विचार</div>
+        <div class="section-title">Ashtakoota Core Element Analysis</div>
         <div class="house-block">
-            <div class="house-title">१. वर्ण एवं कर्म स्वभाव (Mental Constitution & Karma)</div>
-            <div class="house-text">जातक का वर्ण <strong>{{ $avakhada['varna'] }}</strong> है, जो कर्तव्यनिष्ठा, कर्मशीलता एवं समाज में बौद्धिक व नेतृत्वकारी भूमिका को दर्शाता है। जीवन में स्वतंत्र निर्णय लेने की क्षमता प्रबल रहेगी।</div>
+            <div class="house-title">1. Varna & Temperament Matrix</div>
+            <div class="house-text">The native possesses <strong>{{ $avakhada['varna'] }}</strong> Varna, signifying high devotion to duty, acute intellectual discernment, and natural executive capabilities. You possess the mental resilience to make independent decisions during critical cross-roads.</div>
         </div>
         <div class="house-block">
-            <div class="house-title">२. गण एवं सामाजिक तालमेल (Temperament & Interactions)</div>
-            <div class="house-text">जातक का जन्म <strong>{{ $avakhada['gana'] }}</strong> में हुआ है। यह सात्विक सोच, धर्मपरायणता एवं मित्रों व परिवारजनों के साथ सौहार्दपूर्ण व्यवहार को प्रकट करता है। जीवन में संकट के समय भी धैर्य बना रहेगा।</div>
+            <div class="house-title">2. Gana & Social Interaction Dynamics</div>
+            <div class="house-text">Born under <strong>{{ $avakhada['gana'] }}</strong> Gana. This reflects virtuous noble instincts, a respectful attitude toward cultural traditions, and peaceful interpersonal relationships. You maintain dignified calm even amidst demanding conditions.</div>
         </div>
         <div class="house-block">
-            <div class="house-title">३. नाड़ी एवं स्वास्थ्य प्रकृति (Ayurvedic Tridosha & Vitality)</div>
-            <div class="house-text">जातक की नाड़ी <strong>{{ $avakhada['nadi'] }}</strong> है। वात, पित्त व कफ का संतुलन बनाए रखने हेतु नित्य प्रातः तांबे के पात्र का जल ग्रहण करना तथा सूर्य नमस्कार का अभ्यास करना शुभफलदायी सिद्ध होगा।</div>
+            <div class="house-title">3. Nadi & Ayurvedic Constitution (Tridosha)</div>
+            <div class="house-text">Governed by <strong>{{ $avakhada['nadi'] }}</strong> Nadi. Maintaining balance in dietary habits, drinking water from copper vessels in the morning, and practicing daily breathing exercises (Pranayama) will optimize physical longevity and mental vitality.</div>
         </div>
         <div class="house-block">
-            <div class="house-title">४. योनि एवं आंतरिक ऊर्जा (Psychological Drive & Harmony)</div>
-            <div class="house-text">योनि <strong>{{ $avakhada['yoni'] }}</strong> होने से कार्यस्थल पर तीव्र गति से निर्णय लेने तथा कठिन परिस्थितियों में भी शांति बनाए रखने की क्षमता प्राप्त होती है।</div>
+            <div class="house-title">4. Yoni & Instinctive Energy</div>
+            <div class="house-text">Endowed with <strong>{{ $avakhada['yoni'] }}</strong> Yoni. This grants swift adaptability, deep loyalty toward close associates, and steadfast patience when pursuing ambitious long-term goals.</div>
         </div>
 
-        <div class="footer">पृष्ठ २ / १० • OnlinePuja.live • प्रमाणित वैदिक कुण्डली प्रणाली</div>
+        <div class="footer">Page 2 of 10 • OnlinePuja.live • Certified Vedic Horoscope System</div>
     </div>
 
     <!-- ================= PAGE 3: LAGNA KUNDALI CHAKRA (D-1) ================= -->
     <div class="page">
         <div class="page-header-strip">
             <div class="left">OnlinePuja.live • {{ $name }}</div>
-            <div class="right">पृष्ठ ३ / १० • जन्म लग्न कुण्डली (D-1 Rashi Chakra)</div>
+            <div class="right">Page 3 of 10 • Janma Lagna Kundali (D-1 Rashi Chakra)</div>
         </div>
 
-        <div class="section-title">जन्म लग्न चक्र (D-1 Janma Lagna Chart)</div>
-        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0; text-align: center;">लग्न भाव आत्मा के भौतिक प्रकटीकरण, जीवन ऊर्जा, स्वास्थ्य एवं मूल भाग्य का मुख्य केंद्र है:</p>
+        <div class="section-title">Janma Lagna Kundali Chakra (D-1 Ascendant Chart)</div>
+        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0; text-align: center;">The 1st House (Lagna) represents physical vitality, personality, self-expression, and general fortune:</p>
 
         <div style="text-align: center; margin: 6px 0;">
             {!! $svgD1 !!}
         </div>
 
-        <div class="section-title">द्वादश भाव एवं ग्रह स्थिति विवरण (House Distribution Summary)</div>
+        <div class="section-title">House Planetary Distribution Summary</div>
         <table>
             <thead>
                 <tr>
-                    <th width="15%">भाव (House)</th>
-                    <th width="30%">राशि (Rashi in House)</th>
-                    <th width="25%">स्थित ग्रह (Occupying Planets)</th>
-                    <th width="30%">भाव फल प्रभाव (Core Astrological Impact)</th>
+                    <th width="15%">House</th>
+                    <th width="25%">Sign in House</th>
+                    <th width="25%">Occupying Planets</th>
+                    <th width="35%">Primary Astrological Significance</th>
                 </tr>
             </thead>
             <tbody>
@@ -348,80 +343,80 @@
                     }
                 @endphp
                 <tr>
-                    <td><strong>भाव {{ $h }}</strong></td>
-                    <td>राशि {{ $hSign }}</td>
-                    <td><strong style="color: #B91C1C;">{{ !empty($occupants) ? implode(', ', $occupants) : 'शुभ रिक्त (Shubha)' }}</strong></td>
-                    <td>{{ $h == 1 ? 'व्यक्तित्व, आरोग्य व मान-प्रतिष्ठा' : ($h == 2 ? 'धन संचय, वाणी व कुटुम्ब सुख' : ($h == 3 ? 'पराक्रम, भ्रातृ सुख व पुरुषार्थ' : ($h == 4 ? 'माता, भूमि, वाहन व गृह सौख्य' : ($h == 5 ? 'विद्या, बुद्धि, संतान व पूर्व पुण्य' : 'रोग, ऋण, शत्रु पर विजय')))) }}</td>
+                    <td><strong>House {{ $h }}</strong></td>
+                    <td>Sign {{ $hSign }}</td>
+                    <td><strong style="color: #B91C1C;">{{ !empty($occupants) ? implode(', ', $occupants) : 'Auspicious Empty (Shubha)' }}</strong></td>
+                    <td>{{ $h == 1 ? 'Self, Vitality & Physical Personality' : ($h == 2 ? 'Accumulated Wealth, Speech & Family' : ($h == 3 ? 'Courage, Siblings & Initiatives' : ($h == 4 ? 'Mother, Property, Vehicles & Domestic Peace' : ($h == 5 ? 'Intellect, Past Merits & Children' : 'Overcoming Debts, Health & Competitive Prowess')))) }}</td>
                 </tr>
                 @endfor
             </tbody>
         </table>
 
-        <div class="footer">पृष्ठ ३ / १० • OnlinePuja.live • प्रमाणित वैदिक कुण्डली प्रणाली</div>
+        <div class="footer">Page 3 of 10 • OnlinePuja.live • Certified Vedic Horoscope System</div>
     </div>
 
-    <!-- ================= PAGE 4: NAVAMSHA (D-9) & CHANDRA KUNDALI ================= -->
+    <!-- ================= PAGE 4: NAVAMSHA (D-9) & DHARMA CHAKRA ================= -->
     <div class="page">
         <div class="page-header-strip">
             <div class="left">OnlinePuja.live • {{ $name }}</div>
-            <div class="right">पृष्ठ ४ / १० • नवमांश चक्र (D-9) एवं चन्द्र कुण्डली</div>
+            <div class="right">Page 4 of 10 • Navamsha Kundali (D-9 Dharma Chakra)</div>
         </div>
 
-        <div class="section-title">नवमांश कुण्डली (D-9 Navamsha Chakra — धर्म व भाग्योदय चक्र)</div>
-        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">महर्षि पराशर के अनुसार लग्न कुण्डली शरीर है तो नवमांश उसकी आत्मा है। यह वैवाहिक सौख्य एवं ३० वर्ष की आयु के उपरांत भाग्योदय का सूचक है:</p>
+        <div class="section-title">Navamsha Kundali (D-9 Dharma & Fortune Chakra)</div>
+        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">In Parashari astrology, if the D-1 chart is the seed, the D-9 Navamsha chart is the blooming fruit. It reveals spiritual destiny, marital bliss, and post-30 fortunes:</p>
 
         <div style="text-align: center; margin: 6px 0;">
             {!! $svgD9 !!}
         </div>
 
-        <div class="section-title">नवमांश फल एवं भाग्योदय विश्लेषण</div>
+        <div class="section-title">Navamsha Predictions & Spiritual Fortunes</div>
         <div class="house-block">
-            <div class="house-title">★ दाम्पत्य जीवन एवं जीवनसाथी का स्वरूप (Marital Harmony & Spouse Nature)</div>
-            <div class="house-text">नवमांश चक्र में ग्रहों की स्थिति यह संकेत करती है कि जातक को सुसंस्कृत, धर्मनिष्ठ एवं विचारशील जीवनसाथी प्राप्त होगा। परस्पर सम्मान व आध्यात्मिक तालमेल से गृहस्थ जीवन में सुख-समृद्धि बनी रहेगी।</div>
+            <div class="house-title">Marital Harmony & Spouse Characteristics</div>
+            <div class="house-text">Planetary placements in the Navamsha chart indicate a cultured, supportive, and spiritually inclined life companion. Mutual respect, shared ethical values, and mutual support will bring lasting contentment to domestic life.</div>
         </div>
         <div class="house-block">
-            <div class="house-title">★ भाग्योदय काल एवं आध्यात्मिक प्रगति (Spiritual & Financial Elevation)</div>
-            <div class="house-text">३० वर्ष की आयु के पश्चात भाग्य में अप्रत्याशित प्रगति होगी। नवमांश में ग्रहों का शुभ प्रभाव जातक को समाज में स्थायी आदर, व्यापारिक उन्नति एवं तीर्थाटन का शुभ अवसर प्रदान करता है।</div>
+            <div class="house-title">Post-30 Fortune Elevation & Spiritual Trajectory</div>
+            <div class="house-text">After reaching 30 years of age, your innate spiritual strengths and professional breakthroughs will accelerate rapidly. Strong planetary harmonics in the 9th division bestow lasting public goodwill, commercial prosperity, and sacred pilgrimage opportunities.</div>
         </div>
 
-        <div class="footer">पृष्ठ ४ / १० • OnlinePuja.live • प्रमाणित वैदिक कुण्डली प्रणाली</div>
+        <div class="footer">Page 4 of 10 • OnlinePuja.live • Certified Vedic Horoscope System</div>
     </div>
 
     <!-- ================= PAGE 5: GRAHA SPASHTA (PLANETARY DEGREES) ================= -->
     <div class="page">
         <div class="page-header-strip">
             <div class="left">OnlinePuja.live • {{ $name }}</div>
-            <div class="right">पृष्ठ ५ / १० • ग्रह स्पष्ट एवं खगोलीय स्थिति</div>
+            <div class="right">Page 5 of 10 • Planetary Longitudes & Dignities</div>
         </div>
 
-        <div class="section-title">ग्रह स्पष्ट सारणी (Planetary Longitudes & Astrological Dignities)</div>
-        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">जन्म समय पर नवग्रहों की निरयण भोगांश डिग्री, राशि, भाव एवं नक्षत्र स्थिति:</p>
+        <div class="section-title">Graha Spashta Table (Planetary Coordinates & Dignities)</div>
+        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">Astronomical Nirayana Sidereal Longitudes, House Placements, Nakshatras, and Astrological States at the time of birth:</p>
 
         <table>
             <thead>
                 <tr>
-                    <th>ग्रह (Planet)</th>
-                    <th>भोगांश (Degree)</th>
-                    <th>राशि (Zodiac Sign)</th>
-                    <th>भाव (House)</th>
-                    <th>नक्षत्र व चरण (Nakshatra)</th>
-                    <th>अवस्था व बल (State/Dignity)</th>
+                    <th>Planet (Graha)</th>
+                    <th>Degree</th>
+                    <th>Zodiac Sign</th>
+                    <th>House</th>
+                    <th>Nakshatra (Pada)</th>
+                    <th>Dignity / State</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($planets as $pName => $p)
                 <tr>
                     <td><strong>{{ $pName }}</strong></td>
-                    <td>{{ $p['degree'] }}°</td>
+                    <td>{{ $p['degree'] }} deg</td>
                     <td>{{ $p['sign'] }}</td>
-                    <td>भाव {{ $p['house'] }}</td>
-                    <td>{{ $p['nakshatra'] }} (च-{{ $p['pada'] }})</td>
+                    <td>House {{ $p['house'] }}</td>
+                    <td>{{ $p['nakshatra'] }} (P-{{ $p['pada'] }})</td>
                     <td>
                         @if($p['isRetrograde'])
-                            <span class="badge badge-amber">वक्री (Vakri)</span>
-                        @elseif(str_contains($p['dignity'], 'उच्च'))
+                            <span class="badge badge-amber">Retrograde (Vakri)</span>
+                        @elseif(str_contains($p['dignity'], 'Exalted'))
                             <span class="badge badge-green">{{ $p['dignity'] }}</span>
-                        @elseif(str_contains($p['dignity'], 'नीच'))
+                        @elseif(str_contains($p['dignity'], 'Debilitated'))
                             <span class="badge badge-red">{{ $p['dignity'] }}</span>
                         @else
                             <span class="badge badge-blue">{{ $p['dignity'] }}</span>
@@ -432,32 +427,32 @@
             </tbody>
         </table>
 
-        <div class="section-title">ग्रह शक्ति एवं दृष्टि विचार (Planetary Strength & Aspects)</div>
+        <div class="section-title">Key Planetary Functional Roles</div>
         <div class="house-block">
-            <div class="house-title">सूर्य (Sun) — आत्मकारक व प्रतिष्ठा प्रदाता</div>
-            <div class="house-text">सूर्य देव का प्रभाव नेतृत्व शक्ति, पिता से सहयोग एवं आत्म-सम्मान में वृद्धि करता है। सरकारी कार्यों एवं प्रबंधन में सफलता प्राप्त होती है।</div>
+            <div class="house-title">Sun (Surya) — Soul Karaka & Natural Authority</div>
+            <div class="house-text">Governs self-confidence, administrative competence, and fatherly support. Provides energy to undertake high-responsibility roles and gain honorable recognition.</div>
         </div>
         <div class="house-block">
-            <div class="house-title">गुरु (Jupiter) — ज्ञान, विवेक व भाग्य कारक</div>
-            <div class="house-text">देवगुरु बृहस्पति की दृष्टि धर्म भाव व ज्ञान भाव को पोषित कर रही है। यह जातक को सत्संगति, उच्च शिक्षा एवं अध्यात्म में रुचि प्रदान करती है।</div>
+            <div class="house-title">Jupiter (Guru) — Wisdom, Higher Counsel & Grace</div>
+            <div class="house-text">The great benefic casts protective rays over your key houses. Encourages higher philosophical learning, righteous conduct, and divine guidance during difficult periods.</div>
         </div>
         <div class="house-block">
-            <div class="house-title">शनि (Saturn) — न्याय, धैर्य व कर्म प्रदाता</div>
-            <div class="house-text">कर्मफलदाता शनि देव जातक को अनुशासन, श्रमनिष्ठा एवं दीर्घकालिक सफलता का वरदान देते हैं। कठिनाइयों के पश्चात भी स्थायी विजय प्राप्त होती है।</div>
+            <div class="house-title">Saturn (Shani) — Karmic Duty, Discipline & Endurance</div>
+            <div class="house-text">Fosters patient endurance, organizational diligence, and long-term stability. Rewards honest labor with enduring achievements that withstand the test of time.</div>
         </div>
 
-        <div class="footer">पृष्ठ ५ / १० • OnlinePuja.live • प्रमाणित वैदिक कुण्डली प्रणाली</div>
+        <div class="footer">Page 5 of 10 • OnlinePuja.live • Certified Vedic Horoscope System</div>
     </div>
 
     <!-- ================= PAGE 6: 12-BHAV PREDICTIONS ================= -->
     <div class="page">
         <div class="page-header-strip">
             <div class="left">OnlinePuja.live • {{ $name }}</div>
-            <div class="right">पृष्ठ ६ / १० • द्वादश भाव विस्तृत जीवन फल</div>
+            <div class="right">Page 6 of 10 • 12-Bhava Comprehensive Life Forecast</div>
         </div>
 
-        <div class="section-title">द्वादश भाव विस्तृत जीवन फल (12 Houses Comprehensive Forecast)</div>
-        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">वैदिक ज्योतिष के अनुसार कुण्डली के १२ भाव जातक के सम्पूर्ण जीवन आयामों का प्रतिनिधित्व करते हैं:</p>
+        <div class="section-title">12-Bhava Comprehensive Life Predictions</div>
+        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">Detailed Vedic forecast for every domain of human experience according to classical Parashari principles:</p>
 
         @foreach($housePredictions as $hNum => $hp)
         <div class="house-block" style="margin-bottom: 5px; padding: 4px 6px;">
@@ -466,43 +461,43 @@
         </div>
         @endforeach
 
-        <div class="footer">पृष्ठ ६ / १० • OnlinePuja.live • प्रमाणित वैदिक कुण्डली प्रणाली</div>
+        <div class="footer">Page 6 of 10 • OnlinePuja.live • Certified Vedic Horoscope System</div>
     </div>
 
     <!-- ================= PAGE 7: VIMSHOTTARI MAHADASHA ================= -->
     <div class="page">
         <div class="page-header-strip">
             <div class="left">OnlinePuja.live • {{ $name }}</div>
-            <div class="right">पृष्ठ ७ / १० • विंशोत्तरी महादशा चक्र</div>
+            <div class="right">Page 7 of 10 • Vimshottari Mahadasha Timeline</div>
         </div>
 
-        <div class="section-title">विंशोत्तरी महादशा काल चक्र (120-Year Parashari Cycle)</div>
-        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">चन्द्रमा के जन्म नक्षत्र भोगांश से आरम्भ होकर १२० वर्षों की पूर्ण विंशोत्तरी दशा का कालानुक्रम:</p>
+        <div class="section-title">Vimshottari Mahadasha Timeline (120-Year Parashari Cycle)</div>
+        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">Calculated from the exact natal Moon longitude and Nakshatra balance spanning the full 120-year Parashari cycle:</p>
 
         <table>
             <thead>
                 <tr>
-                    <th>महादशा स्वामी</th>
-                    <th>अवधि (Duration)</th>
-                    <th>प्रारम्भ तिथि (Start Date)</th>
-                    <th>समाप्ति तिथि (End Date)</th>
-                    <th>स्थिति (Current Status)</th>
+                    <th>Mahadasha Lord</th>
+                    <th>Duration</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($dashas as $d)
                 <tr @if($d['isCurrent']) style="background-color: #FEF3C7; font-weight: bold;" @endif>
-                    <td><strong>{{ $d['lord'] }} महादशा</strong></td>
+                    <td><strong>{{ $d['lord'] }} Mahadasha</strong></td>
                     <td>{{ $d['duration'] }}</td>
                     <td>{{ $d['start'] }}</td>
                     <td>{{ $d['end'] }}</td>
                     <td>
                         @if($d['isCurrent'])
-                            <span class="badge badge-green">★ वर्तमान में सक्रिय (Active Now)</span>
+                            <span class="badge badge-green">★ ACTIVE NOW</span>
                         @elseif(strtotime($d['end']) < time())
-                            <span class="badge badge-amber">व्यतीत (Completed)</span>
+                            <span class="badge badge-amber">Completed</span>
                         @else
-                            <span class="badge badge-blue">आगामी (Upcoming)</span>
+                            <span class="badge badge-blue">Upcoming</span>
                         @endif
                     </td>
                 </tr>
@@ -510,180 +505,179 @@
             </tbody>
         </table>
 
-        <div class="section-title">वर्तमान महादशा फल विश्लेषण (Current Active Dasha Forecast: {{ $activeDasha }})</div>
+        <div class="section-title">Current Running Mahadasha Forecast: {{ $activeDasha }} Period</div>
         <div class="house-block">
-            <div class="house-title">★ वर्तमान कालखंड का मुख्य प्रभाव एवं दिशा</div>
-            <div class="house-text">वर्तमान में जातक पर <strong>{{ $activeDasha }}</strong> की महादशा का प्रभाव चल रहा है। यह कालखंड जीवन में महत्वपूर्ण परिवर्तन, कार्यक्षेत्र में नए अवसर एवं आध्यात्मिक उत्थान की दिशा तय करेगा। इस अवधि में एकाग्रता बनाए रखना तथा अपने इष्ट देव की नित्य आराधना करना सर्वोत्तम फल प्रदान करेगा।</div>
+            <div class="house-title">Key Trends & Opportunities in the Current Era</div>
+            <div class="house-text">You are currently navigating the planetary cycle of <strong>{{ $activeDasha }}</strong>. This phase brings pivotal shifts in your career trajectory, fresh financial avenues, and heightened spiritual awareness. Focusing on steadfast discipline and honoring daily spiritual commitments will yield maximum prosperity during this time.</div>
         </div>
 
-        <div class="footer">पृष्ठ ७ / १० • OnlinePuja.live • प्रमाणित वैदिक कुण्डली प्रणाली</div>
+        <div class="footer">Page 7 of 10 • OnlinePuja.live • Certified Vedic Horoscope System</div>
     </div>
 
     <!-- ================= PAGE 8: DOSHA NIRNAYA ================= -->
     <div class="page">
         <div class="page-header-strip">
             <div class="left">OnlinePuja.live • {{ $name }}</div>
-            <div class="right">पृष्ठ ८ / १० • दोष निर्णय एवं शान्ति विधान</div>
+            <div class="right">Page 8 of 10 • Dosha Nirnaya & Astrological Audits</div>
         </div>
 
-        <div class="section-title">प्रमुख वैदिक दोष निर्णय (Dosha Nirnaya & Astrological Audits)</div>
-        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">विवाह, स्वास्थ्य, संतान एवं करियर में विघ्न उत्पन्न करने वाले प्रमुख दोषों का शास्त्रीय परीक्षण:</p>
+        <div class="section-title">Major Vedic Dosha Nirnaya (Astrological Audits)</div>
+        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">Classical examination of planetary combinations affecting marriage, health, longevity, and professional growth:</p>
 
         <table>
             <tr>
-                <th width="28%">मांगलिक दोष (Mangal Dosha)</th>
+                <th width="28%">Manglik Dosha (Kuja Dosha)</th>
                 <td width="72%">
                     @if($doshas['manglik']['hasDosha'])
-                        <span class="badge badge-red">मांगलिक दोष विद्यमान (भाव {{ $doshas['manglik']['house'] }})</span>
-                        <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">मंगल देव कुण्डली के {{ $doshas['manglik']['house'] }}वें भाव में स्थित हैं। वैवाहिक सौख्य हेतु कुम्भ विवाह अथवा मंगल शान्ति भात पूजा करवाना श्रेयस्कर है।</div>
+                        <span class="badge badge-red">Manglik Dosha Present in House {{ $doshas['manglik']['house'] }}</span>
+                        <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">Mars is positioned in House {{ $doshas['manglik']['house'] }}. Performing Mangal Shanti Puja or Kumbh Vivah before sacred matrimony neutralizes all marital hurdles.</div>
                     @else
-                        <span class="badge badge-green">मांगलिक दोष मुक्त (No Kuja Dosha)</span>
-                        <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">कुण्डली मांगलिक दोष से सर्वथा मुक्त है। वैवाहिक जीवन निर्विघ्न एवं कल्याणकारी रहेगा।</div>
+                        <span class="badge badge-green">No Manglik Dosha (Kuja Dosha Mukta)</span>
+                        <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">Your chart is completely free from Kuja Dosha. Marital life is naturally blessed with auspicious compatibility.</div>
                     @endif
                 </td>
             </tr>
             <tr>
-                <th>कालसर्प योग (Kaal Sarp Yoga)</th>
+                <th>Kaal Sarp Yoga Assessment</th>
                 <td>
                     @if($doshas['kaalsarp']['hasDosha'])
                         <span class="badge badge-amber">{{ $doshas['kaalsarp']['status'] }}</span>
-                        <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">राहु एवं केतु की विशेष धुरी के कारण कार्यक्षेत्र में कभी-कभी विलम्ब की स्थिति बन सकती है। त्र्यम्बकेश्वर अथवा काशी में नागबलि / रुद्राभिषेक से शान्ति होती है।</div>
+                        <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">Planets hemmed along the Rahu-Ketu axis may cause occasional delays in career recognition. Rahu-Ketu Shanti at Trimbakeshwar or Kashi Vishwanath dissolves impediments.</div>
                     @else
-                        <span class="badge badge-green">कालसर्प योग मुक्त (Free from Kaal Sarp)</span>
-                        <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">सभी ग्रह राहु-केतु की परिधि से मुक्त हैं। कार्यों में अवरोध का कोई खगोलीय योग नहीं है।</div>
+                        <span class="badge badge-green">Free from Kaal Sarp Yoga</span>
+                        <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">Planetary positions are free from nodal entrapment. Initiatives progress steadily without karmic roadblocks.</div>
                     @endif
                 </td>
             </tr>
             <tr>
-                <th>शनि साढ़े साती एवं ढैय्या</th>
+                <th>Shani Sade Sati & Dhaiya Status</th>
                 <td>
                     <span class="badge badge-blue">{{ $doshas['sadeSati'] }}</span>
-                    <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">शनि देव कर्मानुसार फल प्रदाता हैं। नित्य दशरथकृत शनि स्तोत्र अथवा हनुमान चालीसा का पाठ रक्षा कवच का कार्य करता है।</div>
+                    <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">Saturn rewards integrity and ethical conduct. Chanting the Dasharatha Shani Stotram or Hanuman Chalisa serves as an impregnable shield.</div>
                 </td>
             </tr>
             <tr>
-                <th>पितृ दोष विचार</th>
+                <th>Pitru Dosha Audit</th>
                 <td>
-                    <span class="badge badge-green">शुभ स्थिति (No Severe Affliction)</span>
-                    <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">सूर्य एवं नवम भाव पर कोई क्रूर पाप प्रभाव नहीं है। अमावस्या पर पूर्वजों के निमित्त दीपदान एवं जल तर्पण शुभ रहेगा।</div>
+                    <span class="badge badge-green">Favorable Heritage (No Severe Afflictions)</span>
+                    <div style="font-size: 9px; color: #4B5563; margin-top: 3px;">Sun and the 9th House are clear of malefic affliction. Offering tarpan and deepdaan on Amavasya days reinforces ancestral blessings.</div>
                 </td>
             </tr>
         </table>
 
-        <div class="section-title">दोष शान्ति हेतु विशिष्ट वैदिक उपाय</div>
+        <div class="section-title">Recommended Sacred Temple Remedies</div>
         <div class="house-block">
-            <div class="house-title">१. काशी विश्वनाथ महा रुद्राभिषेक पूजा</div>
-            <div class="house-text">द्वादश ज्योतिर्लिंगों में प्रधान श्री काशी विश्वनाथ धाम में अपने नाम व गोत्र से रुद्राभिषेक करवाने से सभी नवग्रह दोष एवं कालसर्प बाधाएं स्वतः शांत हो जाती हैं।</div>
+            <div class="house-title">1. Kashi Vishwanath Maha Rudrabhishek Puja</div>
+            <div class="house-text">Performed in the name and Gotra of the devotee at the supreme Jyotirlinga of Lord Shiva in Kashi. Dissolves malefic planetary transits, pacifies past karmic debts, and grants profound peace of mind.</div>
         </div>
         <div class="house-block">
-            <div class="house-title">२. महामृत्युंजय अनुष्ठान एवं जप</div>
-            <div class="house-text">अकाल मृत्यु भय, असाध्य रोग निवारण तथा जीवन में आध्यात्मिक रक्षा कवच हेतु महामृत्युंजय मंत्र का नित्य ११ अथवा २१ बार जप करें।</div>
+            <div class="house-title">2. Maha Mrityunjaya Japa Anushthan</div>
+            <div class="house-text">Provides divine protection against chronic health afflictions and unexpected hazards. Bestows longevity, vitality, and spiritual fortitude.</div>
         </div>
 
-        <div class="footer">पृष्ठ ८ / १० • OnlinePuja.live • प्रमाणित वैदिक कुण्डली प्रणाली</div>
+        <div class="footer">Page 8 of 10 • OnlinePuja.live • Certified Vedic Horoscope System</div>
     </div>
 
     <!-- ================= PAGE 9: LUCKY ELEMENTS & GEMS ================= -->
     <div class="page">
         <div class="page-header-strip">
             <div class="left">OnlinePuja.live • {{ $name }}</div>
-            <div class="right">पृष्ठ ९ / १० • शुभ तत्व, रत्न एवं रुद्राक्ष विचार</div>
+            <div class="right">Page 9 of 10 • Auspicious Elements & Gemstones</div>
         </div>
 
-        <div class="section-title">जातक के शुभ एवं भाग्यशाली तत्व (Auspicious Cosmic Elements)</div>
-        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">लग्न एवं राशि के आधार पर निर्धारित अनुकूल ब्रह्मांडीय तरंगें एवं सहायक तत्व:</p>
+        <div class="section-title">Auspicious Cosmic Elements & Recommendations</div>
+        <p style="font-size: 9.5px; color: #4B5563; margin-top: 0;">Cosmic frequencies, gemstones, and numbers harmonized with your Ascendant and Moon sign:</p>
 
         <table>
             <tr>
-                <th width="30%">भाग्यशाली रत्न (Lucky Gemstone)</th>
+                <th width="30%">Auspicious Gemstone (Ratna)</th>
                 <td width="70%"><strong style="color: #92400E;">{{ $lucky['gemstone'] }}</strong></td>
             </tr>
             <tr>
-                <th>धारण करने की धातु (Metal)</th>
+                <th>Wearing Metal</th>
                 <td>{{ $lucky['metal'] }}</td>
             </tr>
             <tr>
-                <th>धारण करने की अंगुली (Finger)</th>
+                <th>Wearing Finger</th>
                 <td>{{ $lucky['finger'] }}</td>
             </tr>
             <tr>
-                <th>अनुकूल रुद्राक्ष (Sacred Rudraksha)</th>
+                <th>Sacred Rudraksha</th>
                 <td><strong>{{ $lucky['rudraksha'] }}</strong></td>
             </tr>
             <tr>
-                <th>भाग्यशाली अंक (Lucky Numbers)</th>
+                <th>Lucky Numbers</th>
                 <td><strong>{{ $lucky['numbers'] }}</strong></td>
             </tr>
             <tr>
-                <th>अनुकूल रंग (Favorable Colors)</th>
+                <th>Favorable Colors</th>
                 <td>{{ $lucky['colors'] }}</td>
             </tr>
             <tr>
-                <th>शुभ वार (Auspicious Days)</th>
+                <th>Auspicious Days</th>
                 <td>{{ $lucky['days'] }}</td>
             </tr>
             <tr>
-                <th>इष्ट देवता (Ishta Devta)</th>
+                <th>Ishta Devta</th>
                 <td><strong style="color: #B91C1C;">{{ $lucky['ishtaDevta'] }}</strong></td>
             </tr>
         </table>
 
-        <div class="section-title">रत्न धारण एवं रुद्राक्ष विधि</div>
+        <div class="section-title">Gemstone & Rudraksha Sanctification Guidance</div>
         <div class="house-block">
-            <div class="house-title">★ रत्न धारण नियम एवं सावधानी</div>
-            <div class="house-text">रत्न सदैव अभिमंत्रित एवं प्राण-प्रतिष्ठित करवाकर ही शुक्ल पक्ष के शुभ मुहूर्त में धारण करना चाहिए। रत्न को धारण करने से पूर्व कच्चे दूध व गंगाजल से स्नान कराएं।</div>
+            <div class="house-title">Gemstone Sanctification (Prana Pratishtha)</div>
+            <div class="house-text">Gemstones should be naturally sourced, unheated, and ritually energized on an auspicious Shukla Paksha morning. Purify with raw milk and holy Ganga water before slipping onto the designated finger.</div>
         </div>
         <div class="house-block">
-            <div class="house-title">★ रुद्राक्ष महिमा एवं धारण संस्कार</div>
-            <div class="house-text"><strong>{{ $lucky['rudraksha'] }}</strong> साक्षात् शिव स्वरूप है। इसे लाल या पीले रेशमी धागे में गूंथकर सोमवार के दिन <em>'ॐ नमः शिवाय'</em> मंत्र का १०८ बार जप कर कंठ में धारण करें।</div>
+            <div class="house-title">Sacred Rudraksha Wearing Ceremony</div>
+            <div class="house-text">The <strong>{{ $lucky['rudraksha'] }}</strong> is an embodiment of Lord Shiva's divine grace. Thread in pure silk and chant <em>'Om Namah Shivaya'</em> 108 times before wearing around the neck on a sacred Monday.</div>
         </div>
 
-        <div class="footer">पृष्ठ ९ / १० • OnlinePuja.live • प्रमाणित वैदिक कुण्डली प्रणाली</div>
+        <div class="footer">Page 9 of 10 • OnlinePuja.live • Certified Vedic Horoscope System</div>
     </div>
 
     <!-- ================= PAGE 10: REMEDIES & TEMPLE BLESSING ================= -->
     <div class="page">
         <div class="page-header-strip">
             <div class="left">OnlinePuja.live • {{ $name }}</div>
-            <div class="right">पृष्ठ १० / १० • वैदिक अचूक उपाय एवं काशी आशीर्वाद</div>
+            <div class="right">Page 10 of 10 • Vedic Remedies & Kashi Blessing</div>
         </div>
 
-        <div class="section-title">नित्य साधना एवं दैनिक महामंत्र (Daily Spiritual Sadhana)</div>
+        <div class="section-title">Daily Spiritual Sadhana & Mahamantras</div>
         <div class="house-block">
-            <div class="house-title">१. दैनिक इष्ट महामंत्र जप</div>
+            <div class="house-title">1. Daily Ishta Mahamantra Chanting</div>
             <div class="house-text">
-                <em>॥ ॐ नमः शिवाय शुभं शुभं कुरू कुरू शिवाय नमः ॐ ॥</em><br>
-                प्रातः स्नान के उपरांत पूर्व दिशा की ओर मुख कर रुद्राक्ष माला से कम से कम १ माला (१०८ जप) नित्य करें।
+                <em>OM NAMAH SHIVAYA SHUBHAM SHUBHAM KURU KURU SHIVAYA NAMAH OM</em><br>
+                Chant 108 times using a Rudraksha mala every morning facing East following a fresh bath.
             </div>
         </div>
         <div class="house-block">
-            <div class="house-title">२. सूर्य अर्घ्य एवं गायत्री मंत्र</div>
+            <div class="house-title">2. Surya Arghya & Gayatri Mantra</div>
             <div class="house-text">
-                नित्य प्रातः तांबे के लोटे में शुद्ध जल, रोली, अक्षत एवं लाल पुष्प डालकर <em>'ॐ सूर्याय नमः'</em> बोलते हुए भगवान भुवन भास्कर को अर्घ्य प्रदान करें।
+                Offer clean water from a copper vessel with vermilion (roli), whole rice (akshat), and red flowers to the rising Sun while reciting <em>'Om Suryaya Namaha'</em> for radiant vitality.
             </div>
         </div>
 
-        <div class="section-title">पावन श्री काशी विश्वनाथ तीर्थ संकल्प एवं सेवा</div>
+        <div class="section-title">Sacred Kashi Vishwanath Sanctuary Blessing</div>
         <div class="cover-box" style="margin-top: 8px; padding: 15px 12px; background: #FFFBEB;">
-            <div style="font-size: 24px; color: #D97706;">🛕 🔱 🚩</div>
-            <h3 style="color: #92400E; margin: 4px 0;">श्री काशी विश्वनाथ धाम, वाराणसी</h3>
+            <h3 style="color: #92400E; margin: 4px 0;">Shree Kashi Vishwanath Sanctuary, Varanasi</h3>
             <p style="font-size: 10px; color: #78350F; margin: 2px 0 10px 0;">Certified Vedic Devotional Services • Direct Temple Pujas by Verified Kashi Pandits</p>
 
             <p style="font-size: 9.5px; color: #374151; line-height: 1.4; text-align: left;">
-                अपने एवं अपने परिवार के कल्याण, ग्रह शान्ति, स्वास्थ्य, दीर्घायु एवं व्यापारिक समृद्धि हेतु श्री काशी विश्वनाथ धाम व दशाश्वमेध घाट पर अपने <strong>नाम व गोत्र संकल्प</strong> से प्रामाणिक पूजा बुक करें:
+                For the overall welfare, planetary harmony, health, longevity, and professional elevation of you and your family, book authentic temple pujas with your personal <strong>Name and Gotra Sankalp</strong> performed live from Kashi Vishwanath Dham:
             </p>
             <div style="text-align: center; margin: 10px 0;">
                 <div style="display: inline-block; background: #D97706; color: #FFFFFF; font-weight: bold; padding: 8px 18px; border-radius: 6px; font-size: 11px;">
-                    👉 https://onlinepuja.live/pujas
+                    https://onlinepuja.live/pujas
                 </div>
             </div>
             <p style="font-size: 9px; color: #6B7280; margin-top: 6px;">
-                व्हाट्सएप सेवा केंद्र: +91 70071 58014 • सहायता ईमेल: support@onlinepuja.live<br>
-                एंड्रॉइड ऐप डाउनलोड करें: <strong>OnlinePuja Devotee App</strong> (Google Play Store)
+                WhatsApp Helpline: +91 70071 58014 • Support Email: support@onlinepuja.live<br>
+                Download Devotee App: <strong>OnlinePuja Devotee App</strong> (Google Play Store)
             </p>
         </div>
 
-        <div class="footer">पृष्ठ १० / १० • OnlinePuja.live • प्रमाणित वैदिक कुण्डली प्रणाली • सर्वे भवन्तु सुखिनः</div>
+        <div class="footer">Page 10 of 10 • OnlinePuja.live • Certified Vedic Horoscope System • Sarve Bhavantu Sukhinah</div>
     </div>
 
 </body>
