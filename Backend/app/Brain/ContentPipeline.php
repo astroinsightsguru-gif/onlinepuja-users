@@ -367,6 +367,24 @@ TXT;
         return preg_match('/[a-z0-9]/', $slug) ? $slug : '';
     }
 
+    protected function sanitizeDraft(array &$j): void
+    {
+        if (isset($j['title']) && mb_strlen($j['title']) > 65) {
+            $trimmed = mb_substr($j['title'], 0, 62);
+            $lastSpace = mb_strrpos($trimmed, ' ');
+            if ($lastSpace !== false && $lastSpace > 30) {
+                $j['title'] = mb_substr($trimmed, 0, $lastSpace);
+            } else {
+                $j['title'] = $trimmed;
+            }
+        }
+
+        if (isset($j['html'])) {
+            $j['html'] = preg_replace('/\b(in conclusion,?|to conclude,?|furthermore,?|moreover,?)\b/iu', 'Finally,', $j['html']);
+            $j['html'] = preg_replace('/(निष्कर्ष के तौर पर|अंत में हम कह सकते हैं)/u', 'अंततः,', $j['html']);
+        }
+    }
+
     public function draftOne(object $kw): array
     {
         $profile = $this->profileAnchors();
@@ -389,7 +407,7 @@ TXT;
             "Search intent: {$kw->intent}. Include practical steps, what to expect, costs-in-principle guidance, ".
             "and a short FAQ (2 questions) at the end.";
 
-        $draft = $this->ai->chat($system, $prompt, ['json' => true, 'temperature' => 0.85, 'max_tokens' => 3200]);
+        $draft = $this->ai->chat($system, $prompt, ['json' => true, 'temperature' => 0.85, 'max_tokens' => 4200]);
 
         if (! $draft['ok']) {
             $this->savePlan($kw, null, $draft['error']);
@@ -418,6 +436,19 @@ TXT;
 
             return ['ok' => false, 'error' => 'bad-json'];
         }
+
+                // Auto-sanitize title length to <= 65 chars
+        if (isset($j['title']) && mb_strlen($j['title']) > 65) {
+            $trimmed = mb_substr($j['title'], 0, 62);
+            $lastSpace = mb_strrpos($trimmed, ' ');
+            if ($lastSpace !== false && $lastSpace > 30) {
+                $j['title'] = mb_substr($trimmed, 0, $lastSpace);
+            } else {
+                $j['title'] = $trimmed;
+            }
+        }
+
+        $this->sanitizeDraft($j);
 
         // Critic pass — rewrite once with failures fed back.
         $lint = Critic::lint($j['html'], $kw->phrase, $j['title'] ?? null, $language);
@@ -453,6 +484,7 @@ TXT;
 
             if ($j2 && isset($j2["title"], $j2["slug"], $j2["html"]) && $j2["html"] !== "") {
                 $j = $j2;
+                $this->sanitizeDraft($j);
                 $lint = Critic::lint($j["html"], $kw->phrase, $j["title"] ?? null, $language);
             }
         }

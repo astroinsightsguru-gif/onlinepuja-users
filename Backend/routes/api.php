@@ -649,6 +649,9 @@ Route::prefix('manager')->group(function () {
     Route::post('social/{id}/publish', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'publishSocialNow']);
     Route::post('social/generate-reel', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generateSocialReel']);
     Route::post('social/generate-poster', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generateSocialPoster']);
+    Route::post('social/broadcast-reel', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generateSocialReel']);
+    Route::post('social/synthesize-master-video', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'synthesizeMasterVideo']);
+    Route::get('social/channels/{id}/test', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'testSocialChannel']);
 
     // ðŸ›• Master Bookings & Revenue Ledger
     Route::get('bookings', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getAllBookings']);

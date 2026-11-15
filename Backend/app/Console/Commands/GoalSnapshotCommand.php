@@ -21,17 +21,22 @@ class GoalSnapshotCommand extends Command
         $value = null;
         $source = 'first-party';
 
-        if ($gsc->isConfigured()) {
-            $clicks = $gsc->clicksForDate($date);
+        // Always prioritize real first-party pageviews from traffic_daily
+        $dailyPageviews = TrafficTracker::take($date);
 
-            if ($clicks !== null) {
+        if ($dailyPageviews > 0) {
+            $value = $dailyPageviews;
+            $source = 'traffic_daily (first-party pageviews)';
+        } elseif ($gsc->isConfigured()) {
+            $clicks = $gsc->clicksForDate($date);
+            if ($clicks !== null && $clicks > 0) {
                 $value = $clicks;
                 $source = 'search-console';
             }
         }
 
         if ($value === null) {
-            $value = TrafficTracker::take($date);
+            $value = 0;
         }
 
         $this->line("Traffic source: {$source}");

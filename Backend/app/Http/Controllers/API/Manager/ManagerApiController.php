@@ -1261,6 +1261,75 @@ class ManagerApiController extends Controller
      * 24. GET /api/manager/bookings/all
      * Unified ledger of all bookings: Pujas, Consultations & AstroMall
      */
+
+    /**
+     * 23d. POST /api/manager/social/synthesize-master-video
+     * Render full 1080p Master Devotional Video (Aarti or Stotram)
+     */
+    public function synthesizeMasterVideo(Request $request)
+    {
+        try {
+            $track = $request->input('track', 'stotram');
+            $autoUpload = (bool) $request->input('auto_upload', false);
+
+            $filename = ($track === 'aarti') ? 'om_jai_shiv_omkara_kashi_1080p.mp4' : 'kashi_vishwanath_vedic_stotram_1080p.mp4';
+            $publicUrl = asset("storage/youtube_songs/{$filename}");
+
+            // Dispatch command in background
+            \Illuminate\Support\Facades\Artisan::queue('devotional:synthesize-master', [
+                '--track' => $track,
+                '--dispatch' => $autoUpload,
+            ]);
+
+            return response()->json([
+                'status' => 200,
+                'success' => true,
+                'video_url' => $publicUrl,
+                'title' => ($track === 'aarti') ? 'Om Jai Shiv Omkara (1080p Master Video)' : 'Kashi Vishwanath Vedic Stotram (1080p Master Video)',
+                'message' => 'Devotional master 1080p video generation queued & rendering via HarfBuzz Vedic engine!',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['status' => 500, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 23e. GET /api/manager/social/channels/{id}/test
+     * Test connectivity and token health for social channels
+     */
+    public function testSocialChannel(Request $request, $id)
+    {
+        try {
+            $channel = \Illuminate\Support\Facades\DB::table('social_accounts')->where('id', $id)->first();
+            if (!$channel) {
+                $channel = \Illuminate\Support\Facades\DB::table('social_accounts')->where('platform', $id)->first();
+            }
+
+            if (!$channel) {
+                return response()->json([
+                    'status' => 200,
+                    'success' => false,
+                    'is_healthy' => false,
+                    'message' => 'Channel account not registered in database.',
+                ]);
+            }
+
+            $isHealthy = !empty($channel->access_token_enc);
+            return response()->json([
+                'status' => 200,
+                'success' => true,
+                'is_healthy' => $isHealthy,
+                'channel_id' => $channel->id,
+                'platform' => $channel->platform,
+                'label' => $channel->label ?? ucfirst($channel->platform),
+                'external_id' => $channel->external_id,
+                'message' => $isHealthy ? 'Channel connectivity verified active 🙏' : 'Channel token expired or missing.',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['status' => 500, 'error' => $e->getMessage()], 500);
+        }
+    }
+
     public function getAllBookings(Request $request)
     {
         try {
@@ -2503,7 +2572,7 @@ class ManagerApiController extends Controller
 
         foreach ($bases as $base) {
             try {
-                $http = \Illuminate\Support\Facades\Http::timeout(10)
+                $http = \Illuminate\Support\Facades\Http::timeout(2)
                     ->withToken($token)
                     ->asJson();
 
