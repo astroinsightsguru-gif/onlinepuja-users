@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/manager_auth_session.dart';
 import '../../../theme/manager_theme.dart';
+import '../manager_shell.dart';
 import 'manager_pin_screen.dart';
 
 class ManagerLoginScreen extends StatefulWidget {
@@ -64,6 +65,12 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
       if (!mounted) return;
       if (result.success) {
         _showSnack(result.message, isError: false);
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const ManagerShell()),
+            (route) => false,
+          );
+        }
       } else {
         _showSnack(result.message, isError: true);
       }
@@ -122,6 +129,12 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
         } catch (_) {}
 
         _showSnack('Superadmin session authorized 🙏', isError: false);
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const ManagerShell()),
+            (route) => false,
+          );
+        }
       } else {
         _showSnack(result.message, isError: true);
       }
@@ -167,9 +180,9 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -177,20 +190,20 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                   // App Icon & Header
                   Center(
                     child: Container(
-                      width: 80,
-                      height: 80,
+                      width: 60,
+                      height: 60,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
                             color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
@@ -198,7 +211,7 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                         child: Text(
                           'ॐ',
                           style: TextStyle(
-                            fontSize: 42,
+                            fontSize: 32,
                             fontWeight: FontWeight.w900,
                             color: Color(0xFF0B0F19),
                           ),
@@ -206,15 +219,15 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
                   const Text(
                     'OnlinePuja.live',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 26,
+                      fontSize: 22,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.4,
                       color: Colors.white,
                     ),
                   ),
@@ -222,100 +235,97 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
 
                   Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                       decoration: BoxDecoration(
                         color: ManagerTheme.brandGold.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: ManagerTheme.brandGold.withValues(alpha: 0.4)),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.shield_rounded, color: ManagerTheme.brandGold, size: 14),
-                          SizedBox(width: 6),
+                          Icon(Icons.shield_rounded, color: ManagerTheme.brandGold, size: 12),
+                          SizedBox(width: 5),
                           Text(
                             'SUPERADMIN & TEAM COMMAND TOWER',
                             style: TextStyle(
                               color: ManagerTheme.brandGold,
-                              fontSize: 10,
+                              fontSize: 9.5,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: 0.8,
+                              letterSpacing: 0.6,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
 
-                  // 1-Click Google Sign-In Primary Button
-                  Container(
-                    decoration: BoxDecoration(
+                  // 1-Click Google Sign-In Primary Button (Pure High-Contrast Solid White Container)
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: (_isGoogleLoading || _isLoading) ? null : _handleGoogleLogin,
                       borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _isGoogleLoading || _isLoading ? null : _handleGoogleLogin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF1E293B),
-                        disabledBackgroundColor: const Color(0xFFE2E8F0),
-                        disabledForegroundColor: const Color(0xFF475569),
-                        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
-                        shape: RoundedRectangleBorder(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: (_isGoogleLoading || _isLoading) ? const Color(0xFFE2E8F0) : Colors.white,
                           borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.25),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        elevation: 0,
-                      ),
-                      child: _isGoogleLoading
-                          ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF1E293B)),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white,
-                                  ),
-                                  child: const Center(
-                                    child: Text(
-                                      'G',
-                                      style: TextStyle(
-                                        color: Color(0xFF4285F4),
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
+                        child: _isGoogleLoading
+                            ? const Center(
+                                child: SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2.2, color: Color(0xFF1E293B)),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white,
+                                    ),
+                                    child: const Center(
+                                      child: Text(
+                                        'G',
+                                        style: TextStyle(
+                                          color: Color(0xFF4285F4),
+                                          fontSize: 19,
+                                          fontWeight: FontWeight.w900,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  '1-Click Continue with Google',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.2,
-                                    color: Color(0xFF1F2937),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    '1-Click Continue with Google',
+                                    style: TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.1,
+                                      color: Color(0xFF0F172A),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
+                      ),
                     ),
                   ),
 
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 18),
 
                   // OR Divider
                   Row(
@@ -526,45 +536,66 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Login Button
-                  ElevatedButton(
-                    onPressed: _isLoading || _isGoogleLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ManagerTheme.brandGold,
-                      foregroundColor: const Color(0xFF0B0F19),
-                      disabledBackgroundColor: ManagerTheme.brandGold.withValues(alpha: 0.6),
-                      disabledForegroundColor: const Color(0xFF0B0F19),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: _isLoading
-                        ? const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2.2, color: Color(0xFF0B0F19)),
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                'Authorizing Superadmin...',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF0B0F19)),
-                              ),
-                            ],
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.login_rounded, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'Authorize & Open Command Center',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-                              ),
-                            ],
+                  // Login Button (Pure Solid Brand Gold Container)
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: (_isLoading || _isGoogleLoading) ? null : _handleLogin,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: _isLoading
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2.4, color: Color(0xFF0B0F19)),
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'Authorizing Superadmin...',
+                                    style: TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF0B0F19),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.login_rounded, size: 20, color: Color(0xFF0B0F19)),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Authorize & Open Command Center',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF0B0F19),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
                   ),
 
                   // Quick Switch to PIN Unlock if PIN already configured

@@ -39,6 +39,13 @@ class WebsiteVisitor {
     this.gotra,
   });
 
+  static int _parseInt(dynamic val, int fallback) {
+    if (val == null) return fallback;
+    if (val is num) return val.toInt();
+    if (val is String) return int.tryParse(val) ?? fallback;
+    return fallback;
+  }
+
   factory WebsiteVisitor.fromJson(Map<String, dynamic> json) {
     return WebsiteVisitor(
       id: json['id']?.toString() ?? 'visitor_${DateTime.now().millisecondsSinceEpoch}',
@@ -49,9 +56,9 @@ class WebsiteVisitor {
       currentPage: json['current_page']?.toString() ?? json['currentPage']?.toString() ?? '/puja',
       pageTitle: json['page_title']?.toString() ?? json['pageTitle']?.toString() ?? 'Varanasi Temple Pujas',
       referrer: json['referrer']?.toString() ?? 'Google Search / Direct',
-      durationSeconds: (json['duration_seconds'] as num?)?.toInt() ?? (json['durationSeconds'] as num?)?.toInt() ?? 120,
-      scrollDepth: (json['scroll_depth'] as num?)?.toInt() ?? (json['scrollDepth'] as num?)?.toInt() ?? 75,
-      intentScore: (json['intent_score'] as num?)?.toInt() ?? (json['intentScore'] as num?)?.toInt() ?? 80,
+      durationSeconds: _parseInt(json['duration_seconds'] ?? json['durationSeconds'], 120),
+      scrollDepth: _parseInt(json['scroll_depth'] ?? json['scrollDepth'], 75),
+      intentScore: _parseInt(json['intent_score'] ?? json['intentScore'], 80),
       intentLabel: json['intent_label']?.toString() ?? json['intentLabel']?.toString() ?? 'High Intent',
       device: json['device']?.toString() ?? 'Mobile Web',
       isOnline: json['is_online'] == true || json['isOnline'] == true,

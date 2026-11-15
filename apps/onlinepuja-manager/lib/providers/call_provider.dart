@@ -47,66 +47,29 @@ class CallProvider extends ChangeNotifier {
   int get powerDialerTotal => _powerDialerQueue.length;
 
   CallProvider({required this.apiService}) {
-    _initSampleData();
+    fetchPendingQueue();
   }
 
-  void _initSampleData() {
-    _pendingQueue = [
-      {
-        'id': 'lead_101',
-        'name': 'Rajesh Sharma',
-        'phone': '9810123456',
-        'gotra': 'Bharadwaj',
-        'puja_interest': 'Kashi Vishwanath Rudrabhishek',
-        'dakshina': 5100,
-        'source': 'Meta Ads',
-      },
-      {
-        'id': 'lead_102',
-        'name': 'Pooja Agarwal',
-        'phone': '9820987654',
-        'gotra': 'Garg',
-        'puja_interest': 'Mahamrityunjaya Jaap (21,000 Chants)',
-        'dakshina': 11000,
-        'source': 'WhatsApp',
-      },
-      {
-        'id': 'lead_103',
-        'name': 'Amitabh Verma',
-        'phone': '9935112233',
-        'gotra': 'Vashistha',
-        'puja_interest': 'Ujjain Mahakal Bhasma Aarti Sankalp',
-        'dakshina': 3500,
-        'source': 'Google Search',
-      },
-    ];
-
-    _callLogs = [
-      CallLogModel(
-        id: 'c_1',
-        phone: '9810123456',
-        customerName: 'Rajesh Sharma',
-        direction: CallDirection.outbound,
-        status: 'completed',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 25)),
-        durationSeconds: 195,
-        pujaInterest: 'Rudrabhishek',
-        gotra: 'Bharadwaj',
-        notes: 'Requested 5 Brahmins for Shravan Somwar. Quote sent.',
-      ),
-      CallLogModel(
-        id: 'c_2',
-        phone: '9876543210',
-        customerName: 'Sunita Mishra',
-        direction: CallDirection.inbound,
-        status: 'completed',
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-        durationSeconds: 310,
-        pujaInterest: 'Navgrah Shanti',
-        gotra: 'Kashyap',
-        notes: 'Sankalp confirmed. Razorpay payment received ₹7,100.',
-      ),
-    ];
+  Future<void> fetchPendingQueue() async {
+    try {
+      final res = await apiService.fetchContacts();
+      final contacts = res['contacts'];
+      if (contacts is List && contacts.isNotEmpty) {
+        _pendingQueue = contacts.take(20).map((c) {
+          final m = c is Map ? Map<String, dynamic>.from(c) : <String, dynamic>{};
+          return {
+            'id': m['id']?.toString() ?? '',
+            'name': m['name']?.toString() ?? 'Devotee',
+            'phone': m['contact_no']?.toString() ?? m['phone']?.toString() ?? '',
+            'gotra': m['gotra']?.toString() ?? 'Kashyap',
+            'puja_interest': m['puja_name']?.toString() ?? 'Kashi Vishwanath Sankalp',
+            'dakshina': m['amount'] ?? 2100,
+            'source': m['source']?.toString() ?? 'Devotee Lead Desk',
+          };
+        }).toList();
+        notifyListeners();
+      }
+    } catch (_) {}
   }
 
   Future<void> startCall({

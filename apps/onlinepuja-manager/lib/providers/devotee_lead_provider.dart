@@ -55,68 +55,8 @@ class DevoteeLeadProvider extends ChangeNotifier {
           _leads = (decoded['leads'] as List).map((i) => DevoteeLeadModel.fromJson(Map<String, dynamic>.from(i))).toList();
         }
       }
-    } catch (_) {
-      // Graceful sample fallback for offline / mock testing
-      if (_leads.isEmpty) {
-        _leads = [
-          DevoteeLeadModel(
-            id: 'ld_1',
-            name: 'Rajesh Sharma',
-            phone: '9810123456',
-            city: 'Delhi',
-            gotra: 'Bharadwaj',
-            pujaInterest: 'Kashi Vishwanath Rudrabhishek',
-            dakshinaValue: 5100,
-            stage: 'inquiry',
-            source: 'meta_ads',
-            score: 85,
-            createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-            notes: ['Requested video darshan with family gotra on Shravan Somwar.'],
-          ),
-          DevoteeLeadModel(
-            id: 'ld_2',
-            name: 'Pooja Agarwal',
-            phone: '9820987654',
-            city: 'Mumbai',
-            gotra: 'Garg',
-            pujaInterest: 'Mahamrityunjaya Jaap (21,000 Chants)',
-            dakshinaValue: 11000,
-            stage: 'consultation',
-            source: 'whatsapp',
-            score: 92,
-            createdAt: DateTime.now().subtract(const Duration(hours: 8)),
-            notes: ['Discussed auspicious muhurat with Head Pandit.'],
-          ),
-          DevoteeLeadModel(
-            id: 'ld_3',
-            name: 'Vikramaditya Roy',
-            phone: '9748112233',
-            city: 'Kolkata',
-            gotra: 'Sandilya',
-            pujaInterest: 'Kamakhya Devi Special Tantrokta Puja',
-            dakshinaValue: 15100,
-            stage: 'proposal_sent',
-            source: 'google_ads',
-            score: 88,
-            createdAt: DateTime.now().subtract(const Duration(days: 1)),
-            notes: ['Detailed itemized quote sent via WhatsApp.'],
-          ),
-          DevoteeLeadModel(
-            id: 'ld_4',
-            name: 'Sunita Mishra',
-            phone: '9876543210',
-            city: 'Lucknow',
-            gotra: 'Kashyap',
-            pujaInterest: 'Navgrah Shanti Yagya',
-            dakshinaValue: 7100,
-            stage: 'sankalp_booked',
-            source: 'whatsapp',
-            score: 98,
-            createdAt: DateTime.now().subtract(const Duration(days: 2)),
-            notes: ['Dakshina paid online. Sankalp booked for next Tuesday.'],
-          ),
-        ];
-      }
+    } catch (e) {
+      _errorMessage = 'Could not sync leads from server ($e)';
     }
 
     _isLoading = false;
