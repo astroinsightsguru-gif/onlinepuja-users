@@ -54,7 +54,13 @@ public function sendNotification(array $userIds, array $notification)
     if (!empty($userIds)) {
         $payload['include_player_ids'] = $userIds;
     } else {
-        $payload['included_segments'] = ['Total Subscriptions', 'Active Users'];
+        $payload['included_segments'] = ['Total Subscriptions'];
+    }
+
+    if (!empty($notification['url'])) {
+        $payload['url'] = $notification['url'];
+    } elseif (!empty($notification['body']['url'])) {
+        $payload['url'] = $notification['body']['url'];
     }
 
     if ($isSilent) {

@@ -331,26 +331,40 @@ class ContentPublishCommand extends Command
             ->unique()
             ->values();
 
-        if ($playerIds->isEmpty()) {
-            return 0;
-        }
-
         try {
-            // OneSignal's own limit is far above this; chunking is just a
-            // sane ceiling so one publish never becomes one giant request.
-            foreach ($playerIds->chunk(500) as $chunk) {
-                (new OneSignalService())->sendNotification($chunk->all(), [
-                    'title' => $notification['title'],
-                    'body' => $notification['body'] + ['notificationType' => 90],
-                ]);
+            $service = new OneSignalService();
+            // Broadcast to all active subscribers via Total Subscriptions segment
+            $res = $service->sendNotification([], [
+                'title' => $notification['title'],
+                'body' => $notification['body'] + ['notificationType' => 90],
+                'url' => $notification['body']['url'] ?? null,
+            ]);
+
+            $pushed = (int) ($res['recipients'] ?? 0);
+            if ($pushed > 0) {
+                return $pushed;
             }
+
+            // Fallback: If player IDs exist in local DB, attempt chunked dispatch
+            if (!$playerIds->isEmpty()) {
+                foreach ($playerIds->chunk(500) as $chunk) {
+                    $r = $service->sendNotification($chunk->all(), [
+                        'title' => $notification['title'],
+                        'body' => $notification['body'] + ['notificationType' => 90],
+                        'url' => $notification['body']['url'] ?? null,
+                    ]);
+                    if (!empty($r['id']) && empty($r['errors'])) {
+                        $pushed += count($chunk);
+                    }
+                }
+            }
+
+            return $pushed;
         } catch (\Throwable $e) {
             $this->warn('  OneSignal push threw: '.$e->getMessage());
 
             return 0;
         }
-
-        return $playerIds->count();
     }
 
     /** Kept as the fallback in case the FIREBASE_ / FCM_ .env values ever get filled in. */

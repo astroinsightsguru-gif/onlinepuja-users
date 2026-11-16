@@ -398,21 +398,6 @@ class AstrologerController extends Controller
                     ->where('astrologers.isDelete', false)
                     ->select('astrologers.*')
                     ->get();
-
-                $userdata = DB::table('users')
-                    ->join('user_roles', 'users.id', '=', 'user_roles.userId')
-                    ->where('contactNo', $req->contactNo)
-                    ->where('user_roles.roleId', 3)
-                    ->where('users.isDelete', false)
-                    ->select('users.*')
-                    ->get();
-
-                if ($userdata && count($userdata) > 0) {
-                    return response()->json([
-                        'message' => 'This Mobile number is already registered in user App',
-                        'status' => 400,
-                    ], 400);
-                }
             } elseif ($req->email) {
                 $credentials = [
                     'email' => $req->email,
@@ -426,21 +411,6 @@ class AstrologerController extends Controller
                     ->where('astrologers.isDelete', false)
                     ->select('astrologers.*')
                     ->get();
-
-                $userdata = DB::table('users')
-                    ->join('user_roles', 'users.id', '=', 'user_roles.userId')
-                    ->where('email', $req->email)
-                    ->where('user_roles.roleId', 3)
-                    ->where('users.isDelete', false)
-                    ->select('users.*')
-                    ->get();
-
-                if ($userdata && count($userdata) > 0) {
-                    return response()->json([
-                        'message' => 'This email is already registered in user App',
-                        'status' => 400,
-                    ], 400);
-                }
             }
 
             if ($astrologer && count($astrologer) > 0) {

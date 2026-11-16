@@ -992,64 +992,63 @@ function editMobileNumber() {
 </script>
 
 
-@if (authcheck())
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize OneSignal
-            window.OneSignalDeferred = window.OneSignalDeferred || [];
-            OneSignalDeferred.push(async function(OneSignal) {
-                await OneSignal.init({
-                    appId: "{{ $OneSignalAppId->value }}",
-                });
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+                appId: "{{ $OneSignalAppId->value ?? 'f80dc7c2-6ab0-4332-9e61-75d6a899a3ec' }}",
+                allowLocalhostAsSecureOrigin: true,
+                notifyButton: {
+                    enable: false,
+                },
             });
 
-            // Check and request notification permission using the browser API
-            const checkNotificationPermission = async () => {
-                const permission = Notification.permission;
-
-                if (permission === 'default') {
-                    try {
-                        const newPermission = await Notification.requestPermission();
-
-                        if (newPermission === 'granted') {
-                            const subscriptionId = OneSignal.User.PushSubscription.id;
-
-                            if (subscriptionId) {
-                                // Send the subscription ID to the server
-                                $.ajax({
-                                    url: '{{ route('storeSubscriptionId') }}',
-                                    type: 'POST',
-                                    data: {
-                                        subscription_id_web: subscriptionId,
-                                    },
-                                    dataType: 'JSON',
-                                    success: function(response) {
-                                        console.log('Subscription ID stored:', response);
-                                    },
-                                    error: function(err) {
-                                        console.error('Error storing subscription ID:', err);
-                                    },
-                                });
-                            }
-                        } else {
-                            console.log('Permission not granted or blocked:', newPermission);
-                        }
-                    } catch (error) {
-                        console.error('Error requesting notification permission:', error);
+            function syncSubscription(subId) {
+                if (!subId) return;
+                $.ajax({
+                    url: '{{ route('storeSubscriptionId') }}',
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        subscription_id_web: subId,
+                    },
+                    dataType: 'JSON',
+                    success: function(response) {
+                        console.log('OneSignal web push registered successfully:', subId);
+                    },
+                    error: function(err) {
+                        console.warn('OneSignal registration error:', err);
                     }
-                } else if (permission === 'granted') {
-                    console.log('Notification permission already granted.');
-                } else {
-                    console.log('Notification permission denied or blocked.');
-                }
-            };
+                });
+            }
 
-            // Automatically check notification permission when the page loads
-            checkNotificationPermission();
+            // Sync if already subscribed
+            if (OneSignal.User && OneSignal.User.PushSubscription && OneSignal.User.PushSubscription.id) {
+                syncSubscription(OneSignal.User.PushSubscription.id);
+            }
+
+            // Listen for permission change / subscription creation
+            if (OneSignal.User && OneSignal.User.PushSubscription) {
+                OneSignal.User.PushSubscription.addEventListener('change', function(event) {
+                    if (event.current && event.current.id) {
+                        syncSubscription(event.current.id);
+                    }
+                });
+            }
+
+            // Auto-prompt visitor gently after page load
+            if (window.Notification && Notification.permission === 'default') {
+                setTimeout(async function() {
+                    try {
+                        await OneSignal.Slidedown.promptPush();
+                    } catch (e) {
+                        console.log('OneSignal prompt error:', e);
+                    }
+                }, 3500);
+            }
         });
     </script>
-@endif
 
 
 <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-app.js"></script>

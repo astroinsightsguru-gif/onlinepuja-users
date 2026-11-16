@@ -15,6 +15,7 @@ import 'ui/screens/orders/orders_fulfillment_screen.dart';
 import 'ui/screens/profile/profile_screen.dart';
 import 'ui/screens/social/astrologer_social_growth_screen.dart';
 import 'ui/screens/splash_screen.dart';
+import 'ui/screens/tools/vedic_toolkit_screen.dart';
 import 'ui/screens/wallet/wallet_screen.dart';
 
 class OnlinePujaPartnerApp extends StatelessWidget {
@@ -45,6 +46,7 @@ class OnlinePujaPartnerApp extends StatelessWidget {
         ProfileScreen.route: (_) => const ProfileScreen(),
         WalletScreen.route: (_) => const WalletScreen(),
         AstrologerSocialGrowthScreen.route: (_) => const AstrologerSocialGrowthScreen(),
+        VedicToolkitScreen.route: (_) => const VedicToolkitScreen(),
       },
       onGenerateRoute: (settings) {
         final args = settings.arguments;

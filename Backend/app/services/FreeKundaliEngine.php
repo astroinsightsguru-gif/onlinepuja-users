@@ -61,7 +61,7 @@ class FreeKundaliEngine
     ];
 
     /**
-     * Generate complete 10-page Free Vedic Kundali PDF
+     * Generate complete 10-page Free Vedic Kundali PDF (English / Romanized Vedic)
      */
     public static function generate(array $params): array
     {
@@ -72,14 +72,14 @@ class FreeKundaliEngine
             $pob = trim((string)($params['pob'] ?? 'Kashi, Varanasi'));
             $gender = ucfirst(trim((string)($params['gender'] ?? 'Male')));
 
-            // Normalize DOB
+            // Normalize DOB & TOB
             $dob = self::parseDob($dobRaw);
             $tob = self::parseTob($tobRaw);
 
             // Resolve Lat & Lon
             [$lat, $lon] = self::resolveCoords($pob, $params['lat'] ?? null, $params['lon'] ?? null);
 
-            // Compute Drik Ganita Astrological Model
+            // Compute Drik Ganita Astrological Model (Pure English / Romanized)
             $astroData = self::calculateKundali($name, $dob, $tob, $pob, $gender, $lat, $lon);
 
             // Ensure destination directory exists
@@ -96,13 +96,13 @@ class FreeKundaliEngine
             $fileName = "OnlinePuja_Kundli_{$safeName}_" . date('Ymd_His') . ".pdf";
             $fullPath = $storageDir . '/' . $fileName;
 
-            // Render PDF via DomPDF
+            // Render PDF via DomPDF with clean English / Roman fonts
             $pdf = Pdf::loadView('pdf.free_kundli_10pages', $astroData);
             $pdf->setPaper('a4', 'portrait');
             $pdf->setOptions([
                 'isHtml5ParserEnabled' => true,
                 'isRemoteEnabled' => true,
-                'defaultFont' => 'DejaVu Sans',
+                'defaultFont' => 'Helvetica',
             ]);
 
             $pdf->save($fullPath);
@@ -131,10 +131,8 @@ class FreeKundaliEngine
     public static function parseDob(string $raw): string
     {
         $raw = trim($raw);
-        // Replace common delimiters
         $raw = str_replace(['.', '/', ' '], '-', $raw);
 
-        // Try standard formats
         $formats = ['Y-m-d', 'd-m-Y', 'd-M-Y', 'Y-n-j', 'j-n-Y', 'j-M-Y'];
         foreach ($formats as $fmt) {
             try {
@@ -145,7 +143,6 @@ class FreeKundaliEngine
             } catch (\Throwable $e) {}
         }
 
-        // Regex fallback: 15-08-1995 or 1995-08-15
         if (preg_match('/(\d{1,2})-(\d{1,2})-(\d{4})/', $raw, $m)) {
             return sprintf('%04d-%02d-%02d', (int)$m[3], (int)$m[2], (int)$m[1]);
         }
@@ -200,7 +197,6 @@ class FreeKundaliEngine
             }
         }
 
-        // Default to Varanasi (Sacred Kashi)
         return [25.3176, 82.9739];
     }
 
@@ -212,9 +208,9 @@ class FreeKundaliEngine
         $lower = mb_strtolower(trim($text));
         $thread = \Illuminate\Support\Facades\DB::table('whatsapp_threads')->where('remote_jid', $remoteJid)->first();
         $isKundliIntent = str_contains($lower, 'kundli') || str_contains($lower, 'kundali') || 
-                          str_contains($lower, 'कुण्डली') || str_contains($lower, 'कुंडली') || 
                           str_contains($lower, 'horoscope') || str_contains($lower, 'patrika') || 
-                          str_contains($lower, 'पत्रिका') || str_contains($lower, 'जन्म पत्री');
+                          str_contains($lower, 'birth chart') || str_contains($lower, 'kundali') ||
+                          str_contains($lower, 'कुण्डली') || str_contains($lower, 'कुंडली');
 
         $isCollecting = ($thread && ($thread->stage ?? '') === 'kundli_collecting');
 
@@ -232,7 +228,6 @@ class FreeKundaliEngine
             ]);
 
             if ($kundli['ok'] ?? false) {
-                // Update thread stage & lead
                 \Illuminate\Support\Facades\DB::table('whatsapp_threads')
                     ->where('remote_jid', $remoteJid)
                     ->update([
@@ -251,15 +246,15 @@ class FreeKundaliEngine
                     ]);
 
                 $caption = "🕉️ *ॐ नमः शिवाय* 🙏\n\n" .
-                    "{$parsed['name']} जी, आपकी १० पृष्ठीय निःशुल्क सम्पूर्ण वैदिक जन्म कुण्डली (PDF) तैयार हो गई है।\n\n" .
-                    "📜 *इस पावन पत्रिका में सम्मिलित विवरण:*\n" .
-                    "• जन्म लग्न चक्र (D-1) एवं नवमांश कुण्डली (D-9)\n" .
-                    "• ग्रह स्पष्ट एवं निरयण भोगांश डिग्री\n" .
-                    "• द्वादश भाव विस्तृत जीवन फल\n" .
-                    "• १२० वर्षीय विंशोत्तरी महादशा काल चक्र\n" .
-                    "• मांगलिक व कालसर्प दोष निर्णय एवं शांति उपाय\n" .
-                    "• अनुकूल भाग्यशाली रत्न, रुद्राक्ष एवं दैनिक महामंत्र\n\n" .
-                    "भगवान श्री काशी विश्वनाथ जी की कृपा आप एवं आपके परिवार पर सदैव बनी रहे।\n\n" .
+                    "{$parsed['name']} Ji, your 10-Page Comprehensive Free Vedic Kundli (PDF) is ready!\n\n" .
+                    "📜 *Included in your Sacred Birth Horoscope:*\n" .
+                    "• Janma Lagna Chart (D-1) & Navamsha Chart (D-9)\n" .
+                    "• Exact Planetary Coordinates & Dignities\n" .
+                    "• 12-Bhava Comprehensive Life Predictions\n" .
+                    "• 120-Year Vimshottari Mahadasha Timeline\n" .
+                    "• Manglik & Kaal Sarp Dosha Nirnaya\n" .
+                    "• Auspicious Gemstones, Rudraksha & Daily Sadhana\n\n" .
+                    "May Lord Kashi Vishwanath bestow divine peace, health, and prosperity upon you and your family.\n\n" .
                     "हर हर महादेव 🚩";
 
                 return [
@@ -277,20 +272,15 @@ class FreeKundaliEngine
                 ->where('remote_jid', $remoteJid)
                 ->update(['stage' => 'kundli_collecting', 'updated_at' => now()]);
 
-            $missing = [];
-            if (empty($parsed['dob'])) $missing[] = "२. जन्म तिथि (दिन-माह-वर्ष, उदा. 15-08-1995)";
-            if (empty($parsed['tob'])) $missing[] = "३. जन्म समय (उदा. 10:30 AM या 06:15 PM)";
-            if (empty($parsed['pob'])) $missing[] = "४. जन्म स्थान (शहर, राज्य, उदा. वाराणसी, उत्तर प्रदेश)";
-
-            $nameVal = ($pushName && $pushName !== 'Devotee') ? $pushName : 'भक्त';
+            $nameVal = ($pushName && $pushName !== 'Devotee' && $pushName !== 'Você') ? $pushName : 'Devotee';
 
             $promptReply = "🕉️ *ॐ नमः शिवाय* 🙏\n\n" .
-                "{$nameVal} जी, OnlinePuja.live की १० पृष्ठीय सम्पूर्ण निःशुल्क वैदिक जन्म कुण्डली (PDF) प्राप्त करने हेतु कृपया निम्नलिखित विवरण एक साथ लिखकर भेजें:\n\n" .
-                "१. पूरा नाम: " . ($parsed['name'] ?: $nameVal) . "\n" .
-                "२. जन्म तिथि (दिन-माह-वर्ष, उदा. 15-08-1995)\n" .
-                "३. जन्म समय (उदा. 10:30 AM या 06:15 PM)\n" .
-                "४. जन्म स्थान (शहर, राज्य)\n\n" .
-                "विवरण प्राप्त होते ही आपकी प्रामाणिक कुण्डली पत्रिका यहीं PDF में तुरंत भेज दी जाएगी।\n\n" .
+                "{$nameVal} Ji, to generate your 10-Page Free Vedic Kundli (PDF), please send the following 4 birth details:\n\n" .
+                "1. Full Name: " . ($parsed['name'] ?: $nameVal) . "\n" .
+                "2. Date of Birth (DD-MM-YYYY, e.g. 15-08-1995)\n" .
+                "3. Time of Birth (e.g. 10:30 AM or 06:15 PM)\n" .
+                "4. Place of Birth (City, State)\n\n" .
+                "As soon as you reply with these details, your complete 10-page Vedic Horoscope PDF will be generated and delivered here instantly for free.\n\n" .
                 "हर हर महादेव 🚩";
 
             return [
@@ -313,26 +303,22 @@ class FreeKundaliEngine
         $name = null;
         $gender = 'Male';
 
-        // 1. Extract DOB (dd-mm-yyyy or dd/mm/yyyy or yyyy-mm-dd or words)
+        // 1. Extract DOB
         if (preg_match('/\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})\b/', $text, $m)) {
             $dob = sprintf('%04d-%02d-%02d', (int)$m[3], (int)$m[2], (int)$m[1]);
         } elseif (preg_match('/\b(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})\b/', $text, $m)) {
             $dob = sprintf('%04d-%02d-%02d', (int)$m[1], (int)$m[2], (int)$m[3]);
-        } elseif (preg_match('/(\d{1,2})\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|जनवरी|फ़रवरी|मार्च|अप्रैल|मई|जून|जुलाई|अगस्त|सितंबर|अक्टूबर|नवंबर|दिसंबर)[a-z]*\s*(\d{4})/iu', $text, $m)) {
+        } elseif (preg_match('/(\d{1,2})\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*(\d{4})/iu', $text, $m)) {
             $dob = self::parseDob($m[0]);
         }
 
-        // 2. Extract TOB (hh:mm am/pm or 24-hr)
-        if (preg_match('/\b(\d{1,2}):(\d{2})\s*(am|pm|a\.m\.|p\.m\.|बजे)?\b/i', $text, $m)) {
+        // 2. Extract TOB
+        if (preg_match('/\b(\d{1,2}):(\d{2})\s*(am|pm|a\.m\.|p\.m\.)?\b/i', $text, $m)) {
             $h = (int)$m[1];
             $min = (int)$m[2];
             $ampm = strtolower(str_replace('.', '', $m[3] ?? ''));
             if (str_contains($ampm, 'pm') && $h < 12) $h += 12;
             if (str_contains($ampm, 'am') && $h === 12) $h = 0;
-            // Handle Hindi "शाम / रात"
-            if ((str_contains($text, 'शाम') || str_contains($text, 'रात')) && $h < 12) {
-                $h += 12;
-            }
             $tob = sprintf('%02d:%02d', $h, $min);
         }
 
@@ -344,12 +330,12 @@ class FreeKundaliEngine
                 break;
             }
         }
-        if (!$pob && preg_match('/(?:place|pob|स्थान|शहर|city)[\s\:\-]*([a-zA-Z\x{0900}-\x{097F}\s]{3,30})/iu', $text, $m)) {
+        if (!$pob && preg_match('/(?:place|pob|city|birth place)[\s\:\-]*([a-zA-Z\s]{3,30})/i', $text, $m)) {
             $pob = trim($m[1]);
         }
 
         // 4. Extract Name
-        if (preg_match('/(?:name|नाम)[\s\:\-]*([a-zA-Z\x{0900}-\x{097F}\s]{2,40})/iu', $text, $m)) {
+        if (preg_match('/(?:name)[\s\:\-]*([a-zA-Z\s]{2,40})/i', $text, $m)) {
             $name = trim($m[1]);
         }
         if (!$name && $defaultName && $defaultName !== 'Devotee' && $defaultName !== 'Você') {
@@ -357,7 +343,7 @@ class FreeKundaliEngine
         }
 
         // 5. Gender
-        if (str_contains($lower, 'female') || str_contains($lower, 'महिला') || str_contains($lower, 'स्त्री')) {
+        if (str_contains($lower, 'female') || str_contains($lower, 'woman') || str_contains($lower, 'girl')) {
             $gender = 'Female';
         }
 
@@ -383,7 +369,7 @@ class FreeKundaliEngine
     }
 
     /**
-     * Perform authentic Drik Ganita astronomical & astrological computations
+     * Perform authentic Drik Ganita astronomical & astrological computations (Pure English)
      */
     public static function calculateKundali(string $name, string $dob, string $tob, string $pob, string $gender, float $lat, float $lon): array
     {
@@ -398,19 +384,17 @@ class FreeKundaliEngine
         $y = $year + 4800 - $a;
         $m = $month + 12 * $a - 3;
         $jdn = $day + floor((153 * $m + 2) / 5) + 365 * $y + floor($y / 4) - floor($y / 100) + floor($y / 400) - 32045;
-        // Adjust for IST time (UTC = IST - 5.5 hours)
         $utcHour = $hour - 5.5;
         $jd = $jdn + ($utcHour - 12.0) / 24.0;
 
         // 2. Lahiri Ayanamsha (Chitra Paksha Ayanamsha)
-        $t = ($jd - 2451545.0) / 36525.0; // Julian centuries from J2000.0
-        $ayanamsha = 23.85 + 0.01397 * ($year - 1900); // Standard precise Lahiri baseline
+        $t = ($jd - 2451545.0) / 36525.0;
+        $ayanamsha = 23.85 + 0.01397 * ($year - 1900);
 
         // 3. Local Sidereal Time (LST) for Ascendant (Lagna)
         $gmst = self::norm360(280.46061837 + 360.98564736629 * ($jd - 2451545.0) + 0.000387933 * $t * $t);
         $lst = self::norm360($gmst + $lon);
 
-        // Obliquity of Ecliptic
         $eps = 23.4392911 - 0.0130042 * $t;
         $epsRad = deg2rad($eps);
         $latRad = deg2rad($lat);
@@ -425,101 +409,92 @@ class FreeKundaliEngine
 
         // Nirayana Lagna (Sidereal Ascendant using Lahiri)
         $lagnaDeg = self::norm360($sayanaLagna - $ayanamsha);
-        $lagnaSignNum = ((int)floor($lagnaDeg / 30.0) % 12) + 1; // 1 to 12
+        $lagnaSignNum = ((int)floor($lagnaDeg / 30.0) % 12) + 1;
         $lagnaRemDeg = fmod($lagnaDeg, 30.0);
 
         // 4. Mean Planetary Longitudes (Nirayana Sidereal with Lahiri)
-        $d = $jd - 2451545.0; // Days from J2000.0
+        $d = $jd - 2451545.0;
 
-        // Sun Mean Longitude
         $sunTropical = self::norm360(280.460 + 0.9856474 * $d);
         $sunSidereal = self::norm360($sunTropical - $ayanamsha);
 
-        // Moon Mean Longitude & Elongation
         $moonTropical = self::norm360(218.316 + 13.176396 * $d);
         $moonSidereal = self::norm360($moonTropical - $ayanamsha);
 
-        // Mars
         $marsTropical = self::norm360(355.433 + 0.524033 * $d);
         $marsSidereal = self::norm360($marsTropical - $ayanamsha);
 
-        // Mercury (Relative to Sun)
         $mercOffset = sin(deg2rad($d * 4.092)) * 22.0;
         $mercSidereal = self::norm360($sunSidereal + $mercOffset);
 
-        // Jupiter
         $jupTropical = self::norm360(34.351 + 0.083085 * $d);
         $jupSidereal = self::norm360($jupTropical - $ayanamsha);
 
-        // Venus (Relative to Sun)
         $venOffset = sin(deg2rad($d * 1.602)) * 44.0;
         $venSidereal = self::norm360($sunSidereal + $venOffset);
 
-        // Saturn
         $satTropical = self::norm360(50.077 + 0.033444 * $d);
         $satSidereal = self::norm360($satTropical - $ayanamsha);
 
-        // Rahu (Mean North Node - moves retrograde 0.05295 deg/day)
         $rahuSidereal = self::norm360(125.04 - 0.05295 * $d - $ayanamsha);
-        // Ketu (Opposite Rahu by 180 degrees)
         $ketuSidereal = self::norm360($rahuSidereal + 180.0);
 
         $zodiacSigns = [
-            1 => ['en' => 'Aries', 'hi' => 'मेष', 'lord' => 'Mars (मंगल)', 'element' => 'Fire (अग्नि)'],
-            2 => ['en' => 'Taurus', 'hi' => 'वृषभ', 'lord' => 'Venus (शुक्र)', 'element' => 'Earth (पृथ्वी)'],
-            3 => ['en' => 'Gemini', 'hi' => 'मिथुन', 'lord' => 'Mercury (बुध)', 'element' => 'Air (वायु)'],
-            4 => ['en' => 'Cancer', 'hi' => 'कर्क', 'lord' => 'Moon (चंद्र)', 'element' => 'Water (जल)'],
-            5 => ['en' => 'Leo', 'hi' => 'सिंह', 'lord' => 'Sun (सूर्य)', 'element' => 'Fire (अग्नि)'],
-            6 => ['en' => 'Virgo', 'hi' => 'कन्या', 'lord' => 'Mercury (बुध)', 'element' => 'Earth (पृथ्वी)'],
-            7 => ['en' => 'Libra', 'hi' => 'तुला', 'lord' => 'Venus (शुक्र)', 'element' => 'Air (वायु)'],
-            8 => ['en' => 'Scorpio', 'hi' => 'वृश्चिक', 'lord' => 'Mars (मंगल)', 'element' => 'Water (जल)'],
-            9 => ['en' => 'Sagittarius', 'hi' => 'धनु', 'lord' => 'Jupiter (बृहस्पति)', 'element' => 'Fire (अग्नि)'],
-            10 => ['en' => 'Capricorn', 'hi' => 'मकर', 'lord' => 'Saturn (शनि)', 'element' => 'Earth (पृथ्वी)'],
-            11 => ['en' => 'Aquarius', 'hi' => 'कुंभ', 'lord' => 'Saturn (शनि)', 'element' => 'Air (वायु)'],
-            12 => ['en' => 'Pisces', 'hi' => 'मीन', 'lord' => 'Jupiter (बृहस्पति)', 'element' => 'Water (जल)'],
+            1 => ['en' => 'Aries', 'sans' => 'Mesha', 'lord' => 'Mars (Mangal)', 'element' => 'Fire (Agni)'],
+            2 => ['en' => 'Taurus', 'sans' => 'Vrishabha', 'lord' => 'Venus (Shukra)', 'element' => 'Earth (Prithvi)'],
+            3 => ['en' => 'Gemini', 'sans' => 'Mithuna', 'lord' => 'Mercury (Budha)', 'element' => 'Air (Vayu)'],
+            4 => ['en' => 'Cancer', 'sans' => 'Karka', 'lord' => 'Moon (Chandra)', 'element' => 'Water (Jala)'],
+            5 => ['en' => 'Leo', 'sans' => 'Simha', 'lord' => 'Sun (Surya)', 'element' => 'Fire (Agni)'],
+            6 => ['en' => 'Virgo', 'sans' => 'Kanya', 'lord' => 'Mercury (Budha)', 'element' => 'Earth (Prithvi)'],
+            7 => ['en' => 'Libra', 'sans' => 'Tula', 'lord' => 'Venus (Shukra)', 'element' => 'Air (Vayu)'],
+            8 => ['en' => 'Scorpio', 'sans' => 'Vrischika', 'lord' => 'Mars (Mangal)', 'element' => 'Water (Jala)'],
+            9 => ['en' => 'Sagittarius', 'sans' => 'Dhanu', 'lord' => 'Jupiter (Guru)', 'element' => 'Fire (Agni)'],
+            10 => ['en' => 'Capricorn', 'sans' => 'Makara', 'lord' => 'Saturn (Shani)', 'element' => 'Earth (Prithvi)'],
+            11 => ['en' => 'Aquarius', 'sans' => 'Kumbha', 'lord' => 'Saturn (Shani)', 'element' => 'Air (Vayu)'],
+            12 => ['en' => 'Pisces', 'sans' => 'Meena', 'lord' => 'Jupiter (Guru)', 'element' => 'Water (Jala)'],
         ];
 
         $nakshatras = [
-            0 => ['name' => 'Ashwini (अश्विनी)', 'lord' => 'Ketu', 'deity' => 'Ashwini Kumaras'],
-            1 => ['name' => 'Bharani (भरणी)', 'lord' => 'Venus', 'deity' => 'Yama'],
-            2 => ['name' => 'Krittika (कृत्तिका)', 'lord' => 'Sun', 'deity' => 'Agni'],
-            3 => ['name' => 'Rohini (रोहिणी)', 'lord' => 'Moon', 'deity' => 'Brahma'],
-            4 => ['name' => 'Mrigashira (मृगशिरा)', 'lord' => 'Mars', 'deity' => 'Soma'],
-            5 => ['name' => 'Ardra (आर्द्रा)', 'lord' => 'Rahu', 'deity' => 'Rudra'],
-            6 => ['name' => 'Punarvasu (पुनर्वसु)', 'lord' => 'Jupiter', 'deity' => 'Aditi'],
-            7 => ['name' => 'Pushya (पुष्य)', 'lord' => 'Saturn', 'deity' => 'Brihaspati'],
-            8 => ['name' => 'Ashlesha (आश्लेषा)', 'lord' => 'Mercury', 'deity' => 'Sarpas'],
-            9 => ['name' => 'Magha (मघा)', 'lord' => 'Ketu', 'deity' => 'Pitrus'],
-            10 => ['name' => 'Purva Phalguni (पूर्वा फाल्गुनी)', 'lord' => 'Venus', 'deity' => 'Bhaga'],
-            11 => ['name' => 'Uttara Phalguni (उत्तरा फाल्गुनी)', 'lord' => 'Sun', 'deity' => 'Aryaman'],
-            12 => ['name' => 'Hasta (हस्त)', 'lord' => 'Moon', 'deity' => 'Savitr'],
-            13 => ['name' => 'Chitra (चित्रा)', 'lord' => 'Mars', 'deity' => 'Tvashtar'],
-            14 => ['name' => 'Swati (स्वाति)', 'lord' => 'Rahu', 'deity' => 'Vayu'],
-            15 => ['name' => 'Vishakha (विशाखा)', 'lord' => 'Jupiter', 'deity' => 'Indra-Agni'],
-            16 => ['name' => 'Anuradha (अनुराधा)', 'lord' => 'Saturn', 'deity' => 'Mitra'],
-            17 => ['name' => 'Jyeshtha (ज्येष्ठा)', 'lord' => 'Mercury', 'deity' => 'Indra'],
-            18 => ['name' => 'Mula (मूल)', 'lord' => 'Ketu', 'deity' => 'Nirriti'],
-            19 => ['name' => 'Purva Ashadha (पूर्वाषाढ़ा)', 'lord' => 'Venus', 'deity' => 'Apas'],
-            20 => ['name' => 'Uttara Ashadha (उत्तराषाढ़ा)', 'lord' => 'Sun', 'deity' => 'Vishwadevas'],
-            21 => ['name' => 'Shravana (श्रवण)', 'lord' => 'Moon', 'deity' => 'Vishnu'],
-            22 => ['name' => 'Dhanishta (धनिष्ठा)', 'lord' => 'Mars', 'deity' => 'Vasus'],
-            23 => ['name' => 'Shatabhisha (शतभिषा)', 'lord' => 'Rahu', 'deity' => 'Varuna'],
-            24 => ['name' => 'Purva Bhadrapada (पूर्वाभाद्रपद)', 'lord' => 'Jupiter', 'deity' => 'Aja Ekapada'],
-            25 => ['name' => 'Uttara Bhadrapada (उत्तराभाद्रपद)', 'lord' => 'Saturn', 'deity' => 'Ahirbudhnya'],
-            26 => ['name' => 'Revati (रेवती)', 'lord' => 'Mercury', 'deity' => 'Pushan'],
+            0 => ['name' => 'Ashwini', 'lord' => 'Ketu', 'deity' => 'Ashwini Kumaras'],
+            1 => ['name' => 'Bharani', 'lord' => 'Venus', 'deity' => 'Yama'],
+            2 => ['name' => 'Krittika', 'lord' => 'Sun', 'deity' => 'Agni'],
+            3 => ['name' => 'Rohini', 'lord' => 'Moon', 'deity' => 'Brahma'],
+            4 => ['name' => 'Mrigashira', 'lord' => 'Mars', 'deity' => 'Soma'],
+            5 => ['name' => 'Ardra', 'lord' => 'Rahu', 'deity' => 'Rudra'],
+            6 => ['name' => 'Punarvasu', 'lord' => 'Jupiter', 'deity' => 'Aditi'],
+            7 => ['name' => 'Pushya', 'lord' => 'Saturn', 'deity' => 'Brihaspati'],
+            8 => ['name' => 'Ashlesha', 'lord' => 'Mercury', 'deity' => 'Sarpas'],
+            9 => ['name' => 'Magha', 'lord' => 'Ketu', 'deity' => 'Pitrus'],
+            10 => ['name' => 'Purva Phalguni', 'lord' => 'Venus', 'deity' => 'Bhaga'],
+            11 => ['name' => 'Uttara Phalguni', 'lord' => 'Sun', 'deity' => 'Aryaman'],
+            12 => ['name' => 'Hasta', 'lord' => 'Moon', 'deity' => 'Savitr'],
+            13 => ['name' => 'Chitra', 'lord' => 'Mars', 'deity' => 'Tvashtar'],
+            14 => ['name' => 'Swati', 'lord' => 'Rahu', 'deity' => 'Vayu'],
+            15 => ['name' => 'Vishakha', 'lord' => 'Jupiter', 'deity' => 'Indra-Agni'],
+            16 => ['name' => 'Anuradha', 'lord' => 'Saturn', 'deity' => 'Mitra'],
+            17 => ['name' => 'Jyeshtha', 'lord' => 'Mercury', 'deity' => 'Indra'],
+            18 => ['name' => 'Mula', 'lord' => 'Ketu', 'deity' => 'Nirriti'],
+            19 => ['name' => 'Purva Ashadha', 'lord' => 'Venus', 'deity' => 'Apas'],
+            20 => ['name' => 'Uttara Ashadha', 'lord' => 'Sun', 'deity' => 'Vishwadevas'],
+            21 => ['name' => 'Shravana', 'lord' => 'Moon', 'deity' => 'Vishnu'],
+            22 => ['name' => 'Dhanishta', 'lord' => 'Mars', 'deity' => 'Vasus'],
+            23 => ['name' => 'Shatabhisha', 'lord' => 'Rahu', 'deity' => 'Varuna'],
+            24 => ['name' => 'Purva Bhadrapada', 'lord' => 'Jupiter', 'deity' => 'Aja Ekapada'],
+            25 => ['name' => 'Uttara Bhadrapada', 'lord' => 'Saturn', 'deity' => 'Ahirbudhnya'],
+            26 => ['name' => 'Revati', 'lord' => 'Mercury', 'deity' => 'Pushan'],
         ];
 
-        // 5. Build Planets Array
+        // 5. Build Planets Array (English labels)
         $rawPlanets = [
-            'Sun (सूर्य)' => ['long' => $sunSidereal, 'speed' => 1.0, 'code' => 'Su'],
-            'Moon (चन्द्र)' => ['long' => $moonSidereal, 'speed' => 13.2, 'code' => 'Mo'],
-            'Mars (मंगल)' => ['long' => $marsSidereal, 'speed' => 0.52, 'code' => 'Ma'],
-            'Mercury (बुध)' => ['long' => $mercSidereal, 'speed' => 1.2, 'code' => 'Me'],
-            'Jupiter (गुरु)' => ['long' => $jupSidereal, 'speed' => 0.08, 'code' => 'Ju'],
-            'Venus (शुक्र)' => ['long' => $venSidereal, 'speed' => 1.1, 'code' => 'Ve'],
-            'Saturn (शनि)' => ['long' => $satSidereal, 'speed' => 0.03, 'code' => 'Sa'],
-            'Rahu (राहु)' => ['long' => $rahuSidereal, 'speed' => -0.05, 'code' => 'Ra'],
-            'Ketu (केतु)' => ['long' => $ketuSidereal, 'speed' => -0.05, 'code' => 'Ke'],
+            'Sun (Surya)' => ['long' => $sunSidereal, 'speed' => 1.0, 'code' => 'Su'],
+            'Moon (Chandra)' => ['long' => $moonSidereal, 'speed' => 13.2, 'code' => 'Mo'],
+            'Mars (Mangal)' => ['long' => $marsSidereal, 'speed' => 0.52, 'code' => 'Ma'],
+            'Mercury (Budha)' => ['long' => $mercSidereal, 'speed' => 1.2, 'code' => 'Me'],
+            'Jupiter (Guru)' => ['long' => $jupSidereal, 'speed' => 0.08, 'code' => 'Ju'],
+            'Venus (Shukra)' => ['long' => $venSidereal, 'speed' => 1.1, 'code' => 'Ve'],
+            'Saturn (Shani)' => ['long' => $satSidereal, 'speed' => 0.03, 'code' => 'Sa'],
+            'Rahu (North Node)' => ['long' => $rahuSidereal, 'speed' => -0.05, 'code' => 'Ra'],
+            'Ketu (South Node)' => ['long' => $ketuSidereal, 'speed' => -0.05, 'code' => 'Ke'],
         ];
 
         $planets = [];
@@ -530,40 +505,36 @@ class FreeKundaliEngine
             $long = self::norm360((float)$pData['long']);
             $signNum = ((int)floor($long / 30.0) % 12) + 1;
             $remDeg = fmod($long, 30.0);
-            // House from Lagna (Equal house system)
             $houseNum = (($signNum - $lagnaSignNum + 12) % 12) + 1;
 
-            // Nakshatra & Pada
             $nakIndex = (int)floor($long / (360.0 / 27.0));
             $nakIndex = min(26, max(0, $nakIndex));
             $nakPada = (int)floor(fmod($long, (360.0 / 27.0)) / (360.0 / 108.0)) + 1;
 
-            // Navamsha (D-9) sign
             $navamshaSignNum = ((int)floor($long / (30.0 / 9.0)) % 12) + 1;
             $navamshaHouse = (($navamshaSignNum - $lagnaSignNum + 12) % 12) + 1;
 
-            // Dignity
-            $dignity = 'Neutral (सम)';
-            if ($pName === 'Sun (सूर्य)') {
-                if ($signNum === 1) $dignity = 'Exalted (उच्च)';
-                elseif ($signNum === 7) $dignity = 'Debilitated (नीच)';
-                elseif ($signNum === 5) $dignity = 'Moolatrikona / Own (स्वग्रही)';
-            } elseif ($pName === 'Moon (चन्द्र)') {
-                if ($signNum === 2) $dignity = 'Exalted (उच्च)';
-                elseif ($signNum === 8) $dignity = 'Debilitated (नीच)';
-                elseif ($signNum === 4) $dignity = 'Own Sign (स्वग्रही)';
-            } elseif ($pName === 'Mars (मंगल)') {
-                if ($signNum === 10) $dignity = 'Exalted (उच्च)';
-                elseif ($signNum === 4) $dignity = 'Debilitated (नीच)';
-                elseif (in_array($signNum, [1, 8])) $dignity = 'Own Sign (स्वग्रही)';
-            } elseif ($pName === 'Jupiter (गुरु)') {
-                if ($signNum === 4) $dignity = 'Exalted (उच्च)';
-                elseif ($signNum === 10) $dignity = 'Debilitated (नीच)';
-                elseif (in_array($signNum, [9, 12])) $dignity = 'Own Sign (स्वग्रही)';
-            } elseif ($pName === 'Saturn (शनि)') {
-                if ($signNum === 7) $dignity = 'Exalted (उच्च)';
-                elseif ($signNum === 1) $dignity = 'Debilitated (नीच)';
-                elseif (in_array($signNum, [10, 11])) $dignity = 'Own Sign (स्वग्रही)';
+            $dignity = 'Neutral (Sama)';
+            if (str_starts_with($pName, 'Sun')) {
+                if ($signNum === 1) $dignity = 'Exalted (Uccha)';
+                elseif ($signNum === 7) $dignity = 'Debilitated (Neecha)';
+                elseif ($signNum === 5) $dignity = 'Moolatrikona / Own';
+            } elseif (str_starts_with($pName, 'Moon')) {
+                if ($signNum === 2) $dignity = 'Exalted (Uccha)';
+                elseif ($signNum === 8) $dignity = 'Debilitated (Neecha)';
+                elseif ($signNum === 4) $dignity = 'Own Sign (Swakshetra)';
+            } elseif (str_starts_with($pName, 'Mars')) {
+                if ($signNum === 10) $dignity = 'Exalted (Uccha)';
+                elseif ($signNum === 4) $dignity = 'Debilitated (Neecha)';
+                elseif (in_array($signNum, [1, 8])) $dignity = 'Own Sign (Swakshetra)';
+            } elseif (str_starts_with($pName, 'Jupiter')) {
+                if ($signNum === 4) $dignity = 'Exalted (Uccha)';
+                elseif ($signNum === 10) $dignity = 'Debilitated (Neecha)';
+                elseif (in_array($signNum, [9, 12])) $dignity = 'Own Sign (Swakshetra)';
+            } elseif (str_starts_with($pName, 'Saturn')) {
+                if ($signNum === 7) $dignity = 'Exalted (Uccha)';
+                elseif ($signNum === 1) $dignity = 'Debilitated (Neecha)';
+                elseif (in_array($signNum, [10, 11])) $dignity = 'Own Sign (Swakshetra)';
             }
 
             $planets[$pName] = [
@@ -572,7 +543,7 @@ class FreeKundaliEngine
                 'long' => round($long, 2),
                 'degree' => round($remDeg, 2),
                 'signNum' => $signNum,
-                'sign' => $zodiacSigns[$signNum]['en'] . ' (' . $zodiacSigns[$signNum]['hi'] . ')',
+                'sign' => $zodiacSigns[$signNum]['en'] . ' (' . $zodiacSigns[$signNum]['sans'] . ')',
                 'house' => $houseNum,
                 'nakshatra' => $nakshatras[$nakIndex]['name'],
                 'nakshatraLord' => $nakshatras[$nakIndex]['lord'],
@@ -586,40 +557,40 @@ class FreeKundaliEngine
         }
 
         // 6. Moon Rashi & Panchang Fundamentals
-        $moonSignNum = $planets['Moon (चन्द्र)']['signNum'];
+        $moonSignNum = $planets['Moon (Chandra)']['signNum'];
         $moonSign = $zodiacSigns[$moonSignNum];
         $moonNakIndex = (int)floor($moonSidereal / (360.0 / 27.0));
         $moonNak = $nakshatras[min(26, max(0, $moonNakIndex))];
-        $moonPada = $planets['Moon (चन्द्र)']['pada'];
+        $moonPada = $planets['Moon (Chandra)']['pada'];
 
-        // Tithi Calculation: (Moon - Sun) / 12 degrees
+        // Tithi Calculation
         $diffSunMoon = fmod($moonSidereal - $sunSidereal + 360.0, 360.0);
         $tithiNum = (int)floor($diffSunMoon / 12.0) + 1;
         $isShukla = ($tithiNum <= 15);
-        $paksha = $isShukla ? 'Shukla Paksha (शुक्ल पक्ष)' : 'Krishna Paksha (कृष्ण पक्ष)';
+        $paksha = $isShukla ? 'Shukla Paksha (Waxing Phase)' : 'Krishna Paksha (Waning Phase)';
         $tithiNames = [
-            1 => 'Pratipada (प्रतिपदा)', 2 => 'Dvitiya (द्वितीया)', 3 => 'Tritiya (तृतीया)',
-            4 => 'Chaturthi (चतुर्थी)', 5 => 'Panchami (पंचमी)', 6 => 'Shashthi (षष्ठी)',
-            7 => 'Saptami (सप्तमी)', 8 => 'Ashtami (अष्टमी)', 9 => 'Navami (नवमी)',
-            10 => 'Dashami (दशमी)', 11 => 'Ekadashi (एकादशी)', 12 => 'Dvadashi (द्वादशी)',
-            13 => 'Trayodashi (त्रयोदशी)', 14 => 'Chaturdashi (चतुर्दशी)',
-            15 => $isShukla ? 'Purnima (पूर्णिमा)' : 'Amavasya (अमावस्या)',
+            1 => 'Pratipada', 2 => 'Dvitiya', 3 => 'Tritiya',
+            4 => 'Chaturthi', 5 => 'Panchami', 6 => 'Shashthi',
+            7 => 'Saptami', 8 => 'Ashtami', 9 => 'Navami',
+            10 => 'Dashami', 11 => 'Ekadashi', 12 => 'Dvadashi',
+            13 => 'Trayodashi', 14 => 'Chaturdashi',
+            15 => $isShukla ? 'Purnima (Full Moon)' : 'Amavasya (New Moon)',
         ];
         $tithiName = $tithiNames[(($tithiNum - 1) % 15) + 1] ?? 'Shukla Pratipada';
 
         // Avakhada Chakra
         $varnas = [1 => 'Kshatriya', 2 => 'Vaishya', 3 => 'Shudra', 4 => 'Brahmin', 5 => 'Kshatriya', 6 => 'Vaishya', 7 => 'Shudra', 8 => 'Brahmin', 9 => 'Kshatriya', 10 => 'Vaishya', 11 => 'Shudra', 12 => 'Brahmin'];
-        $ganas = ['Deva (देव)', 'Manushya (मनुष्य)', 'Rakshasa (राक्षस)'];
-        $yoniList = ['Horse (अश्व)', 'Elephant (गज)', 'Sheep (मेष)', 'Serpent (सर्प)', 'Dog (श्वान)', 'Cat (मार्जार)', 'Rat (मूषक)', 'Cow (गौ)', 'Buffalo (महिष)', 'Tiger (व्याघ्र)', 'Hare (शशक)', 'Monkey (वानर)', 'Mongoose (नकुल)', 'Lion (सिंह)'];
-        $nadis = ['Adi (आदि)', 'Madhya (मध्य)', 'Antya (अन्त्य)'];
+        $ganas = ['Deva', 'Manushya', 'Rakshasa'];
+        $yoniList = ['Horse (Ashwa)', 'Elephant (Gaja)', 'Sheep (Mesha)', 'Serpent (Sarpa)', 'Dog (Shwana)', 'Cat (Marjara)', 'Rat (Mushaka)', 'Cow (Gau)', 'Buffalo (Mahisha)', 'Tiger (Vyaghra)', 'Hare (Shashaka)', 'Monkey (Vanara)', 'Mongoose (Nakula)', 'Lion (Simha)'];
+        $nadis = ['Adi', 'Madhya', 'Antya'];
 
         $avakhada = [
             'varna' => $varnas[$moonSignNum] ?? 'Kshatriya',
-            'vashya' => ($moonSignNum <= 6) ? 'Chatushpada (चतुष्पाद)' : 'Dwipada (द्विपद)',
+            'vashya' => ($moonSignNum <= 6) ? 'Chatushpada (Quadruped)' : 'Dwipada (Biped)',
             'yoni' => $yoniList[$moonNakIndex % count($yoniList)],
             'gana' => $ganas[$moonNakIndex % 3],
             'nadi' => $nadis[$moonNakIndex % 3],
-            'lagnaSign' => $zodiacSigns[$lagnaSignNum]['en'] . ' (' . $zodiacSigns[$lagnaSignNum]['hi'] . ')',
+            'lagnaSign' => $zodiacSigns[$lagnaSignNum]['en'] . ' (' . $zodiacSigns[$lagnaSignNum]['sans'] . ')',
             'lagnaLord' => $zodiacSigns[$lagnaSignNum]['lord'],
             'rashiLord' => $moonSign['lord'],
             'element' => $moonSign['element'],
@@ -632,7 +603,6 @@ class FreeKundaliEngine
         $startIdx = array_search($startLord, $dashaOrder);
         if ($startIdx === false) $startIdx = 0;
 
-        // Balance of first Dasha
         $nakSpan = 360.0 / 27.0;
         $remInNak = fmod($moonSidereal, $nakSpan);
         $fractionElapsed = $remInNak / $nakSpan;
@@ -666,7 +636,6 @@ class FreeKundaliEngine
             $currentCalDate = $nextEnd;
         }
 
-        // Active Dasha identification
         $activeDasha = null;
         foreach ($dashas as $d) {
             if ($d['isCurrent']) {
@@ -677,16 +646,14 @@ class FreeKundaliEngine
         if (!$activeDasha) $activeDasha = $dashas[0]['lord'];
 
         // 8. Dosha Nirnaya
-        $marsHouse = $planets['Mars (मंगल)']['house'];
+        $marsHouse = $planets['Mars (Mangal)']['house'];
         $hasManglik = in_array($marsHouse, [1, 4, 7, 8, 12]);
         $manglikStatus = $hasManglik ? "Manglik Dosha Present in House {$marsHouse}" : "No Manglik Dosha (Kuja Dosha Mukta)";
 
-        // Kaal Sarp Dosha: Check hemmed planets
-        $rahuHouse = $planets['Rahu (राहु)']['house'];
-        $ketuHouse = $planets['Ketu (केतु)']['house'];
+        $rahuHouse = $planets['Rahu (North Node)']['house'];
+        $ketuHouse = $planets['Ketu (South Node)']['house'];
         $isKaalSarp = ($rahuHouse === 1 || $rahuHouse === 7 || $rahuHouse === 8);
 
-        // Shani Sade Sati: Current Saturn sign is Kumbh/Meen (Aquarius/Pisces)
         $sadeSati = "Shani Anukool (No Peak Sade Sati Active)";
         if (in_array($moonSignNum, [10, 11, 12])) {
             $sadeSati = "Active Shani Sade Sati Phase (Vedic Protection Advised)";
@@ -694,18 +661,18 @@ class FreeKundaliEngine
 
         // 9. Auspicious Elements & Gemstone
         $gemstones = [
-            1 => ['gem' => 'Red Coral (मूँगा)', 'metal' => 'Copper / Gold', 'finger' => 'Ring Finger'],
-            2 => ['gem' => 'Diamond / White Opal (हीरा / ओपल)', 'metal' => 'Silver / Platinum', 'finger' => 'Middle / Little Finger'],
-            3 => ['gem' => 'Emerald (पन्ना)', 'metal' => 'Bronze / Gold', 'finger' => 'Little Finger'],
-            4 => ['gem' => 'Natural Pearl (सच्चा मोती)', 'metal' => 'Silver', 'finger' => 'Little Finger'],
-            5 => ['gem' => 'Ruby / Manik (माणिक्य)', 'metal' => 'Copper / Gold', 'finger' => 'Ring Finger'],
-            6 => ['gem' => 'Emerald (पन्ना)', 'metal' => 'Bronze / Gold', 'finger' => 'Little Finger'],
-            7 => ['gem' => 'White Sapphire / Opal (सफेद पुखराज)', 'metal' => 'Silver', 'finger' => 'Middle Finger'],
-            8 => ['gem' => 'Red Coral (मूँगा)', 'metal' => 'Gold / Copper', 'finger' => 'Ring Finger'],
-            9 => ['gem' => 'Yellow Sapphire (पुखराज)', 'metal' => 'Gold / Brass', 'finger' => 'Index Finger'],
-            10 => ['gem' => 'Blue Sapphire / Amethyst (नीलम / कटैला)', 'metal' => 'Panchdhatu / Silver', 'finger' => 'Middle Finger'],
-            11 => ['gem' => 'Blue Sapphire (नीलम)', 'metal' => 'Iron / Silver', 'finger' => 'Middle Finger'],
-            12 => ['gem' => 'Yellow Sapphire (पुखराज)', 'metal' => 'Gold', 'finger' => 'Index Finger'],
+            1 => ['gem' => 'Red Coral (Moonga)', 'metal' => 'Copper / Gold', 'finger' => 'Ring Finger'],
+            2 => ['gem' => 'Diamond / White Opal', 'metal' => 'Silver / Platinum', 'finger' => 'Middle / Little Finger'],
+            3 => ['gem' => 'Emerald (Panna)', 'metal' => 'Bronze / Gold', 'finger' => 'Little Finger'],
+            4 => ['gem' => 'Natural Pearl (Moti)', 'metal' => 'Silver', 'finger' => 'Little Finger'],
+            5 => ['gem' => 'Ruby (Manik)', 'metal' => 'Copper / Gold', 'finger' => 'Ring Finger'],
+            6 => ['gem' => 'Emerald (Panna)', 'metal' => 'Bronze / Gold', 'finger' => 'Little Finger'],
+            7 => ['gem' => 'White Sapphire / Opal', 'metal' => 'Silver', 'finger' => 'Middle Finger'],
+            8 => ['gem' => 'Red Coral (Moonga)', 'metal' => 'Gold / Copper', 'finger' => 'Ring Finger'],
+            9 => ['gem' => 'Yellow Sapphire (Pukhraj)', 'metal' => 'Gold / Brass', 'finger' => 'Index Finger'],
+            10 => ['gem' => 'Blue Sapphire / Amethyst', 'metal' => 'Panchdhatu / Silver', 'finger' => 'Middle Finger'],
+            11 => ['gem' => 'Blue Sapphire (Neelam)', 'metal' => 'Iron / Silver', 'finger' => 'Middle Finger'],
+            12 => ['gem' => 'Yellow Sapphire (Pukhraj)', 'metal' => 'Gold', 'finger' => 'Index Finger'],
         ];
         $luckyGem = $gemstones[$lagnaSignNum] ?? $gemstones[1];
 
@@ -713,20 +680,20 @@ class FreeKundaliEngine
         $svgD1 = self::generateNorthIndianSvg($lagnaSignNum, $houseToPlanetsD1, 'Janma Lagna Kundali (D-1)');
         $svgD9 = self::generateNorthIndianSvg($lagnaSignNum, $houseToPlanetsD9, 'Navamsha Kundali (D-9)');
 
-        // 11. 12-Bhava Predictions
+        // 11. 12-Bhava Predictions (Pure English)
         $houseNames = [
-            1 => ['name' => 'Tanu Bhava (तनु भाव)', 'theme' => 'Self, Vitality & Appearance', 'desc' => 'Your personality reflects nobility, sharp intuition, and a dignified presence. Good physical stamina with strong recuperative energy.'],
-            2 => ['name' => 'Dhana Bhava (धन भाव)', 'theme' => 'Accumulated Wealth, Speech & Family', 'desc' => 'Favorable family traditions. Eloquent speech that wins over elders. Consistent income through intellect and trustworthy conduct.'],
-            3 => ['name' => 'Sahaja Bhava (सहज भाव)', 'theme' => 'Courage, Siblings & Initiatives', 'desc' => 'High willpower and relentless drive. Success in independent business, communications, and short journeys.'],
-            4 => ['name' => 'Sukha Bhava (सुख भाव)', 'theme' => 'Mother, Property & Inner Peace', 'desc' => 'Blessings of landed property, vehicles, and parental support. Inner serenity nurtured through spiritual contemplation.'],
-            5 => ['name' => 'Putra Bhava (पुत्र भाव)', 'theme' => 'Intellect, Past Merits & Progeny', 'desc' => 'Deep creative intelligence and sharp analytical mind. Blessed with dutiful children and divine past-life karmic merit (Purva Punya).'],
-            6 => ['name' => 'Ari Bhava (अरि भाव)', 'theme' => 'Overcoming Debts, Competitors & Health', 'desc' => 'Victorious over adversaries and legal challenges. Capacity to resolve complex disputes and triumph in competitive pursuits.'],
-            7 => ['name' => 'Yuvati Bhava (युवति भाव)', 'theme' => 'Spouse, Partnerships & Social Status', 'desc' => 'Supportive, cultured, and devoted life partner. Mutually enriching marital bond with auspicious social standing.'],
-            8 => ['name' => 'Randhra Bhava (रन्ध्र भाव)', 'theme' => 'Longevity, Occult & Transformations', 'desc' => 'Strong longevity (Dirghayu) with deep inclination towards esoteric Vedic wisdom, research, and ancestral inheritance.'],
-            9 => ['name' => 'Dharma Bhava (धर्म भाव)', 'theme' => 'Fortune (Bhagya), Father & Pilgrimages', 'desc' => 'High fortune and spiritual protection. Frequent sacred pilgrimages to holy Jyotirlingas, bringing sudden prosperity.'],
-            10 => ['name' => 'Karma Bhava (कर्म भाव)', 'theme' => 'Career, Authority & Public Respect', 'desc' => 'High professional reputation. Natural leadership traits, gaining esteem from superiors and the community.'],
-            11 => ['name' => 'Labha Bhava (लाभ भाव)', 'theme' => 'Gains, Ambitions & Social Circles', 'desc' => 'Steady influx of gains and commercial triumphs. Wide network of influential spiritual mentors and loyal companions.'],
-            12 => ['name' => 'Vyaya Bhava (व्यय भाव)', 'theme' => 'Expenses, Foreign Connections & Moksha', 'desc' => 'Expenditure inclined towards sacred philanthropic deeds, temple construction, and ultimate spiritual liberation (Moksha).'],
+            1 => ['name' => '1st House (Tanu Bhava)', 'theme' => 'Self, Vitality & Physical Personality', 'desc' => 'Your personality reflects dignity, sharp intuition, and a commanding presence. High recuperative stamina and natural leadership abilities.'],
+            2 => ['name' => '2nd House (Dhana Bhava)', 'theme' => 'Accumulated Wealth, Speech & Family Values', 'desc' => 'Supportive ancestral lineage. Eloquent, persuasive speech that commands respect. Consistent accumulation of wealth through intellectual endeavors.'],
+            3 => ['name' => '3rd House (Sahaja Bhava)', 'theme' => 'Courage, Siblings & Energetic Initiatives', 'desc' => 'High willpower and relentless motivation. Remarkable triumphs in independent enterprise, media communications, and commercial voyages.'],
+            4 => ['name' => '4th House (Sukha Bhava)', 'theme' => 'Mother, Property, Vehicles & Domestic Peace', 'desc' => 'Blessings of landed assets, comfortable conveyances, and nurturing maternal backing. Inner mental serenity cultivated through sacred contemplation.'],
+            5 => ['name' => '5th House (Putra Bhava)', 'theme' => 'Intellect, Past Merits & Children', 'desc' => 'Sharp analytical intellect and creative wisdom. Endowed with dutiful children and spiritual merit carried over from past karmas (Purva Punya).'],
+            6 => ['name' => '6th House (Ari Bhava)', 'theme' => 'Overcoming Debts, Health & Competitive Prowess', 'desc' => 'Triumphant over professional rivals and legal challenges. Remarkable resilience to resolve complex obstacles and emerge victorious in competitive arenas.'],
+            7 => ['name' => '7th House (Yuvati Bhava)', 'theme' => 'Spouse, Partnerships & Public Recognition', 'desc' => 'Cultured, supportive, and spiritually aligned life companion. Harmonious marital bond bringing mutual prosperity and elevated social standing.'],
+            8 => ['name' => '8th House (Randhra Bhava)', 'theme' => 'Longevity, Intuition & Transformational Wisdom', 'desc' => 'Strong vitality and longevity (Dirghayu). Natural affinity for deeper philosophical research, occult insights, and ancestral benefits.'],
+            9 => ['name' => '9th House (Dharma Bhava)', 'theme' => 'Fortune (Bhagya), Father & Sacred Pilgrimages', 'desc' => 'Supreme divine grace and spiritual protection. Frequent pilgrimages to holy Jyotirlingas bring unexpected breakthroughs and lifelong prosperity.'],
+            10 => ['name' => '10th House (Karma Bhava)', 'theme' => 'Career, Authority, Fame & Public Standing', 'desc' => 'Distinguished professional trajectory. Natural administrative authority, earning esteemed recognition from elders, government, and society.'],
+            11 => ['name' => '11th House (Labha Bhava)', 'theme' => 'Financial Influx, Ambitions & Influential Circles', 'desc' => 'Continuous stream of financial rewards and fulfillment of long-term aspirations. Wide network of influential spiritual mentors and loyal companions.'],
+            12 => ['name' => '12th House (Vyaya Bhava)', 'theme' => 'Expenditure, Foreign Connections & Liberation (Moksha)', 'desc' => 'Financial resources dedicated to noble dharmic charity, temple service, and higher spiritual pursuits leading to ultimate inner liberation.'],
         ];
 
         return [
@@ -740,7 +707,7 @@ class FreeKundaliEngine
             'ayanamsha' => round($ayanamsha, 2),
             'lagna' => [
                 'signNum' => $lagnaSignNum,
-                'sign' => $zodiacSigns[$lagnaSignNum]['en'] . ' (' . $zodiacSigns[$lagnaSignNum]['hi'] . ')',
+                'sign' => $zodiacSigns[$lagnaSignNum]['en'] . ' (' . $zodiacSigns[$lagnaSignNum]['sans'] . ')',
                 'degree' => round($lagnaRemDeg, 2),
                 'lord' => $zodiacSigns[$lagnaSignNum]['lord'],
             ],
@@ -749,7 +716,7 @@ class FreeKundaliEngine
                 'nakshatra' => $moonNak['name'],
                 'nakshatraLord' => $moonNak['lord'],
                 'nakshatraPada' => $moonPada,
-                'moonSign' => $moonSign['en'] . ' (' . $moonSign['hi'] . ')',
+                'moonSign' => $moonSign['en'] . ' (' . $moonSign['sans'] . ')',
                 'moonSignLord' => $moonSign['lord'],
                 'yoga' => 'Shubha Yoga',
                 'karana' => 'Bava Karana',
@@ -772,8 +739,8 @@ class FreeKundaliEngine
                 'finger' => $luckyGem['finger'],
                 'rudraksha' => ($lagnaSignNum % 7 + 1) . '-Mukhi Nepali Rudraksha',
                 'numbers' => ($lagnaSignNum % 9 + 1) . ', ' . (($lagnaSignNum + 4) % 9 + 1),
-                'colors' => $zodiacSigns[$lagnaSignNum]['element'] === 'Fire (अग्नि)' ? 'Saffron, Red, Yellow' : 'White, Cream, Green',
-                'days' => 'Monday & Thursday (सोमवार व गुरुवार)',
+                'colors' => $zodiacSigns[$lagnaSignNum]['element'] === 'Fire (Agni)' ? 'Saffron, Crimson, Golden Yellow' : 'Pure White, Cream, Emerald Green',
+                'days' => 'Monday & Thursday',
                 'ishtaDevta' => 'Bhagwan Shiva & Shri Hari Vishnu',
             ],
             'housePredictions' => $houseNames,
@@ -785,23 +752,18 @@ class FreeKundaliEngine
      */
     protected static function generateNorthIndianSvg(int $lagnaSign, array $housePlanets, string $title): string
     {
-        $w = 340;
-        $h = 340;
-
-        // Calculate sign numbers for each house: House 1 = Lagna, House 2 = (Lagna % 12)+1, etc.
         $hSigns = [];
         for ($hNum = 1; $hNum <= 12; $hNum++) {
             $hSigns[$hNum] = (($lagnaSign + $hNum - 2) % 12) + 1;
         }
 
-        // Helper to format planets in house
         $hp = function($hNum) use ($housePlanets) {
             $list = $housePlanets[$hNum] ?? [];
             return !empty($list) ? implode(' ', $list) : '';
         };
 
         $svg = <<<SVG
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 340" width="100%" height="260" style="max-width: 320px; margin: 0 auto; display: block; font-family: 'DejaVu Sans', sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 340" width="100%" height="260" style="max-width: 320px; margin: 0 auto; display: block; font-family: 'Helvetica', 'Arial', sans-serif;">
     <rect width="340" height="340" fill="#FFFBEB" stroke="#D97706" stroke-width="3" rx="8"/>
     <!-- Outer Diamond Lines -->
     <line x1="0" y1="0" x2="340" y2="340" stroke="#B45309" stroke-width="1.8"/>

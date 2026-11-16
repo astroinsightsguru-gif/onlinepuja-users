@@ -14,6 +14,7 @@ import '../chat/chat_session_screen.dart';
 import '../orders/orders_fulfillment_screen.dart';
 import '../profile/profile_screen.dart';
 import '../social/astrologer_social_growth_screen.dart';
+import '../tools/vedic_toolkit_screen.dart';
 import '../wallet/wallet_screen.dart';
 import 'availability_screen.dart';
 import 'requests_screen.dart';
@@ -906,6 +907,94 @@ class _HomeShellState extends State<HomeShell> {
           ),
           const SizedBox(height: 16),
 
+          // 🕉️ Pandit Vedic Toolkit Card
+          PartnerCard(
+            padding: const EdgeInsets.all(16),
+            gradient: dark
+                ? const LinearGradient(
+                    colors: [Color(0xFF2D1B36), Color(0xFF191224)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : const LinearGradient(
+                    colors: [Color(0xFFFFFBEB), Color(0xFFFEF3C7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+            borderColor: PartnerTheme.saffron.withValues(alpha: 0.5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            gradient: PartnerTheme.saffronGradient,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.auto_stories_rounded, color: Colors.white, size: 18),
+                        ),
+                        const SizedBox(width: 10),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'वैदिक टूलकिट (Vedic Toolkit)',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                            ),
+                            Text(
+                              'कुंडली, पंचांग व पूजा संस्तुति',
+                              style: TextStyle(fontSize: 10.5, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: PartnerTheme.saffron.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'PANDIT TOOLS',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: PartnerTheme.saffron),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'कॉल व परामर्श के समय यजमान की 10-पेज संपूर्ण वैदिक कुंडली PDF बनाएं, दैनिक पंचांग/शुभ मुहूर्त देखें अथवा व्हाट्सएप पर पूजा संस्तुति भेजें।',
+                  style: TextStyle(fontSize: 11.5, color: dark ? Colors.white70 : Colors.black87, height: 1.35),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: PartnerTheme.saffron,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    icon: const Icon(Icons.stars_rounded, size: 16),
+                    label: const Text(
+                      'टूलकिट खोलें (Open Vedic Toolkit)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                    ),
+                    onPressed: () => Navigator.pushNamed(context, VedicToolkitScreen.route),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Astrologer Performance Grid
           Text(
             AppStrings.practiceSummary,
@@ -1108,6 +1197,15 @@ class _HomeShellState extends State<HomeShell> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, AstrologerSocialGrowthScreen.route);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.auto_stories_rounded, color: PartnerTheme.saffron),
+              title: const Text('वैदिक टूलकिट (Vedic Toolkit)'),
+              subtitle: const Text('कुंडली, पंचांग व पूजा संस्तुति'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, VedicToolkitScreen.route);
               },
             ),
             ListTile(

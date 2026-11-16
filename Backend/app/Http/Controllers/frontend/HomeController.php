@@ -526,31 +526,41 @@ class HomeController extends Controller
 
     public function storeSubscriptionId(Request $request)
     {
-        if (authcheck()) {
-            $userId = authcheck()['id'];
-            // dd($userId);
-            // Find the user's device details
-            $userDeviceDetails = DB::table('user_device_details')->where('userId', $userId)->first();
+        $subscriptionIdWeb = $request->input('subscription_id_web');
+        if (empty($subscriptionIdWeb)) {
+            return response()->json(['error' => 'Missing subscription_id_web'], 400);
+        }
 
-            if ($userDeviceDetails) {
-                DB::table('user_device_details')
-                    ->where('userId', $userId)
-                    ->update([
-                        'subscription_id_web' => $request->subscription_id_web,
-                        'updated_at' => now()
-                    ]);
-            } else {
-                $userDeviceDetail = UserDeviceDetail::create([
-                    'userId' => $userId,
-                    'appId' => 1,
-                    'subscription_id_web' => $request->subscription_id_web,
-                    'created_at' => now(),
+        $userId = authcheck() ? authcheck()['id'] : null;
+
+        // Check if device already exists by subscription_id_web or userId
+        $query = DB::table('user_device_details')->where('subscription_id_web', $subscriptionIdWeb);
+        if ($userId) {
+            $query->orWhere('userId', $userId);
+        }
+        $existing = $query->first();
+
+        if ($existing) {
+            DB::table('user_device_details')
+                ->where('id', $existing->id)
+                ->update([
+                    'userId' => $userId ?: $existing->userId,
+                    'subscription_id_web' => $subscriptionIdWeb,
+                    'isActive' => 1,
                     'updated_at' => now(),
                 ]);
-            }
-
-            return response()->json(['message' => 'Subscription ID stored successfully.'], 200);
+        } else {
+            DB::table('user_device_details')->insert([
+                'userId' => $userId,
+                'appId' => '1',
+                'subscription_id_web' => $subscriptionIdWeb,
+                'isActive' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
+
+        return response()->json(['message' => 'Subscription ID stored successfully.'], 200);
     }
 
     public function getStates($countryId)
