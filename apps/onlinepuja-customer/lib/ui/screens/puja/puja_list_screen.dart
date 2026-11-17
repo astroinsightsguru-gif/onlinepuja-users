@@ -16,7 +16,6 @@ class PujaListScreen extends StatefulWidget {
 }
 
 class _PujaListScreenState extends State<PujaListScreen> {
-  List<PujaCategory>? _categories;
   List<Puja>? _items;
   Object? _error;
   dynamic _categoryId;
@@ -54,22 +53,15 @@ class _PujaListScreenState extends State<PujaListScreen> {
   Future<void> _load() async {
     setState(() => _error = null);
     try {
-      final cats = await PujaApi.instance.categories();
       final items = await PujaApi.instance.list(categoryId: _categoryId);
       if (mounted) {
         setState(() {
-          _categories = cats;
           _items = items;
         });
       }
     } catch (e) {
       if (mounted) setState(() => _error = e);
     }
-  }
-
-  void _pickCategory(dynamic id) {
-    setState(() => _categoryId = (_categoryId == id) ? null : id);
-    _load();
   }
 
   static String _formatTithi(dynamic rawDate) {
@@ -79,12 +71,6 @@ class _PujaListScreenState extends State<PujaListScreen> {
       return "${s.substring(0, 10)} • Sacred Tithi";
     }
     return s;
-  }
-
-  static String _formatCategoryTitle(String raw) {
-    if (raw.isEmpty) return raw;
-    final words = raw.toLowerCase().split(' ');
-    return words.map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ');
   }
 
   List<Puja> get _filteredItems {
@@ -248,23 +234,16 @@ class _PujaListScreenState extends State<PujaListScreen> {
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  // 1. Festive Hero Mahotsav Banner
-                  SliverToBoxAdapter(child: _buildFestiveHeroBanner(displayItems)),
-
-                  // 2. Devotional Ambient Chant Bar (Compact & Sleek)
-                  SliverToBoxAdapter(child: _buildAmbientAudioBar(isDark)),
-
-                  // 3. Search Bar
+                  // 1. Sleek Search Bar at Top
                   SliverToBoxAdapter(child: _buildSearchBar(cardBg, cardBorder, textPrimary, textSecondary)),
 
-                  // 4. Custom Deity Filter Pills (Zero Overflow)
+                  // 2. Clean Deity & Category Filter Pills (Single Row)
                   SliverToBoxAdapter(child: _buildDeityFilterStrip(cardBg, cardBorder, isDark)),
 
-                  // 5. Category Chips (Title Cased, Clean)
-                  if (_categories != null && _categories!.isNotEmpty)
-                    SliverToBoxAdapter(child: _buildCategoryStrip(cardBg, cardBorder, isDark)),
+                  // 3. Compact Devotional Ambient Chant Bar
+                  SliverToBoxAdapter(child: _buildAmbientAudioBar(isDark)),
 
-                  // 6. Section Header
+                  // 4. Section Header
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
@@ -379,145 +358,6 @@ class _PujaListScreenState extends State<PujaListScreen> {
                 ],
               ),
             ),
-    );
-  }
-
-  /// Festive Hero Banner with rich spiritual gradient, live counters & trust points
-  Widget _buildFestiveHeroBanner(List<Puja> items) {
-    final topPuja = items.isNotEmpty ? items.first : null;
-    final bannerTitle = topPuja != null && (topPuja.title?.isNotEmpty ?? false)
-        ? topPuja.title!
-        : "Kashi Dev Deepawali & Diwali 2026";
-    final bannerSubtitle = topPuja != null && (topPuja.subtitle?.isNotEmpty ?? false)
-        ? topPuja.subtitle!
-        : "Participate in Sacred 108 Deepdaan, Maha Lakshmi Havan at Kashi Vishwanath & Holy Teerths with Gotra Sankalp.";
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF6B2606), Color(0xFF92400E), Color(0xFFB45309)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF78350F).withValues(alpha: 0.28),
-              blurRadius: 12,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Om Watermark
-            Positioned(
-              right: -14,
-              bottom: -22,
-              child: Opacity(
-                opacity: 0.13,
-                child: const Text("ॐ", style: TextStyle(fontSize: 160, color: Colors.white, fontWeight: FontWeight.w100)),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFBBF24),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text("✨ ", style: TextStyle(fontSize: 10)),
-                            Text(
-                              "VEDIC SANKALPA & SEVA",
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF78350F),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text("⚡ 100% Certified Pandits", style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w700)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    bannerTitle,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.2,
-                      height: 1.2,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    bannerSubtitle,
-                    style: const TextStyle(color: Color(0xFFFEF3C7), fontSize: 11, height: 1.35),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 12),
-                  // Trust pills strip
-                  Row(
-                    children: [
-                      _heroTrustBadge("📹 Video Proof"),
-                      const SizedBox(width: 8),
-                      _heroTrustBadge("🌸 Gotra Chanting"),
-                      const SizedBox(width: 8),
-                      _heroTrustBadge("📦 Home Prasad"),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _heroTrustBadge(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w600),
-      ),
     );
   }
 
@@ -704,58 +544,26 @@ class _PujaListScreenState extends State<PujaListScreen> {
     );
   }
 
-  /// Secondary Category Horizontal List (Title-Cased, Clean)
-  Widget _buildCategoryStrip(Color cardBg, Color cardBorder, bool isDark) {
-    return SizedBox(
-      height: 38,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-        itemCount: _categories!.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final c = _categories![i];
-          final isSelected = _categoryId == c.id;
-          final title = _formatCategoryTitle(c.name?.toString() ?? '');
+  String _cleanPujaTitle(String? raw) {
+    if (raw == null || raw.isEmpty) return 'Vedic Mahapuja';
+    if (raw.contains(' - ')) return raw.split(' - ').first.trim();
+    if (raw.contains(' | ')) return raw.split(' | ').first.trim();
+    return raw.trim();
+  }
 
-          return InkWell(
-            onTap: () => _pickCategory(c.id),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? (isDark ? const Color(0xFF78350F) : const Color(0xFFFEF3C7))
-                    : cardBg,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isSelected ? const Color(0xFFF59E0B) : cardBorder,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isSelected) ...[
-                    const Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFFD97706)),
-                    const SizedBox(width: 4),
-                  ],
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      color: isSelected
-                          ? (isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E))
-                          : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
+  String _cleanPujaSubtitle(Puja p) {
+    final sub = p.subtitle?.toString() ?? '';
+    if (sub.isNotEmpty) {
+      if (sub.length > 80) return '${sub.substring(0, 77)}...';
+      return sub;
+    }
+    final rawTitle = p.title?.toString() ?? '';
+    if (rawTitle.contains(' - ')) {
+      final part = rawTitle.split(' - ').sublist(1).join(' - ').trim();
+      if (part.length > 80) return '${part.substring(0, 77)}...';
+      return part;
+    }
+    return 'Vedic Sankalp & Vidhi by certified Kashi Shastris';
   }
 
   /// High Quality Sri Mandir-Grade Puja Card
@@ -914,9 +722,9 @@ class _PujaListScreenState extends State<PujaListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
+                  // Title (Cleaned up, no delimiter spam)
                   Text(
-                    p.title?.toString() ?? 'Vedic Mahapuja',
+                    _cleanPujaTitle(p.title?.toString()),
                     style: TextStyle(
                       fontSize: 15.5,
                       fontWeight: FontWeight.w900,
@@ -924,21 +732,19 @@ class _PujaListScreenState extends State<PujaListScreen> {
                       letterSpacing: -0.2,
                       height: 1.25,
                     ),
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
 
-                  // Subtitle
-                  if (p.subtitle != null && p.subtitle.toString().isNotEmpty) ...[
-                    Text(
-                      p.subtitle.toString(),
-                      style: TextStyle(fontSize: 11, color: textSecondary, height: 1.3),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                  ],
+                  // Subtitle (Concise, single-line)
+                  Text(
+                    _cleanPujaSubtitle(p),
+                    style: TextStyle(fontSize: 11, color: textSecondary, height: 1.3),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
 
                   // Teerth Location
                   Row(
