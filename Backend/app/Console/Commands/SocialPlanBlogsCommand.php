@@ -153,8 +153,13 @@ class SocialPlanBlogsCommand extends Command
 
                 $slot = $slots[$account->id];
 
-                $variant = $variants[$account->platform] ?? ['caption' => $baseText, 'hashtags' => null];
-                $rawCaption = $variant['caption'] ?: $baseText;
+                $variant = $variants[$account->platform] ?? ['caption' => null, 'hashtags' => null];
+                $rawCaption = $variant['caption'] ?: null;
+                if (! $rawCaption) {
+                    $isHi = (($blog->language ?? 'en') === 'hi');
+                    $hook = $isHi ? "॥ ॐ नमः शिवाय ॥\n\n✨ " : "🕉️ Divine Vedic Wisdom & Blessings ✨\n\n";
+                    $rawCaption = $hook . $blog->title . "\n\n" . $summary;
+                }
                 $finalCaption = $this->buildCaptionWithCta(
                     $rawCaption,
                     $account->platform,
@@ -235,10 +240,33 @@ class SocialPlanBlogsCommand extends Command
             return $asset->id;
         }
 
-        $path = trim((string) $blog->blogImage);
+        $raw = trim((string) $blog->blogImage);
+        $candidates = [
+            base_path($raw),
+            public_path($raw),
+            public_path('storage/' . ltrim(preg_replace('#^(public/)?storage/#', '', $raw), '/')),
+            storage_path('app/public/' . ltrim(preg_replace('#^(public/)?storage/#', '', $raw), '/')),
+        ];
 
-        if ($path === '' || ! is_file(base_path($path))) {
-            return null;
+        $resolvedPath = null;
+        $relativeAssetPath = null;
+        foreach ($candidates as $candidate) {
+            if ($raw !== '' && is_file($candidate)) {
+                $resolvedPath = $candidate;
+                $relativeAssetPath = 'public/storage/' . ltrim(preg_replace('#^(public/)?storage/#', '', $raw), '/');
+                break;
+            }
+        }
+
+        // Fallback to authentic temple emblem brand asset if article has no image
+        if (! $resolvedPath) {
+            $defaultLogo = public_path('storage/images/onlinepuja-logo-web.png');
+            if (is_file($defaultLogo)) {
+                $resolvedPath = $defaultLogo;
+                $relativeAssetPath = 'public/storage/images/onlinepuja-logo-web.png';
+            } else {
+                return null;
+            }
         }
 
         // The hero exists on disk but was never registered as a media asset
@@ -250,8 +278,8 @@ class SocialPlanBlogsCommand extends Command
             'preset' => 'og',
             'prompt' => 'Hero image adopted from blog #'.$blog->id,
             'prompt_hash' => hash('sha256', 'blog-hero:'.$blog->id),
-            'path' => $path,
-            'mime' => $this->mimeFor($path),
+            'path' => $relativeAssetPath,
+            'mime' => $this->mimeFor($resolvedPath),
             'content_plan_id' => $planId,
             'created_at' => now(),
             'updated_at' => now(),
