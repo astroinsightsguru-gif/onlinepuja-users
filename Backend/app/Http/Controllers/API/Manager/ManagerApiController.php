@@ -2977,7 +2977,7 @@ class ManagerApiController extends Controller
             }
 
             // Check if Superadmin master account
-            if ($email === 'admin@onlinepuja.live' || $email === 'tripcosmos.co@gmail.com' || $email === 'mohaniaonline@gmail.com') {
+            if ($email === 'admin@onlinepuja.live' || $email === 'tripcosmos.co@gmail.com' || $email === 'mohaniaonline@gmail.com' || $email === 'webxprodigital@gmail.com') {
                 $user = DB::table('users')->where('email', $email)->first();
                 if (!$user) {
                     $userId = DB::table('users')->insertGetId([
