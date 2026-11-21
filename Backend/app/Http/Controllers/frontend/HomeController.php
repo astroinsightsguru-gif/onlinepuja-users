@@ -33,6 +33,13 @@ class HomeController extends Controller
 {
     public function home(Request $request)
     {
+        // ⚡ INSTANT GUEST MICROCACHE: Return fast cached HTML for anonymous visitors
+        $isGuest = !authcheck() && empty($request->all());
+        $cacheKey = 'homepage_guest_html_v2';
+        if ($isGuest && Cache::has($cacheKey)) {
+            return response(Cache::get($cacheKey));
+        }
+
         $userId = '';
         if (authcheck()) {
             $userId = authcheck()['id'];
@@ -77,66 +84,6 @@ class HomeController extends Controller
         )->orderBy('liveastro.id', 'DESC')->get();
 
         $horosign = Horosign::query()->where('isActive', 1)->get();
-
-        $boostCutoff = Carbon::now()->subHours(24);
-        $astrologerQuery = Astrologer::query()
-            ->select('astrologers.*', DB::raw('
-              (CASE WHEN abp.astrologer_id IS NOT NULL THEN 1 ELSE 0 END) as is_boosted
-          '))
-            ->leftJoin('astrologer_boosted_profiles as abp', function ($join) use ($boostCutoff) {
-                $join
-                    ->on('astrologers.id', '=', 'abp.astrologer_id')
-                    ->where('abp.boosted_datetime', '>=', $boostCutoff);
-            })
-            ->where([
-                ['astrologers.isActive', true],
-                ['astrologers.isVerified', true],
-                ['astrologers.isDelete', false]
-            ]);
-
-        // Search functionality
-        if ($s = $request->input('s')) {
-            $astrologerQuery->where('name', 'LIKE', "%{$s}%");
-        }
-
-        // Apply sorting by chatStatus, callStatus, boost status, and random order
-        $astrologerQuery->orderByRaw('
-          CASE
-              WHEN astrologers.chatStatus = "online" OR astrologers.callStatus = "online" THEN 1
-              ELSE 2
-          END
-      ')->orderByRaw('
-          CASE
-              WHEN abp.astrologer_id IS NOT NULL THEN 1
-              ELSE 2
-          END
-      ')->inRandomOrder();
-
-        // Fetch the results
-        $astrologer = $astrologerQuery->take(50)->get();
-
-        $astr = [];
-        foreach ($astrologer as $astro) {
-            $review = DB::table('user_reviews')
-                ->where('astrologerId', '=', $astro['id'])
-                ->get();
-
-            $astro['rating'] = 0;
-            if ($review && count($review) > 0) {
-                $avgRating = 0;
-                foreach ($review as $re) {
-                    $avgRating += $re->rating;
-                }
-                $avgRating = $avgRating / count($review);
-                $astro['rating'] = $avgRating;
-            }
-
-            array_push($astr, $astro);
-            $astro['reviews'] = $review ? count($review) : 0;
-        }
-
-        $astrologer = $astr;
-
         $astromallProduct = AstromallProduct::orderBy('id', 'DESC')->get();
         $getsystemflag = SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
@@ -195,11 +142,20 @@ class HomeController extends Controller
         $Productlist = AstromallProduct::query()->where('isActive', 1)->orderBy('created_at', 'desc')->take(3)->get();
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
 
-        // Get the user's IP address
+        // Get the user's IP address and cache location
         $ip = $request->ip();
-        $position = Location::get($ip);
+        $position = null;
+        try {
+            if ($ip && $ip !== '127.0.0.1' && !str_starts_with($ip, '192.168.') && !str_starts_with($ip, '10.')) {
+                $position = Cache::remember('user_geo_' . md5($ip), 86400, function () use ($ip) {
+                    return Location::get($ip);
+                });
+            }
+        } catch (\Throwable $e) {
+            // Silently fallback without blocking homepage
+        }
+
         if (!$position) {
-            // Fallback to a default location if geolocation fails
             $position = (object) [
                 'latitude' => '28.6139',  // New Delhi latitude
                 'longitude' => '77.2090',  // New Delhi longitude
@@ -311,16 +267,12 @@ class HomeController extends Controller
 
         // Query to get astrologers
         $astrologerQuery = Astrologer::query()
-            ->select('astrologers.*', DB::raw('
-                (CASE WHEN abp.astrologer_id IS NOT NULL THEN 1 ELSE 0 END) as is_boosted,
-                COALESCE(AVG(user_reviews.rating), 0) as rating
-            '))
+            ->select('astrologers.*', DB::raw('(CASE WHEN abp.astrologer_id IS NOT NULL THEN 1 ELSE 0 END) as is_boosted'))
             ->leftJoin('astrologer_boosted_profiles as abp', function ($join) use ($boostCutoff) {
                 $join
                     ->on('astrologers.id', '=', 'abp.astrologer_id')
                     ->where('abp.boosted_datetime', '>=', $boostCutoff);
             })
-            ->leftJoin('user_reviews', 'astrologers.id', '=', 'user_reviews.astrologerId')
             ->where([
                 ['astrologers.isActive', true],
                 ['astrologers.isVerified', true],
@@ -331,8 +283,7 @@ class HomeController extends Controller
                     ->select('astrologerId')
                     ->from('blockastrologer')
                     ->where('userId', '=', $request->userId);
-            })
-            ->groupBy('astrologers.id');
+            });
 
         // Apply category filter
         if ($astrologerCategoryId) {
@@ -351,7 +302,7 @@ class HomeController extends Controller
         } elseif ($sortBy === 'priceLowToHigh') {
             $astrologerQuery->orderBy('astrologers.charge', 'ASC');
         } else {
-            // Default random + boosted + online + rating order
+            // Default random + boosted + online order
             $astrologerQuery
                 ->orderByRaw('
                 CASE
@@ -365,7 +316,7 @@ class HomeController extends Controller
                     ELSE 2
                 END
             ')
-                ->orderBy('rating', 'DESC');
+                ->orderBy('astrologers.id', 'DESC');
         }
 
         // Search filter
@@ -376,46 +327,51 @@ class HomeController extends Controller
         // Apply pagination
         $astrologer = $astrologerQuery->paginate(15);
 
+        // Pre-fetch all lookup dictionaries in 1 single query each (cached for 1 hour)
+        $allCategories = Cache::remember('lookup_astro_categories', 3600, function () {
+            return DB::table('astrologer_categories')->pluck('name', 'id')->all();
+        });
+        $allSkills = Cache::remember('lookup_skills', 3600, function () {
+            return DB::table('skills')->pluck('name', 'id')->all();
+        });
+        $allLanguages = Cache::remember('lookup_languages', 3600, function () {
+            return DB::table('languages')->pluck('languageName', 'id')->all();
+        });
+
+        // Batch fetch reviews count and avg rating for the 15 astrologers on this page
+        $astroIds = $astrologer->pluck('id')->filter()->all();
+        $reviewStats = collect();
+        if (!empty($astroIds)) {
+            $reviewStats = DB::table('user_reviews')
+                ->whereIn('astrologerId', $astroIds)
+                ->groupBy('astrologerId')
+                ->select([
+                    'astrologerId',
+                    DB::raw('COUNT(*) as total_reviews'),
+                    DB::raw('COALESCE(AVG(rating), 0) as avg_rating')
+                ])
+                ->get()
+                ->keyBy('astrologerId');
+        }
+
         foreach ($astrologer as $astro) {
             $astro->isFreeAvailable = $isFreeAvailable;
 
-            // Fetch and count reviews
-            $reviewCount = DB::table('user_reviews')
-                ->where('astrologerId', $astro->id)
-                ->count();
-            $astro->reviews = $reviewCount;
-
-            // Calculate average rating
-            $astro->rating = DB::table('user_reviews')
-                ->where('astrologerId', $astro->id)
-                ->avg('rating') ?? 0;
+            $stat = $reviewStats->get($astro->id);
+            $astro->reviews = $stat ? (int) $stat->total_reviews : 0;
+            $astro->rating = $stat ? round((float) $stat->avg_rating, 1) : 0;
 
             // Convert comma-separated values into arrays
-            $astrologerCategoryIds = array_map('intval', explode(',', $astro->astrologerCategoryId));
-            $allSkillIds = array_map('intval', explode(',', $astro->allSkill));
-            $primarySkillIds = array_map('intval', explode(',', $astro->primarySkill));
-            $languageIds = array_map('intval', explode(',', $astro->languageKnown));
+            $catIds = array_filter(array_map('intval', explode(',', (string) $astro->astrologerCategoryId)));
+            $allSkillIds = array_filter(array_map('intval', explode(',', (string) $astro->allSkill)));
+            $priSkillIds = array_filter(array_map('intval', explode(',', (string) $astro->primarySkill)));
+            $langIds = array_filter(array_map('intval', explode(',', (string) $astro->languageKnown)));
 
-            // Fetch related data
-            $astro->astrologerCategory = DB::table('astrologer_categories')
-                ->whereIn('id', $astrologerCategoryIds)
-                ->pluck('name')
-                ->implode(',');
-
-            $astro->allSkill = DB::table('skills')
-                ->whereIn('id', $allSkillIds)
-                ->pluck('name')
-                ->implode(',');
-
-            $astro->primarySkill = DB::table('skills')
-                ->whereIn('id', $primarySkillIds)
-                ->pluck('name')
-                ->implode(',');
-
-            $astro->languageKnown = DB::table('languages')
-                ->whereIn('id', $languageIds)
-                ->pluck('languageName')
-                ->implode(',');
+            // Instant in-memory map without N+1 SQL queries
+            $astro->astrologerCategory = implode(',', array_filter(array_map(fn($id) => $allCategories[$id] ?? null, $catIds)));
+            $astro->allSkill = implode(',', array_filter(array_map(fn($id) => $allSkills[$id] ?? null, $allSkillIds)));
+            $astro->primarySkill = implode(',', array_filter(array_map(fn($id) => $allSkills[$id] ?? null, $priSkillIds)));
+            $astro->languageKnown = implode(',', array_filter(array_map(fn($id) => $allLanguages[$id] ?? null, $langIds)));
         }
 
         if ($request->ajax()) {
@@ -435,7 +391,7 @@ class HomeController extends Controller
         $currentDatetime = \Carbon\Carbon::now();
         $pujaCategories = PujaCategory::where('isActive', 1)->paginate(3);
 
-        return view('frontend.pages.index', [
+        $rendered = view('frontend.pages.index', [
             'token' => $token,
             'banner' => $banner,
             'blogs' => $blogs,
@@ -472,7 +428,13 @@ class HomeController extends Controller
             'userId' => $userId,
             'walletAmount' => $userWalletAmount,
             'pujaCategories' => $pujaCategories,
-        ]);
+        ])->render();
+
+        if ($isGuest) {
+            Cache::put($cacheKey, $rendered, 600); // 10 minutes cache
+        }
+
+        return response($rendered);
     }
 
     private function getTimezoneOffset($timezone)
