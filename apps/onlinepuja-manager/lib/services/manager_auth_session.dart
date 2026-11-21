@@ -66,7 +66,7 @@ class ManagerAuthSession extends ChangeNotifier {
       _role = prefs.getString(_prefRole) ?? 'SUPERADMIN';
       _photoUrl = prefs.getString(_prefPhoto);
       _masterPin = prefs.getString(_prefPin);
-      _isLocked = prefs.getBool(_prefIsLocked) ?? (_token != null);
+      _isLocked = prefs.getBool(_prefIsLocked) ?? false;
 
       final permsJson = prefs.getString(_prefPermissions);
       if (permsJson != null) {

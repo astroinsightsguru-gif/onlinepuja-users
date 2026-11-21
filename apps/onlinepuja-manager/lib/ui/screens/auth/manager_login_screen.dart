@@ -45,6 +45,15 @@ class _ManagerLoginScreenState extends State<ManagerLoginScreen> {
             _passCtrl.text = savedPass;
           }
         });
+
+        // Instant Auto-Login: If user previously opted to remember password, auto-authorize seamlessly
+        if (remember && savedPass != null && savedPass.isNotEmpty && savedEmail != null && savedEmail.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_isLoading && !_isGoogleLoading) {
+              _handleLogin();
+            }
+          });
+        }
       }
     } catch (_) {}
   }
