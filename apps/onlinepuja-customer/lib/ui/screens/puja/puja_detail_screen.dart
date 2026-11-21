@@ -92,198 +92,326 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
     ));
   }
 
+  String _cleanTitle(String? raw, bool isHi) {
+    if (raw == null || raw.isEmpty) {
+      return isHi ? 'वैदिक महापूजा एवं अनुष्ठान' : 'Vedic Mahapuja';
+    }
+    if (isHi) {
+      final lower = raw.toLowerCase();
+      if (lower.contains('narayan nagbali') || (lower.contains('narayan') && lower.contains('nagbali'))) {
+        return 'वाराणसी में नारायण नागबलि महापूजा - कालसर्प व पितृदोष निवारण';
+      }
+      if (lower.contains('deepdaan') || lower.contains('deepawali') || lower.contains('dev deepavali')) {
+        return 'काशी देव दीपावली महामहोत्सव - 108 दीपदान एवं गंगा महाआरती';
+      }
+      if (lower.contains('rudrabhishek') || lower.contains('rudra')) {
+        return 'द्वादश ज्योतिर्लिंग षोडशोपचार रुद्राभिषेक महायज्ञ';
+      }
+      if (lower.contains('mahamrityunjaya') || lower.contains('mrityunjay')) {
+        return 'अकाल मृत्यु व रोग निवारक महामृत्युंजय महाजाप अनुष्ठान';
+      }
+      if (lower.contains('kalsarp') || lower.contains('sarpa dosha')) {
+        return 'त्र्यंबकेश्वर / काशी कालसर्प दोष शांति महापूजा';
+      }
+      if (lower.contains('navgrah') || lower.contains('graha shanti')) {
+        return 'सर्वग्रह पीड़ा निवारक संपूर्ण नवग्रह शांति महायज्ञ';
+      }
+      if (lower.contains('baglamukhi')) {
+        return 'मां पीताम्बरा बगलामुखी शत्रु व विजय प्राप्ति अनुष्ठान';
+      }
+      if (lower.contains('pind daan') || lower.contains('shradh') || lower.contains('pitru')) {
+        return 'गयाजी तीर्थ में त्रिपिंडी श्राद्ध एवं मोक्षदायिनी पिंडदान';
+      }
+      if (lower.contains('lakshmi') || lower.contains('laxmi') || lower.contains('kuber')) {
+        return 'अष्टलक्ष्मी एवं कुबेर अखंड धन समृद्धि महायज्ञ';
+      }
+      if (lower.contains('durga') || lower.contains('chandi') || lower.contains('navratri')) {
+        return 'मां भगवती दुर्गा शतचंडी महायज्ञ एवं वेदोक्त पाठ';
+      }
+      if (lower.contains('satyanarayan')) {
+        return 'श्री सत्यनारायण भगवान व्रत कथा एवं पावन महापूजा';
+      }
+      if (lower.contains('sundarkand') || lower.contains('hanuman')) {
+        return 'संकटमोचन श्री हनुमान सुंदरकांड संगीतमय अखंड पाठ';
+      }
+    }
+    if (raw.contains(' - ')) return raw.split(' - ').first.trim();
+    if (raw.contains(' | ')) return raw.split(' | ').first.trim();
+    return raw.trim();
+  }
+
+  String _localizePackageName(String? name, bool isHi) {
+    if (!isHi || name == null) return name ?? 'Package';
+    final lower = name.toLowerCase();
+    if (lower.contains('individual') || lower.contains('single') || lower.contains('1 person')) {
+      return 'एकल यजमान संकल्प';
+    }
+    if (lower.contains('family') || lower.contains('parivar')) {
+      return 'सपरिवार महासंकल्प';
+    }
+    if (lower.contains('sampoorna') || lower.contains('grand') || lower.contains('complete')) {
+      return 'संपूर्ण तीर्थ महापूजा एवं महाप्रसाद';
+    }
+    if (lower.contains('sankalp seva') || lower.contains('vedic')) {
+      return 'वैदिक संकल्प सेवा';
+    }
+    return name;
+  }
+
+  String _localizeInclusion(String inc, bool isHi) {
+    if (!isHi) return inc;
+    final lower = inc.toLowerCase();
+    if (lower.contains('sankalp for 1 devotee') || lower.contains('personal sankalp')) {
+      return 'नाम एवं गोत्र के साथ व्यक्तिगत संकल्प';
+    }
+    if (lower.contains('live chadhava') || lower.contains('pushpanjali')) {
+      return 'प्रत्यक्ष पुष्पार्पण एवं चढ़ावा अर्पण';
+    }
+    if (lower.contains('video') && lower.contains('whatsapp')) {
+      return 'पूजा का संपूर्ण वीडियो रिकॉर्डिंग व्हाट्सएप पर';
+    }
+    if (lower.contains('family members') || lower.contains('family')) {
+      return 'समस्त परिवार जन संकल्प में सम्मिलित';
+    }
+    if (lower.contains('archana') || lower.contains('ahuti') || lower.contains('navgrah')) {
+      return 'विशेष अर्चना एवं नवग्रह आहुति';
+    }
+    if (lower.contains('prasad delivered') || lower.contains('holy prasad')) {
+      return 'अभिमंत्रित महाप्रसाद आपके घर तक';
+    }
+    if (lower.contains('hawan') || lower.contains('brahmin bhojan')) {
+      return 'संपूर्ण वैदिक हवन एवं ब्राह्मण भोजन';
+    }
+    if (lower.contains('raksha sutra') || lower.contains('energized')) {
+      return 'सिद्ध रक्षा सूत्र एवं महाप्रसाद बॉक्स';
+    }
+    if (lower.contains('mantra chanting') || lower.contains('acharyas')) {
+      return 'तीर्थ पुरोहितों द्वारा सस्वर वेदोक्त मंत्रोच्चार';
+    }
+    return inc;
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = _puja;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scheme = Theme.of(context).colorScheme;
-    final packages = (p.packages != null && p.packages!.isNotEmpty)
-        ? p.packages!
-        : [
-            PujaPackage(
-              id: 1,
-              name: 'Individual Sankalp',
-              price: '501',
-              inclusions: const [
-                'Sankalp for 1 devotee with Name & Gotra',
-                'Live Chadhava & Pushpanjali offered',
-                'Personalized Video sent on WhatsApp',
-              ],
-            ),
-            PujaPackage(
-              id: 2,
-              name: 'Family Maha Sankalp',
-              price: '1100',
-              inclusions: const [
-                'Sankalp for up to 4 family members',
-                'Special Archana & Navgrah Ahuti',
-                'Puja Video + Prasad delivered to home',
-              ],
-            ),
-            PujaPackage(
-              id: 3,
-              name: 'Sampoorna Teerth Mahapuja',
-              price: '2100',
-              inclusions: const [
-                'Complete Vedic Hawan & Brahmin Bhojan',
-                'All family members included in Sankalp',
-                'Special Energized Raksha Sutra & Mahaprasad box',
-              ],
-            ),
-          ];
 
-    if (_selectedPackage == null && packages.isNotEmpty) {
-      _selectedPackage = packages.first;
-    }
-
-    final currentPrice = _selectedPackage?.priceValue ?? 501.0;
-    final cardBg = isDark ? CustomerTheme.cosmicCardDark : Colors.white;
-    final cardBorder = isDark ? CustomerTheme.cosmicBorderDark : const Color(0xFFE2E8F0);
-    final textPrimary = isDark ? Colors.white : const Color(0xFF1E293B);
-    final textSecondary = isDark ? Colors.white70 : const Color(0xFF64748B);
-
-    return Scaffold(
-      backgroundColor: scheme.surface,
-      appBar: AppBar(
-        backgroundColor: scheme.surface,
-        foregroundColor: scheme.onSurface,
-        elevation: 0.5,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              p.title?.toString() ?? 'Puja Details',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: textPrimary,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Text(
-              'OnlinePuja Verified Vedic Ritual',
-              style: TextStyle(fontSize: 11, color: textSecondary),
-            ),
-          ],
-        ),
-        bottom: _loadingDetails
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(2),
-                child: LinearProgressIndicator(
-                  minHeight: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(CustomerTheme.brandGold),
-                  backgroundColor: Colors.transparent,
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: LocaleManager.instance.currentLanguage,
+      builder: (context, lang, _) {
+        final isHi = lang == AppLanguage.hi;
+        final packages = (p.packages != null && p.packages!.isNotEmpty)
+            ? p.packages!
+            : [
+                PujaPackage(
+                  id: 1,
+                  name: isHi ? 'एकल यजमान संकल्प' : 'Individual Sankalp',
+                  price: '501',
+                  inclusions: isHi
+                      ? const [
+                          '१ यजमान का नाम व गोत्र सहित संकल्प',
+                          'प्रत्यक्ष पुष्पार्पण एवं चढ़ावा अर्पण',
+                          'व्यक्तिगत वीडियो रिकॉर्डिंग व्हाट्सएप पर',
+                        ]
+                      : const [
+                          'Sankalp for 1 devotee with Name & Gotra',
+                          'Live Chadhava & Pushpanjali offered',
+                          'Personalized Video sent on WhatsApp',
+                        ],
                 ),
-              )
-            : null,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.share_outlined, color: textSecondary),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Puja link copied to share')),
-              );
-            },
-          ),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: cardBg,
-          border: Border(top: BorderSide(color: cardBorder, width: 1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _selectedPackage?.name ?? 'Selected Package',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: textSecondary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          '₹${currentPrice.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: textPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'All-Inclusive',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF15803D),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                PujaPackage(
+                  id: 2,
+                  name: isHi ? 'सपरिवार महासंकल्प' : 'Family Maha Sankalp',
+                  price: '1100',
+                  inclusions: isHi
+                      ? const [
+                          'परिवार के ४ सदस्यों हेतु संयुक्त संकल्प',
+                          'विशेष अर्चना एवं नवग्रह आहुति',
+                          'पूजा वीडियो + महाप्रसाद घर तक',
+                        ]
+                      : const [
+                          'Sankalp for up to 4 family members',
+                          'Special Archana & Navgrah Ahuti',
+                          'Puja Video + Prasad delivered to home',
+                        ],
                 ),
-              ),
-              const SizedBox(width: 14),
-              ElevatedButton(
-                onPressed: _proceedToBooking,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF059669),
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                PujaPackage(
+                  id: 3,
+                  name: isHi ? 'संपूर्ण तीर्थ महापूजा' : 'Sampoorna Teerth Mahapuja',
+                  price: '2100',
+                  inclusions: isHi
+                      ? const [
+                          'संपूर्ण वैदिक हवन एवं ब्राह्मण भोजन',
+                          'समस्त परिवार जन संकल्प में सम्मिलित',
+                          'सिद्ध रक्षा सूत्र एवं महाप्रसाद बॉक्स',
+                        ]
+                      : const [
+                          'Complete Vedic Hawan & Brahmin Bhojan',
+                          'All family members included in Sankalp',
+                          'Special Energized Raksha Sutra & Mahaprasad box',
+                        ],
+                ),
+              ];
+
+        if (_selectedPackage == null && packages.isNotEmpty) {
+          _selectedPackage = packages.first;
+        }
+
+        final currentPrice = _selectedPackage?.priceValue ?? 501.0;
+        final cardBg = isDark ? CustomerTheme.cosmicCardDark : Colors.white;
+        final cardBorder = isDark ? CustomerTheme.cosmicBorderDark : const Color(0xFFE2E8F0);
+        final textPrimary = isDark ? Colors.white : const Color(0xFF1E293B);
+        final textSecondary = isDark ? Colors.white70 : const Color(0xFF64748B);
+
+        return Scaffold(
+          backgroundColor: scheme.surface,
+          appBar: AppBar(
+            backgroundColor: scheme.surface,
+            foregroundColor: scheme.onSurface,
+            elevation: 0.5,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _cleanTitle(p.title?.toString(), isHi),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: textPrimary,
                   ),
-                  elevation: 2,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      AppStrings.participate,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
+                Text(
+                  isHi
+                      ? 'ऑनलाइन पूजा द्वारा प्रमाणित वैदिक अनुष्ठान'
+                      : 'OnlinePuja Verified Vedic Ritual',
+                  style: TextStyle(fontSize: 11, color: textSecondary),
+                ),
+              ],
+            ),
+            bottom: _loadingDetails
+                ? const PreferredSize(
+                    preferredSize: Size.fromHeight(2),
+                    child: LinearProgressIndicator(
+                      minHeight: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(CustomerTheme.brandGold),
+                      backgroundColor: Colors.transparent,
+                    ),
+                  )
+                : null,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.share_outlined, color: textSecondary),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isHi ? 'पूजा लिंक कॉपी किया गया' : 'Puja link copied to share',
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    const Icon(Icons.arrow_forward_rounded, size: 18),
-                  ],
-                ),
+                  );
+                },
               ),
             ],
           ),
-        ),
-      ),
+          bottomNavigationBar: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: cardBg,
+              border: Border(top: BorderSide(color: cardBorder, width: 1)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, -3),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _localizePackageName(_selectedPackage?.name, isHi),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              '₹${currentPrice.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: textPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                isHi ? 'सर्व-समावेशी' : 'All-Inclusive',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF15803D),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  ElevatedButton(
+                    onPressed: _proceedToBooking,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      foregroundColor: Colors.white,
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          isHi ? 'संकल्प लें' : AppStrings.participate,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.arrow_forward_rounded, size: 18),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -337,7 +465,7 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                       Text(
                         (p.place ?? '').toString().isNotEmpty
                             ? p.place.toString()
-                            : 'Holy Teerth Kshetra',
+                            : (isHi ? 'पावन तीर्थ क्षेत्र' : 'Holy Teerth Kshetra'),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -363,14 +491,16 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                         color: const Color(0xFF059669),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.people_alt_rounded,
+                          const Icon(Icons.people_alt_rounded,
                               size: 13, color: Colors.white),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
-                            '14,250+ Devotees Participated',
-                            style: TextStyle(
+                            isHi
+                                ? '१४,२५०+ यजमान संकल्प ले चुके हैं'
+                                : '14,250+ Devotees Participated',
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -409,7 +539,7 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
               children: [
                 // Title and Subtitle
                 Text(
-                  p.title?.toString() ?? 'Vedic Puja',
+                  _cleanTitle(p.title?.toString(), isHi),
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
@@ -444,8 +574,8 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                       _trustItem(
                         icon: Icons.video_camera_front_rounded,
                         color: const Color(0xFF25D366),
-                        title: 'Video Proof',
-                        subtitle: 'On WhatsApp',
+                        title: isHi ? 'प्रत्यक्ष वीडियो' : 'Video Proof',
+                        subtitle: isHi ? 'व्हाट्सएप पर' : 'On WhatsApp',
                         textPrimary: textPrimary,
                         textSecondary: textSecondary,
                       ),
@@ -457,8 +587,8 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                       _trustItem(
                         icon: Icons.local_shipping_rounded,
                         color: const Color(0xFFF59E0B),
-                        title: 'Prasad Box',
-                        subtitle: 'SpeedPost Delivery',
+                        title: isHi ? 'अभिमंत्रित महाप्रसाद' : 'Prasad Box',
+                        subtitle: isHi ? 'घर तक सुरक्षित डिलीवरी' : 'SpeedPost Delivery',
                         textPrimary: textPrimary,
                         textSecondary: textSecondary,
                       ),
@@ -470,8 +600,8 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                       _trustItem(
                         icon: Icons.workspace_premium_rounded,
                         color: const Color(0xFF3B82F6),
-                        title: 'Kashi Acharyas',
-                        subtitle: '100% Vedic Mantras',
+                        title: isHi ? 'तीर्थ पुरोहित' : 'Kashi Acharyas',
+                        subtitle: isHi ? 'सस्वर वेदोक्त मंत्रोच्चार' : '100% Vedic Mantras',
                         textPrimary: textPrimary,
                         textSecondary: textSecondary,
                       ),
@@ -500,14 +630,16 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Select the seva tier for your family’s sankalp',
+                    isHi
+                        ? 'अपने परिवार के संकल्प हेतु उपयुक्त सेवा चुनें'
+                        : 'Select the seva tier for your family’s sankalp',
                     style: TextStyle(fontSize: 12, color: textSecondary),
                   ),
                   const SizedBox(height: 12),
 
                   // Package List
                   for (int i = 0; i < packages.length; i++) ...[
-                    _packageCard(packages[i], i, cardBg, cardBorder, textPrimary, textSecondary),
+                    _packageCard(packages[i], i, cardBg, cardBorder, textPrimary, textSecondary, isHi),
                     const SizedBox(height: 10),
                   ],
 
@@ -626,7 +758,7 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'How Online Puja Works',
+                        isHi ? 'ऑनलाइन पूजा विधि एवं प्रक्रिया' : 'How Online Puja Works',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
@@ -636,23 +768,39 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                       const SizedBox(height: 14),
                       _stepRow(
                         num: '1',
-                        title: 'Select Seva & Fill Devotee Details',
-                        desc: 'Provide your Gotra, Name & Sankalp Wish at checkout.',
+                        title: isHi
+                            ? 'सेवा चुनें व यजमान विवरण भरें'
+                            : 'Select Seva & Fill Devotee Details',
+                        desc: isHi
+                            ? 'चेकआउट पर नाम, गोत्र व मनोकामना दर्ज करें।'
+                            : 'Provide your Gotra, Name & Sankalp Wish at checkout.',
                       ),
                       _stepRow(
                         num: '2',
-                        title: 'Pandit Ji performs Sankalp at Teerth',
-                        desc: 'Vedic rituals conducted strictly per your astrological timings.',
+                        title: isHi
+                            ? 'तीर्थ धाम पर पंडित जी द्वारा संकल्प'
+                            : 'Pandit Ji performs Sankalp at Teerth',
+                        desc: isHi
+                            ? 'शुभ मुहूर्त में आपके नाम-गोत्र से संपूर्ण वैदिक अनुष्ठान।'
+                            : 'Vedic rituals conducted strictly per your astrological timings.',
                       ),
                       _stepRow(
                         num: '3',
-                        title: 'Video Proof Shared on WhatsApp',
-                        desc: 'Receive recorded personal video & chadhava darshan photos.',
+                        title: isHi
+                            ? 'व्हाट्सएप पर प्रत्यक्ष वीडियो प्रमाण'
+                            : 'Video Proof Shared on WhatsApp',
+                        desc: isHi
+                            ? 'संकल्प व पूजा का व्यक्तिगत वीडियो व फोटो प्राप्त करें।'
+                            : 'Receive recorded personal video & chadhava darshan photos.',
                       ),
                       _stepRow(
                         num: '4',
-                        title: 'Holy Prasad Delivered to Home',
-                        desc: 'Energized Raksha Sutra, Vibhuti & Prasad shipped in 3-5 days.',
+                        title: isHi
+                            ? 'अभिमंत्रित महाप्रसाद घर तक'
+                            : 'Holy Prasad Delivered to Home',
+                        desc: isHi
+                            ? 'अभिमंत्रित रक्षा सूत्र, भस्म व महाप्रसाद ३-५ दिनों में।'
+                            : 'Energized Raksha Sutra, Vibhuti & Prasad shipped in 3-5 days.',
                         isLast: true,
                       ),
                     ],
@@ -664,7 +812,7 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                 // 7. FAQs
                 if (_faqs != null && _faqs!.isNotEmpty) ...[
                   Text(
-                    'Frequently Asked Questions',
+                    isHi ? 'प्रायः पूछे जाने वाले प्रश्न' : 'Frequently Asked Questions',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
@@ -718,7 +866,9 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
         ],
       ),
     );
-  }
+  },
+);
+}
 
   Widget _trustItem({
     required IconData icon,
@@ -762,8 +912,9 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
     Color cardBg,
     Color cardBorder,
     Color textPrimary,
-    Color textSecondary,
-  ) {
+    Color textSecondary, [
+    bool isHi = false,
+  ]) {
     final isSelected = _selectedPackageIndex == index;
     final isPopular = index == 1;
 
@@ -812,7 +963,7 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    pkg.name?.toString() ?? 'Package',
+                    _localizePackageName(pkg.name?.toString(), isHi),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -832,9 +983,9 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(color: const Color(0xFFF59E0B)),
                     ),
-                    child: const Text(
-                      'MOST POPULAR',
-                      style: TextStyle(
+                    child: Text(
+                      isHi ? 'सर्वाधिक लोकप्रिय' : 'MOST POPULAR',
+                      style: const TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFFB45309),
@@ -867,9 +1018,24 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        inc,
+                        _localizeInclusion(inc, isHi),
                         style: TextStyle(
                           fontSize: 12,
+                          color: textSecondary,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
                           color: textSecondary,
                           height: 1.3,
                         ),
