@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:onlinepuja_manager/services/manager_api_service.dart';
 import 'package:onlinepuja_manager/theme/manager_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BlogsManagementScreen extends StatefulWidget {
   const BlogsManagementScreen({super.key});

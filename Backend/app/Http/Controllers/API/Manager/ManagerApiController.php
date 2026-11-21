@@ -322,15 +322,21 @@ class ManagerApiController extends Controller
 
     /**
      * 4. GET /api/manager/sankalps
+     * Real devotee sankalps awaiting sanctum video proof or abhimantrit prasad dispatch
      */
     public function getPendingSankalps(Request $request)
     {
         try {
             $sankalpsDb = DB::table('puja_orders')
                 ->leftJoin('pujas', 'puja_orders.puja_id', '=', 'pujas.id')
-                ->select('puja_orders.*', 'pujas.puja_place as puja_place', 'pujas.puja_title as fallback_puja_title')
+                ->select(
+                    'puja_orders.*',
+                    'pujas.puja_place as puja_place',
+                    'pujas.puja_title as fallback_puja_title',
+                    'pujas.puja_images as puja_images'
+                )
                 ->orderBy('puja_orders.id', 'DESC')
-                ->limit(30)
+                ->limit(40)
                 ->get();
 
             $sankalps = [];
@@ -345,18 +351,38 @@ class ManagerApiController extends Controller
                 $rawGotra = !empty($ord->sankalp_gotra) ? $ord->sankalp_gotra : ($ord->address_landmark ?: 'Kashyap');
                 $gotraFormatted = stripos($rawGotra, 'gotra') !== false ? $rawGotra : $rawGotra . ' Gotra';
 
+                // Resolve sacred puja cover image
+                $imgUrl = null;
+                if (!empty($ord->puja_images)) {
+                    $decodedImgs = json_decode($ord->puja_images, true);
+                    if (is_array($decodedImgs) && !empty($decodedImgs)) {
+                        $imgUrl = self::formatPublicMediaUrl($decodedImgs[0]);
+                    } elseif (is_string($ord->puja_images)) {
+                        $imgUrl = self::formatPublicMediaUrl($ord->puja_images);
+                    }
+                }
+
                 $sankalps[] = [
-                    'id'       => '#OP-PUJA-' . $ord->id,
-                    'orderId'  => (int)$ord->id,
-                    'devotee'  => !empty($ord->devotee_names) ? $ord->devotee_names : ($ord->address_name ?: 'Devotee'),
-                    'gotra'    => $gotraFormatted,
-                    'puja'     => $ord->puja_name ?: (!empty($ord->fallback_puja_title) ? $ord->fallback_puja_title : 'Vedic Puja'),
-                    'temple'   => !empty($ord->puja_place) ? $ord->puja_place : 'Dashashwamedh Ghat, Kashi',
-                    'amount'   => 'â‚¹' . number_format($ord->order_total_price ?: 1500),
-                    'videoUrl' => $ord->puja_video ?: '',
-                    'awb'      => $ord->prasad_tracking_number ?: '',
-                    'status'   => $status,
-                    'date'     => $ord->created_at ? Carbon::parse($ord->created_at)->diffForHumans() : 'Recent',
+                    'id'            => '#OP-PUJA-' . $ord->id,
+                    'orderId'       => (int) $ord->id,
+                    'devotee'       => !empty($ord->devotee_names) ? $ord->devotee_names : ($ord->address_name ?: 'Devotee'),
+                    'phone'         => $ord->address_number ?: '',
+                    'gotra'         => $gotraFormatted,
+                    'city'          => $ord->address_city ?: '',
+                    'state'         => $ord->address_state ?: '',
+                    'pincode'       => $ord->address_pincode ?: '',
+                    'sankalp_notes' => $ord->sankalp_notes ?: '',
+                    'package'       => $ord->package_name ?: 'Vedic Sankalp',
+                    'puja'          => $ord->puja_name ?: (!empty($ord->fallback_puja_title) ? $ord->fallback_puja_title : 'Vedic Puja'),
+                    'temple'        => !empty($ord->puja_place) ? $ord->puja_place : 'Dashashwamedh Ghat, Kashi',
+                    'image_url'     => $imgUrl,
+                    'amount'        => '₹' . number_format($ord->order_total_price ?: 1500),
+                    'amount_val'    => (double) ($ord->order_total_price ?: 1500),
+                    'videoUrl'      => $ord->puja_video ?: '',
+                    'awb'           => $ord->prasad_tracking_number ?: '',
+                    'courier_name'  => $ord->prasad_courier_name ?: 'SpeedPost',
+                    'status'        => $status,
+                    'date'          => $ord->created_at ? Carbon::parse($ord->created_at)->diffForHumans() : 'Recent',
                 ];
             }
 
@@ -1474,11 +1500,27 @@ class ManagerApiController extends Controller
             // 1. Puja Orders
             if ($type === 'all' || $type === 'puja') {
                 $pujaOrders = DB::table('puja_orders')
-                    ->orderByDesc('id')
+                    ->leftJoin('pujas', 'puja_orders.puja_id', '=', 'pujas.id')
+                    ->select(
+                        'puja_orders.*',
+                        'pujas.puja_images as puja_images',
+                        'pujas.puja_place as puja_place'
+                    )
+                    ->orderByDesc('puja_orders.id')
                     ->limit(40)
                     ->get();
 
                 foreach ($pujaOrders as $po) {
+                    $imgUrl = null;
+                    if (!empty($po->puja_images)) {
+                        $decoded = json_decode($po->puja_images, true);
+                        if (is_array($decoded) && !empty($decoded)) {
+                            $imgUrl = self::formatPublicMediaUrl($decoded[0]);
+                        } elseif (is_string($po->puja_images)) {
+                            $imgUrl = self::formatPublicMediaUrl($po->puja_images);
+                        }
+                    }
+
                     $allBookings[] = [
                         'id' => '#OP-PUJA-' . $po->id,
                         'numeric_id' => $po->id,
@@ -1486,10 +1528,16 @@ class ManagerApiController extends Controller
                         'title' => $po->puja_name ?? 'Sacred Vedic Puja',
                         'devotee' => $po->address_name ?? ($po->devotee_names ? explode(',', $po->devotee_names)[0] : 'Devotee'),
                         'gotra' => $po->sankalp_gotra ?? 'Kashyap',
+                        'phone' => $po->address_number ?? '',
+                        'city' => $po->address_city ?? '',
+                        'image_url' => $imgUrl,
+                        'temple' => $po->puja_place ?? 'Kashi Vishwanath Dham',
                         'amount' => (double) ($po->order_total_price ?: 1500),
+                        'amount_formatted' => '₹' . number_format($po->order_total_price ?: 1500),
                         'status' => $po->puja_order_status ?? 'pending',
                         'prasad_status' => $po->prasad_status ?? 'order_placed',
                         'awb' => $po->prasad_tracking_number,
+                        'video_url' => $po->puja_video,
                         'has_video' => !empty($po->puja_video),
                         'created_at' => $po->created_at ? date('d M Y, h:i A', strtotime($po->created_at)) : 'Today',
                     ];
@@ -1504,7 +1552,9 @@ class ManagerApiController extends Controller
                     ->select(
                         'callrequest.*',
                         'users.name as userName',
-                        'astrologers.name as astroName'
+                        'users.contactNo as userPhone',
+                        'astrologers.name as astroName',
+                        'astrologers.profileImage as astroImage'
                     )
                     ->orderByDesc('callrequest.id')
                     ->limit(30)
@@ -1518,10 +1568,14 @@ class ManagerApiController extends Controller
                         'title' => 'Consultation with ' . ($c->astroName ?? 'Astrologer'),
                         'devotee' => $c->userName ?? 'Client',
                         'gotra' => 'Astrology Client',
+                        'phone' => $c->userPhone ?? '',
+                        'image_url' => self::formatPublicMediaUrl($c->astroImage),
                         'amount' => (double) ($c->deduction ?: ($c->callRate ?: 500)),
+                        'amount_formatted' => '₹' . number_format($c->deduction ?: ($c->callRate ?: 500)),
                         'status' => strtolower($c->callStatus ?? 'completed'),
                         'prasad_status' => 'n/a',
                         'awb' => null,
+                        'video_url' => null,
                         'has_video' => false,
                         'created_at' => $c->created_at ? date('d M Y, h:i A', strtotime($c->created_at)) : 'Recent',
                     ];
@@ -1536,7 +1590,9 @@ class ManagerApiController extends Controller
                     ->select(
                         'chatrequest.*',
                         'users.name as userName',
-                        'astrologers.name as astroName'
+                        'users.contactNo as userPhone',
+                        'astrologers.name as astroName',
+                        'astrologers.profileImage as astroImage'
                     )
                     ->orderByDesc('chatrequest.id')
                     ->limit(30)
@@ -1550,10 +1606,14 @@ class ManagerApiController extends Controller
                         'title' => 'Chat with ' . ($ch->astroName ?? 'Astrologer'),
                         'devotee' => $ch->userName ?? 'Client',
                         'gotra' => 'Chat Client',
+                        'phone' => $ch->userPhone ?? '',
+                        'image_url' => self::formatPublicMediaUrl($ch->astroImage),
                         'amount' => (double) ($ch->deduction ?: ($ch->chatRate ?: 350)),
+                        'amount_formatted' => '₹' . number_format($ch->deduction ?: ($ch->chatRate ?: 350)),
                         'status' => strtolower($ch->chatStatus ?? 'completed'),
                         'prasad_status' => 'n/a',
                         'awb' => null,
+                        'video_url' => null,
                         'has_video' => false,
                         'created_at' => $ch->created_at ? date('d M Y, h:i A', strtotime($ch->created_at)) : 'Recent',
                     ];
