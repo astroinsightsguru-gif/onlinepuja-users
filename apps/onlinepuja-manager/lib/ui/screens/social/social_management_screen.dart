@@ -1221,7 +1221,6 @@ class _SocialManagementScreenState extends State<SocialManagementScreen>
       );
     }
   }
-  }
 
   // =============================================================
   // TAB 1: 9:16 SACRED REELS STUDIO & MULTI-FANOUT
