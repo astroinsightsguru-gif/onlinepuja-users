@@ -93,6 +93,7 @@ class ManagerAuthSession extends ChangeNotifier {
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
         clientId: kIsWeb ? googleClientId : null,
+        serverClientId: googleClientId,
       );
 
       final GoogleSignInAccount? account = await googleSignIn.signIn();
