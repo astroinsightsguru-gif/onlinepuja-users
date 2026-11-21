@@ -613,6 +613,42 @@ class ManagerApiService {
     return null;
   }
 
+  // 24c. Update Social Post
+  Future<bool> updateSocialPost(int id, {String? caption, String? hashtags, String? scheduledAt}) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/social/posts/$id/update'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          if (caption != null) 'caption': caption,
+          if (hashtags != null) 'hashtags': hashtags,
+          if (scheduledAt != null) 'scheduled_at': scheduledAt,
+        }),
+      ).timeout(const Duration(seconds: 8));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 24d. Generate AI Visual Banner for Post
+  Future<String?> generateSocialPostBanner(int id, {String? prompt}) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/social/posts/$id/generate-banner'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          if (prompt != null) 'prompt': prompt,
+        }),
+      ).timeout(const Duration(seconds: 25));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        return decoded['image_url']?.toString();
+      }
+    } catch (_) {}
+    return null;
+  }
+
   // 24c. Create & Queue Custom Social Post
   Future<bool> createSocialPost({
     required String platform,

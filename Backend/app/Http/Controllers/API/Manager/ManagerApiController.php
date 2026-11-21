@@ -916,6 +916,22 @@ class ManagerApiController extends Controller
     }
 
     /**
+     * Format a public media path into an absolute HTTPS URL
+     */
+    public static function formatPublicMediaUrl(?string $path): ?string
+    {
+        if (empty($path)) {
+            return null;
+        }
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+        $clean = ltrim(preg_replace('/^public\//', '', $path), '/');
+        $baseUrl = rtrim(config('app.url', 'https://onlinepuja.live'), '/');
+        return $baseUrl . '/' . $clean;
+    }
+
+    /**
      * 20. GET /api/manager/blogs
      * Retrieve all published blogs, draft articles & view stats
      */
@@ -928,13 +944,16 @@ class ManagerApiController extends Controller
                 ->limit(50)
                 ->get()
                 ->map(function ($b) {
+                    $rawImg = $b->previewImage ?: $b->blogImage;
+                    $imgUrl = self::formatPublicMediaUrl($rawImg);
                     return [
                         'id' => $b->id,
                         'title' => $b->title,
                         'slug' => $b->slug,
                         'author' => $b->author ?? 'OnlinePuja Vedic Desk',
                         'views' => (int) ($b->viewer ?? 0),
-                        'image' => $b->previewImage ?: $b->blogImage,
+                        'image' => $imgUrl,
+                        'image_url' => $imgUrl,
                         'is_active' => (bool) $b->isActive,
                         'created_at' => $b->created_at ? date('d M Y, h:i A', strtotime($b->created_at)) : 'Recent',
                     ];
@@ -978,19 +997,43 @@ class ManagerApiController extends Controller
 
     /**
      * 22. GET /api/manager/social/posts
-     * Social media queue & published posts across channels
+     * Social media queue & published posts across channels with rich image & blog link resolution
      */
     public function getSocialPosts(Request $request)
     {
         try {
             $platform = $request->input('platform', 'all');
-            $query = DB::table('social_posts');
+            $query = DB::table('social_posts')
+                ->leftJoin('media_assets', 'social_posts.media_asset_id', '=', 'media_assets.id')
+                ->select([
+                    'social_posts.*',
+                    'media_assets.path as media_path',
+                    'media_assets.mime as media_mime',
+                ]);
+
             if ($platform !== 'all') {
-                $query->where('platform', $platform);
+                $query->where('social_posts.platform', $platform);
             }
 
-            $posts = $query->orderByDesc('id')->limit(50)->get()->map(function ($p) {
+            $posts = $query->orderByDesc('social_posts.id')->limit(50)->get()->map(function ($p) {
                 $meta = !empty($p->meta) ? (is_array($p->meta) ? $p->meta : json_decode($p->meta, true)) : [];
+
+                // 1. Resolve media URL (from media_assets or linked blog cover)
+                $imageUrl = null;
+                $mediaType = 'none';
+
+                if (!empty($p->media_path)) {
+                    $imageUrl = self::formatPublicMediaUrl($p->media_path);
+                    $mediaType = str_starts_with($p->media_mime ?? '', 'video/') ? 'video' : 'image';
+                } elseif (!empty($p->link_url) && str_contains($p->link_url, '/blog/')) {
+                    $slug = basename(parse_url($p->link_url, PHP_URL_PATH));
+                    $blog = DB::table('blogs')->where('slug', $slug)->first(['blogImage', 'previewImage']);
+                    if ($blog) {
+                        $imageUrl = self::formatPublicMediaUrl($blog->previewImage ?: $blog->blogImage);
+                        $mediaType = 'image';
+                    }
+                }
+
                 return [
                     'id' => $p->id,
                     'platform' => $p->platform,
@@ -998,6 +1041,11 @@ class ManagerApiController extends Controller
                     'full_caption' => $p->caption ?? '',
                     'hashtags' => $p->hashtags ?? '',
                     'status' => $p->status ?? 'queued',
+                    'media_url' => $imageUrl,
+                    'image_url' => $imageUrl,
+                    'media_type' => $mediaType,
+                    'link_url' => $p->link_url,
+                    'error' => $p->error,
                     'scheduled_at' => $p->scheduled_at ? date('d M Y, h:i A', strtotime($p->scheduled_at)) : 'Scheduled',
                     'published_at' => $p->published_at ? date('d M Y, h:i A', strtotime($p->published_at)) : null,
                     'permalink' => $p->permalink,
@@ -1013,6 +1061,91 @@ class ManagerApiController extends Controller
                 'total' => $posts->count(),
                 'posts' => $posts,
             ]);
+        } catch (\Throwable $e) {
+            return response()->json(['status' => 500, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 22e. POST /api/manager/social/posts/{id}/update
+     * Update caption, hashtags, or scheduled date for a social post
+     */
+    public function updateSocialPost(Request $request, $id)
+    {
+        try {
+            $post = DB::table('social_posts')->where('id', $id)->first();
+            if (!$post) {
+                return response()->json(['status' => 404, 'error' => 'Post not found'], 404);
+            }
+
+            $updates = ['updated_at' => now()];
+            if ($request->has('caption')) {
+                $updates['caption'] = $request->input('caption');
+            }
+            if ($request->has('hashtags')) {
+                $updates['hashtags'] = $request->input('hashtags');
+            }
+            if ($request->has('scheduled_at') && !empty($request->input('scheduled_at'))) {
+                $updates['scheduled_at'] = date('Y-m-d H:i:s', strtotime($request->input('scheduled_at')));
+            }
+
+            DB::table('social_posts')->where('id', $id)->update($updates);
+
+            return response()->json([
+                'status' => 200,
+                'success' => true,
+                'message' => 'Post updated successfully!',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['status' => 500, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 22f. POST /api/manager/social/posts/{id}/generate-banner
+     * Synthesize a high-res devotional visual banner and link to social post
+     */
+    public function generatePostBanner(Request $request, $id)
+    {
+        try {
+            $post = DB::table('social_posts')->where('id', $id)->first();
+            if (!$post) {
+                return response()->json(['status' => 404, 'error' => 'Post not found'], 404);
+            }
+
+            $prompt = $request->input('prompt', '');
+            if (empty($prompt)) {
+                $firstLine = strtok($post->caption ?? '', "\n");
+                $cleanTopic = preg_replace('/[^\p{L}\p{N}\s]/u', '', $firstLine);
+                $prompt = "Sacred devotional Vedic art: {$cleanTopic}, holy temple sanctum, golden lighting, divine aura, ultra-realistic 8k commercial photography";
+            }
+
+            $bannerService = app(\App\Services\BannerStudioService::class);
+            $banner = $bannerService->generateBanner($prompt, $post->platform === 'instagram' ? 'square' : 'landscape');
+
+            if (!empty($banner['relative_path'])) {
+                $mediaAssetId = DB::table('media_assets')->insertGetId([
+                    'path' => $banner['relative_path'],
+                    'mime' => 'image/png',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('social_posts')->where('id', $id)->update([
+                    'media_asset_id' => $mediaAssetId,
+                    'updated_at' => now(),
+                ]);
+
+                $imageUrl = self::formatPublicMediaUrl($banner['relative_path']);
+                return response()->json([
+                    'status' => 200,
+                    'success' => true,
+                    'image_url' => $imageUrl,
+                    'message' => 'New devotional visual banner synthesized and linked!',
+                ]);
+            }
+
+            return response()->json(['status' => 500, 'error' => 'Banner generation failed.'], 500);
         } catch (\Throwable $e) {
             return response()->json(['status' => 500, 'error' => $e->getMessage()], 500);
         }

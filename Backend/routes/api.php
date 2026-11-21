@@ -646,6 +646,8 @@ Route::prefix('manager')->group(function () {
     Route::get('social/analytics', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getSocialAnalytics']);
     Route::get('social/posts', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'getSocialPosts']);
     Route::post('social/posts/create', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'createSocialPost']);
+    Route::post('social/posts/{id}/update', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'updateSocialPost']);
+    Route::post('social/posts/{id}/generate-banner', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'generatePostBanner']);
     Route::post('social/posts/{id}/retry', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'retrySocialPost']);
     Route::post('social/posts/{id}/publish', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'publishSocialNow']);
     Route::post('social/{id}/publish', [\App\Http\Controllers\API\Manager\ManagerApiController::class, 'publishSocialNow']);

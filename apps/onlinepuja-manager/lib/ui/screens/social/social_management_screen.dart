@@ -668,6 +668,10 @@ class _SocialManagementScreenState extends State<SocialManagementScreen>
                         final platform = post['platform']?.toString() ?? 'facebook';
                         final caption = post['caption']?.toString() ?? '';
                         final fullCaption = post['full_caption']?.toString() ?? caption;
+                        final hashtags = post['hashtags']?.toString() ?? '';
+                        final imageUrl = post['image_url']?.toString() ?? post['media_url']?.toString();
+                        final mediaType = post['media_type']?.toString() ?? 'none';
+                        final linkUrl = post['link_url']?.toString();
                         final status = post['status']?.toString() ?? 'queued';
                         final scheduled = post['scheduled_at']?.toString() ?? 'Queued';
                         final published = post['published_at']?.toString();
@@ -683,119 +687,340 @@ class _SocialManagementScreenState extends State<SocialManagementScreen>
                         final isQueued = status == 'queued';
 
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(14),
+                          margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: color.withValues(alpha: 0.25)),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: color.withValues(alpha: 0.35)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
+                          clipBehavior: Clip.antiAlias,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Header: Platform Badge + Status
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: color.withValues(alpha: 0.15),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(icon, color: color, size: 16),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        platform.toUpperCase().replaceAll('_', ' '),
-                                        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  _buildStatusBadge(status),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-
-                              // Caption Preview
-                              Text(
-                                fullCaption,
-                                style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 8),
-
-                              // Engagement Stats if published
-                              if (isPublished)
-                                Row(
+                              // 1. Visual Media Banner (16:9 / 1:1 with Badges & Zoom)
+                              if (imageUrl != null && imageUrl.isNotEmpty)
+                                Stack(
                                   children: [
-                                    const Icon(Icons.visibility_rounded, color: Color(0xFF38BDF8), size: 14),
-                                    const SizedBox(width: 4),
-                                    Text('$views views', style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11)),
-                                    const SizedBox(width: 12),
-                                    const Icon(Icons.favorite_rounded, color: Colors.pinkAccent, size: 14),
-                                    const SizedBox(width: 4),
-                                    Text('$likes likes', style: const TextStyle(color: Colors.pinkAccent, fontSize: 11)),
+                                    AspectRatio(
+                                      aspectRatio: platform == 'instagram' ? 1.0 : 16 / 9,
+                                      child: Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return Container(
+                                            color: const Color(0xFF0F172A),
+                                            child: const Center(
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: ManagerTheme.brandGold,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder: (context, error, stackTrace) => Container(
+                                          color: const Color(0xFF0F172A),
+                                          child: const Center(
+                                            child: Icon(Icons.broken_image_rounded, color: Colors.white24, size: 40),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // Gradient Scrim for contrast
+                                    Positioned.fill(
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Colors.black.withValues(alpha: 0.5),
+                                              Colors.transparent,
+                                              Colors.black.withValues(alpha: 0.65),
+                                            ],
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            stops: const [0.0, 0.4, 1.0],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // Top Platform & Status Badges
+                                    Positioned(
+                                      top: 10,
+                                      left: 10,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(alpha: 0.8),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: color.withValues(alpha: 0.6)),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(icon, color: color, size: 14),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              platform.toUpperCase().replaceAll('_', ' '),
+                                              style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 10,
+                                      right: 10,
+                                      child: _buildStatusBadge(status),
+                                    ),
+                                    // Fullscreen Zoom Pill
+                                    Positioned(
+                                      bottom: 10,
+                                      right: 10,
+                                      child: InkWell(
+                                        onTap: () => _showFullImageModal(context, imageUrl, fullCaption),
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.8),
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: Border.all(color: Colors.white30),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.zoom_in_rounded, color: Colors.white, size: 14),
+                                              SizedBox(width: 4),
+                                              Text('Preview 8K', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    if (mediaType == 'video')
+                                      Positioned(
+                                        bottom: 10,
+                                        left: 10,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: Colors.redAccent.withValues(alpha: 0.9),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.play_circle_filled_rounded, color: Colors.white, size: 12),
+                                              SizedBox(width: 4),
+                                              Text('9:16 Sacred Video', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w800)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
 
-                              const SizedBox(height: 10),
-                              const Divider(color: Colors.white10, height: 1),
-                              const SizedBox(height: 8),
-
-                              // Footer Row: Timestamp + Action Buttons
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    isPublished ? 'Published: ${published ?? scheduled}' : 'Scheduled: $scheduled',
-                                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
-                                  ),
-                                  Row(
-                                    children: [
-                                      if (isFailed)
-                                        ElevatedButton.icon(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.redAccent,
-                                            foregroundColor: Colors.white,
-                                            visualDensity: VisualDensity.compact,
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              // 2. Card Content Area
+                              Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (imageUrl == null || imageUrl.isEmpty) ...[
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(6),
+                                                decoration: BoxDecoration(
+                                                  color: color.withValues(alpha: 0.15),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: Icon(icon, color: color, size: 16),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                platform.toUpperCase().replaceAll('_', ' '),
+                                                style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+                                              ),
+                                            ],
                                           ),
-                                          icon: const Icon(Icons.refresh_rounded, size: 12),
-                                          label: const Text('Retry', style: TextStyle(fontSize: 10)),
-                                          onPressed: () => _retryPost(id),
-                                        ),
-                                      if (isQueued)
-                                        ElevatedButton.icon(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: ManagerTheme.brandGold,
-                                            foregroundColor: Colors.black,
-                                            visualDensity: VisualDensity.compact,
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                          ),
-                                          icon: const Icon(Icons.send_rounded, size: 12),
-                                          label: const Text('Publish Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                          onPressed: () => _publishPostNow(id),
-                                        ),
-                                      if (isPublished && permalink != null && permalink.isNotEmpty)
-                                        TextButton.icon(
-                                          style: TextButton.styleFrom(
-                                            visualDensity: VisualDensity.compact,
-                                            foregroundColor: ManagerTheme.brandGold,
-                                          ),
-                                          icon: const Icon(Icons.open_in_new_rounded, size: 12),
-                                          label: const Text('View Live', style: TextStyle(fontSize: 11)),
-                                          onPressed: () async {
-                                            final uri = Uri.parse(permalink);
-                                            if (await canLaunchUrl(uri)) launchUrl(uri);
-                                          },
-                                        ),
+                                          _buildStatusBadge(status),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
                                     ],
-                                  ),
-                                ],
+
+                                    // Caption Preview
+                                    Text(
+                                      fullCaption,
+                                      style: const TextStyle(color: Colors.white, fontSize: 12.5, height: 1.4),
+                                      maxLines: 4,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+
+                                    // Hashtags Strip
+                                    if (hashtags.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        hashtags,
+                                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontStyle: FontStyle.italic),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+
+                                    // Linked Blog Article Pill
+                                    if (linkUrl != null && linkUrl.isNotEmpty) ...[
+                                      const SizedBox(height: 10),
+                                      InkWell(
+                                        onTap: () async {
+                                          final uri = Uri.parse(linkUrl);
+                                          if (await canLaunchUrl(uri)) launchUrl(uri);
+                                        },
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF0F172A),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: const Color(0xFF334155)),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              const Icon(Icons.menu_book_rounded, color: Color(0xFFF59E0B), size: 14),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  'Blog: ${linkUrl.replaceFirst('https://onlinepuja.live/blog/', '')}',
+                                                  style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11, fontWeight: FontWeight.w600),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const Icon(Icons.arrow_outward_rounded, color: Color(0xFF94A3B8), size: 13),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+
+                                    // Engagement Stats if published
+                                    if (isPublished) ...[
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.visibility_rounded, color: Color(0xFF38BDF8), size: 14),
+                                          const SizedBox(width: 4),
+                                          Text('$views views', style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11)),
+                                          const SizedBox(width: 12),
+                                          const Icon(Icons.favorite_rounded, color: Colors.pinkAccent, size: 14),
+                                          const SizedBox(width: 4),
+                                          Text('$likes likes', style: const TextStyle(color: Colors.pinkAccent, fontSize: 11)),
+                                        ],
+                                      ),
+                                    ],
+
+                                    const SizedBox(height: 12),
+                                    const Divider(color: Colors.white10, height: 1),
+                                    const SizedBox(height: 8),
+
+                                    // Footer Row: Timestamp + Action Buttons
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          isPublished ? 'Published: ${published ?? scheduled}' : 'Scheduled: $scheduled',
+                                          style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
+                                        ),
+                                        Row(
+                                          children: [
+                                            // Copy Caption & Tags
+                                            IconButton(
+                                              icon: const Icon(Icons.copy_rounded, size: 16, color: Colors.white70),
+                                              tooltip: 'Copy Caption',
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                              onPressed: () {
+                                                Clipboard.setData(ClipboardData(text: '$fullCaption\n\n$hashtags\n\n${linkUrl ?? ""}'));
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('✓ Caption, tags and article link copied to clipboard!'),
+                                                    duration: Duration(seconds: 2),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            // Quick Edit
+                                            IconButton(
+                                              icon: const Icon(Icons.edit_note_rounded, size: 18, color: Color(0xFF38BDF8)),
+                                              tooltip: 'Quick Edit',
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                              onPressed: () => _showQuickEditModal(context, post),
+                                            ),
+                                            // Regenerate AI Visual Banner
+                                            if (isQueued)
+                                              IconButton(
+                                                icon: const Icon(Icons.auto_awesome_rounded, size: 16, color: ManagerTheme.brandGold),
+                                                tooltip: 'Regenerate 8K Banner',
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                                onPressed: () => _regenerateBanner(id),
+                                              ),
+                                            const SizedBox(width: 4),
+                                            if (isFailed)
+                                              ElevatedButton.icon(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.redAccent,
+                                                  foregroundColor: Colors.white,
+                                                  visualDensity: VisualDensity.compact,
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                ),
+                                                icon: const Icon(Icons.refresh_rounded, size: 12),
+                                                label: const Text('Retry', style: TextStyle(fontSize: 10)),
+                                                onPressed: () => _retryPost(id),
+                                              ),
+                                            if (isQueued)
+                                              ElevatedButton.icon(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: ManagerTheme.brandGold,
+                                                  foregroundColor: Colors.black,
+                                                  visualDensity: VisualDensity.compact,
+                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                ),
+                                                icon: const Icon(Icons.send_rounded, size: 12),
+                                                label: const Text('Publish Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                                onPressed: () => _publishPostNow(id),
+                                              ),
+                                            if (isPublished && permalink != null && permalink.isNotEmpty)
+                                              TextButton.icon(
+                                                style: TextButton.styleFrom(
+                                                  visualDensity: VisualDensity.compact,
+                                                  foregroundColor: ManagerTheme.brandGold,
+                                                ),
+                                                icon: const Icon(Icons.open_in_new_rounded, size: 12),
+                                                label: const Text('View Live', style: TextStyle(fontSize: 11)),
+                                                onPressed: () async {
+                                                  final uri = Uri.parse(permalink);
+                                                  if (await canLaunchUrl(uri)) launchUrl(uri);
+                                                },
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -807,6 +1032,195 @@ class _SocialManagementScreenState extends State<SocialManagementScreen>
               ),
             ),
           );
+  }
+
+  void _showFullImageModal(BuildContext context, String imageUrl, String caption) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFF0F172A),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: InteractiveViewer(
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 200,
+                        color: Colors.black26,
+                        child: const Center(child: Icon(Icons.broken_image, color: Colors.white24, size: 48)),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Devotional Sacred Visual (8K Commercial Art)', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                  TextButton.icon(
+                    icon: const Icon(Icons.open_in_browser_rounded, size: 14, color: ManagerTheme.brandGold),
+                    label: const Text('Open URL', style: TextStyle(color: ManagerTheme.brandGold, fontSize: 11)),
+                    onPressed: () async {
+                      final u = Uri.parse(imageUrl);
+                      if (await canLaunchUrl(u)) launchUrl(u, mode: LaunchMode.externalApplication);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showQuickEditModal(BuildContext context, Map<String, dynamic> post) {
+    final id = (post['id'] as num?)?.toInt() ?? 0;
+    final captionCtrl = TextEditingController(text: post['full_caption'] ?? post['caption'] ?? '');
+    final hashtagsCtrl = TextEditingController(text: post['hashtags'] ?? '');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 20,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.edit_note_rounded, color: ManagerTheme.brandGold, size: 22),
+                    SizedBox(width: 8),
+                    Text(
+                      'Refine Social Post Content',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text('Caption', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: captionCtrl,
+              maxLines: 5,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                hintText: 'Enter engaging devotional caption...',
+                hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text('Hashtags', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: hashtagsCtrl,
+              maxLines: 2,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                hintText: '#OnlinePuja #Kashi #Varanasi...',
+                hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ManagerTheme.brandGold,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: const Icon(Icons.save_rounded, size: 18),
+                label: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  final ok = await _api.updateSocialPost(
+                    id,
+                    caption: captionCtrl.text.trim(),
+                    hashtags: hashtagsCtrl.text.trim(),
+                  );
+                  if (ok) {
+                    _loadPosts();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('✓ Post updated successfully!'), backgroundColor: ManagerTheme.brandEmerald),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to update post.'), backgroundColor: Colors.redAccent),
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _regenerateBanner(int id) async {
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('✨ Synthesizing new high-res devotional banner with FLUX...'), duration: Duration(seconds: 3)),
+    );
+    final newUrl = await _api.generateSocialPostBanner(id);
+    if (newUrl != null && mounted) {
+      _loadPosts();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✓ New 8K devotional banner linked to post!'), backgroundColor: ManagerTheme.brandEmerald),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Banner generation timed out. Please try again.'), backgroundColor: Colors.redAccent),
+      );
+    }
+  }
   }
 
   // =============================================================

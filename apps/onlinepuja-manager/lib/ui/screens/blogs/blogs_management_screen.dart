@@ -227,54 +227,150 @@ class _BlogsManagementScreenState extends State<BlogsManagementScreen> {
                         final b = filtered[i];
                         final id = (b['id'] as num?)?.toInt() ?? 0;
                         final title = b['title']?.toString() ?? 'Devotional Article';
+                        final slug = b['slug']?.toString() ?? '';
                         final author = b['author']?.toString() ?? 'Vedic Desk';
                         final views = b['views'] ?? 0;
                         final date = b['created_at']?.toString() ?? 'Recent';
                         final isActive = b['is_active'] == true;
+                        final imageUrl = b['image_url']?.toString() ?? b['image']?.toString();
 
                         return Container(
-                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: ManagerTheme.surfaceDark,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: isActive ? Colors.white12 : Colors.redAccent.withValues(alpha: 0.3)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
+                          clipBehavior: Clip.antiAlias,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      title,
-                                      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Colors.white, height: 1.3),
+                              // 1. Cover Image Banner
+                              if (imageUrl != null && imageUrl.isNotEmpty)
+                                Stack(
+                                  children: [
+                                    AspectRatio(
+                                      aspectRatio: 16 / 9,
+                                      child: Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (_, child, progress) => progress == null
+                                            ? child
+                                            : Container(
+                                                color: Colors.black26,
+                                                child: const Center(
+                                                  child: CircularProgressIndicator(strokeWidth: 2, color: ManagerTheme.brandGold),
+                                                ),
+                                              ),
+                                        errorBuilder: (_, __, ___) => Container(
+                                          color: Colors.black26,
+                                          child: const Center(
+                                            child: Icon(Icons.temple_hindu_rounded, size: 36, color: Colors.white24),
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Switch(
-                                    value: isActive,
-                                    activeThumbColor: ManagerTheme.brandGold,
-                                    onChanged: (val) => _toggleBlogStatus(id),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'By $author · $date',
-                                    style: const TextStyle(fontSize: 11, color: Colors.white60),
-                                  ),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.remove_red_eye_rounded, size: 14, color: ManagerTheme.brandGold),
-                                      const SizedBox(width: 4),
-                                      Text('$views reads', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70)),
-                                    ],
-                                  ),
-                                ],
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: (isActive ? ManagerTheme.brandEmerald : Colors.redAccent).withValues(alpha: 0.85),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          isActive ? 'LIVE & INDEXED' : 'DRAFT',
+                                          style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w800),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                              Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            title,
+                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white, height: 1.3),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Switch(
+                                          value: isActive,
+                                          activeThumbColor: ManagerTheme.brandGold,
+                                          onChanged: (val) => _toggleBlogStatus(id),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'By $author · $date',
+                                          style: const TextStyle(fontSize: 11, color: Colors.white60),
+                                        ),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.remove_red_eye_rounded, size: 14, color: ManagerTheme.brandGold),
+                                            const SizedBox(width: 4),
+                                            Text('$views reads', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    const Divider(color: Colors.white10, height: 1),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        if (slug.isNotEmpty)
+                                          TextButton.icon(
+                                            style: TextButton.styleFrom(
+                                              visualDensity: VisualDensity.compact,
+                                              padding: EdgeInsets.zero,
+                                              foregroundColor: const Color(0xFF38BDF8),
+                                            ),
+                                            icon: const Icon(Icons.open_in_new_rounded, size: 13),
+                                            label: const Text('View Live Article', style: TextStyle(fontSize: 11)),
+                                            onPressed: () async {
+                                              final uri = Uri.parse('https://onlinepuja.live/blog/$slug');
+                                              if (await canLaunchUrl(uri)) launchUrl(uri);
+                                            },
+                                          )
+                                        else
+                                          const SizedBox.shrink(),
+                                        IconButton(
+                                          icon: const Icon(Icons.copy_rounded, size: 15, color: Colors.white60),
+                                          tooltip: 'Copy Article URL',
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                          onPressed: () {
+                                            Clipboard.setData(ClipboardData(text: 'https://onlinepuja.live/blog/$slug'));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('✓ Article URL copied to clipboard!'), duration: Duration(seconds: 2)),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
