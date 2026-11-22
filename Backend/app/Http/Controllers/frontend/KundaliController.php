@@ -578,19 +578,41 @@ class KundaliController extends Controller
             $getkundali = ['status' => 200, 'recordList' => [], 'totalRecords' => 0];
         }
 
+        $isGuest = empty($userId) && empty($request->input('s'));
+        $cacheKey = 'guest_kundali_html_v2';
+        if ($isGuest && \Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            return response(\Illuminate\Support\Facades\Cache::get($cacheKey));
+        }
+
         $getsystemflag = \App\Models\AdminModel\SystemFlag::all();
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
 
-        return view('frontend.pages.kundali', [
+        $rendered = view('frontend.pages.kundali', [
             'getkundali' => $getkundali,
             'getkundaliprice' => $getkundaliprice,
             'currency' => $currency,
-        ]);
+        ])->render();
+
+        if ($isGuest) {
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $rendered, 1800);
+        }
+
+        return response($rendered);
     }
 
     public function kundaliMatch(Request $request)
     {
-        return view('frontend.pages.kundali-matching', []);
+        $cacheKey = 'guest_kundali_matching_html_v2';
+        if (!authcheck() && \Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            return response(\Illuminate\Support\Facades\Cache::get($cacheKey));
+        }
+
+        $rendered = view('frontend.pages.kundali-matching', [])->render();
+        if (!authcheck()) {
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $rendered, 1800);
+        }
+
+        return response($rendered);
     }
 
     public function kundaliMatchReport(Request $request)

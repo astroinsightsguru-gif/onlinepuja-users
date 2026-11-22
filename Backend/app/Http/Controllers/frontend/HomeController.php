@@ -34,9 +34,13 @@ class HomeController extends Controller
     public function home(Request $request)
     {
         // ⚡ INSTANT GUEST MICROCACHE: Return fast cached HTML for anonymous visitors
-        $isGuest = !authcheck() && empty($request->all());
-        $cacheKey = 'homepage_guest_html_v2';
-        if ($isGuest && Cache::has($cacheKey)) {
+        $isGuest = !authcheck();
+        $queryKeys = array_keys($request->query());
+        $trackingParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid', '_ga', 'ref'];
+        $hasAppFilter = !empty(array_diff($queryKeys, $trackingParams)) || $request->has('astrologerCategoryId') || $request->has('sortBy') || $request->has('s');
+        $canServeGuestCache = $isGuest && !$hasAppFilter;
+        $cacheKey = 'homepage_guest_html_v3';
+        if ($canServeGuestCache && Cache::has($cacheKey)) {
             return response(Cache::get($cacheKey));
         }
 
@@ -430,8 +434,8 @@ class HomeController extends Controller
             'pujaCategories' => $pujaCategories,
         ])->render();
 
-        if ($isGuest) {
-            Cache::put($cacheKey, $rendered, 600); // 10 minutes cache
+        if ($canServeGuestCache) {
+            Cache::put($cacheKey, $rendered, 1800); // 30 minutes in Redis
         }
 
         return response($rendered);
