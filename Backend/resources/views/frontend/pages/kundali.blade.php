@@ -556,12 +556,11 @@
 
 @section('scripts')
 @php
-$getsystemflag = Http::withoutVerifying()->post(url('/') . '/api/getSystemFlag')->json();
-$getsystemflag = collect($getsystemflag['recordList']);
-$apikey = $getsystemflag->where('name', 'googleMapApiKey')->first();
-
+$rawApiKey = \Illuminate\Support\Facades\DB::table('systemflag')->where('name', 'googleMapApiKey')->value('value') ?? '';
+$apikey = ['value' => $rawApiKey];
+$apiKey = $rawApiKey;
 @endphp
-<script src="https://maps.googleapis.com/maps/api/js?key={{ $apikey['value'] }}&libraries=places">
+<script src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places">
 </script>
 <script>
     var input = document.getElementById('address');
