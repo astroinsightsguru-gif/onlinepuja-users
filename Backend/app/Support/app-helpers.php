@@ -26,31 +26,43 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 if (!function_exists('authcheck')) {
     function authcheck()
     {
-        $session = new Session();
-        $token = $session->get('token');
-
-        if ($token) {
-            try {
-                JWTAuth::setToken($token);
-                $user = JWTAuth::authenticate();
-
-                return isset($user) ? $user : false;
-            } catch (\Exception $e) {
-                return false;
-            }
+        static $resolved = false;
+        static $cachedUser = false;
+        if ($resolved) {
+            return $cachedUser;
         }
 
-        return false;
+        try {
+            $session = new Session();
+            $token = $session->get('token');
+
+            if ($token) {
+                JWTAuth::setToken($token);
+                $user = JWTAuth::authenticate();
+                $cachedUser = isset($user) ? $user : false;
+            }
+        } catch (\Throwable $e) {
+            $cachedUser = false;
+        }
+
+        $resolved = true;
+        return $cachedUser;
     }
 }
 
 function astroauthcheck()
 {
-    $session = new Session();
-    $token = $session->get('astrotoken');
+    static $resolved = false;
+    static $cachedAstro = false;
+    if ($resolved) {
+        return $cachedAstro;
+    }
 
-    if ($token) {
-        try {
+    try {
+        $session = new Session();
+        $token = $session->get('astrotoken');
+
+        if ($token) {
             JWTAuth::setToken($token);
             $user = JWTAuth::authenticate();
 
@@ -65,13 +77,14 @@ function astroauthcheck()
                 $user->astrologerId = 0;
             }
 
-            return isset($user) ? $user : false;
-        } catch (\Exception $e) {
-            return false;
+            $cachedAstro = isset($user) ? $user : false;
         }
+    } catch (\Throwable $e) {
+        $cachedAstro = false;
     }
 
-    return false;
+    $resolved = true;
+    return $cachedAstro;
 }
 
 if (!function_exists('getConfig')) {
@@ -702,11 +715,21 @@ function numberToCharacterString($number)
 
 function systemflag($name)
 {
-    $value = SystemFlag::where('name', $name)->pluck('value')->first();
-
-    if ($value) {
-        return $value;
+    static $memoryFlags = null;
+    if ($memoryFlags === null) {
+        $memoryFlags = cache()->remember('all_system_flags_kv', 86400, function () {
+            try {
+                return DB::table('systemflag')->pluck('value', 'name')->toArray();
+            } catch (\Throwable $e) {
+                return [];
+            }
+        });
     }
+
+    if (isset($memoryFlags[$name])) {
+        return $memoryFlags[$name];
+    }
+
     return false;
 }
 

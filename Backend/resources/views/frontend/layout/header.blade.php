@@ -522,7 +522,7 @@
                                     </li>
                                     <!-- Options -->
                                     <li class="d-block"><a class="dropdown-item" href="{{ route('front.getMyAccount') }}"><i class="fa-solid fa-user mr-2"></i>My Account</a></li>
-                                    <li class="d-block"><a class="dropdown-item d-flex justify-content-between align-items-center pr-2" href="{{ route('front.getMyWallet') }}"><span><i class="fa-solid fa-wallet mr-2"></i>My Wallet</span><span class="badge badge-danger">@if($walletType == 'Coin')<img src="{{ asset($coinIcon) }}" alt="Wallet Icon" width="12">@else{{ $currency['value'] }}@endif {{ $userWalletAmount }}</span></a></li>
+                                    <li class="d-block"><a class="dropdown-item d-flex justify-content-between align-items-center pr-2" href="{{ route('front.getMyWallet') }}"><span><i class="fa-solid fa-wallet mr-2"></i>My Wallet</span><span class="badge badge-danger">@if($walletType == 'Coin')<img src="{{ asset($coinIcon) }}" alt="Wallet Icon" width="12" height="12">@else{{ $currency['value'] }}@endif {{ $userWalletAmount }}</span></a></li>
                                     <li class="d-block"><a class="dropdown-item" href="{{ route('front.getMyChat') }}"><i class="fa-solid fa-comment-dots mr-2"></i>My Chats</a></li>
                                     <li class="d-block"><a class="dropdown-item" href="{{ route('front.getMyAiChat') }}"><i class="fa-solid fa-robot mr-2"></i>My Ai Chats</a></li>
                                     <li class="d-block"><a class="dropdown-item" href="{{ route('front.getMyCall') }}"><i class="fa-solid fa-phone mr-2"></i>My Calls</a></li>
@@ -809,9 +809,6 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-
 <!-- Added by bhushan borse on 12, June 2025 -->
 <script>
 $(document).ready(function () {
@@ -1051,10 +1048,10 @@ function editMobileNumber() {
     </script>
 
 
-<script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-storage.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/7.9.1/firebase-app.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/7.9.1/firebase-auth.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/7.9.1/firebase-firestore.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/7.9.1/firebase-storage.js"></script>
 
 
 <script>
@@ -1069,7 +1066,11 @@ function editMobileNumber() {
         measurementId: "{{ $measurementId->value }}"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    window.addEventListener('DOMContentLoaded', function() {
+        if (typeof firebase !== 'undefined' && (!firebase.apps || !firebase.apps.length)) {
+            firebase.initializeApp(firebaseConfig);
+        }
+    });
 </script>
 
 

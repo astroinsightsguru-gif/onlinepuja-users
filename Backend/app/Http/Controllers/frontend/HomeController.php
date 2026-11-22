@@ -89,7 +89,9 @@ class HomeController extends Controller
 
         $horosign = Horosign::query()->where('isActive', 1)->get();
         $astromallProduct = AstromallProduct::orderBy('id', 'DESC')->get();
-        $getsystemflag = SystemFlag::all();
+        $getsystemflag = Cache::remember('all_system_flags_collection', 86400, function () {
+            return SystemFlag::all();
+        });
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
         $freekundali = $getsystemflag->where('name', 'FreeKundali')->first();
         $kundali_matching = $getsystemflag->where('name', 'KundaliMatching')->first();
@@ -146,17 +148,29 @@ class HomeController extends Controller
         $Productlist = AstromallProduct::query()->where('isActive', 1)->orderBy('created_at', 'desc')->take(3)->get();
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
 
-        // Get the user's IP address and cache location
+        // Fast Geo: Check Cloudflare headers first (0ms latency, zero external HTTP)
         $ip = $request->ip();
+        $cfCountry = $request->header('cf-ipcountry');
+        $cfCity = $request->header('cf-ipcity');
         $position = null;
-        try {
-            if ($ip && $ip !== '127.0.0.1' && !str_starts_with($ip, '192.168.') && !str_starts_with($ip, '10.')) {
+
+        if ($cfCountry || $cfCity) {
+            $position = (object) [
+                'latitude' => '28.6139',
+                'longitude' => '77.2090',
+                'cityName' => $cfCity ?: 'New Delhi',
+                'regionName' => 'Delhi',
+                'countryName' => $cfCountry === 'IN' ? 'India' : ($cfCountry ?: 'India'),
+                'timezone' => 'Asia/Kolkata',
+            ];
+        } elseif ($ip && $ip !== '127.0.0.1' && !str_starts_with($ip, '192.168.') && !str_starts_with($ip, '10.')) {
+            try {
                 $position = Cache::remember('user_geo_' . md5($ip), 86400, function () use ($ip) {
                     return Location::get($ip);
                 });
+            } catch (\Throwable $e) {
+                // Silently fallback without blocking homepage
             }
-        } catch (\Throwable $e) {
-            // Silently fallback without blocking homepage
         }
 
         if (!$position) {
@@ -187,51 +201,30 @@ class HomeController extends Controller
         $date = date('d/m/Y');
         $time = now($timezone)->format('H:i');
 
-        // Generate a unique session key based on the IP and date
-        $sessionKey = 'panchang_data_' . $ip . '_' . date('Y-m-d');
-
-        // Check if the panchang data is already stored in the session
-        if ($session->has($sessionKey)) {
-            $sessionData = $session->get($sessionKey);
-
-            // Check if the session data has expired
-            if (time() > $sessionData['expires_at']) {
-                $session->remove($sessionKey);
-            } else {
-                // Use the existing session data
-                $Tpanchangs = $sessionData['data'];
-            }
-        }
-
-        // If the session does not exist or has expired, fetch new data from the API
-        if (!$session->has($sessionKey)) {
-            $Tpanchangs = [];
+        // Global Daily Panchang Cache in Redis (avoids 4s external HTTP call per visitor)
+        $panchangCacheKey = 'daily_panchang_' . date('Y-m-d');
+        $Tpanchangs = Cache::remember($panchangCacheKey, 86400, function () use ($date, $time, $timezone, $latitude, $longitude, $api_key) {
             $apiKeyVal = $api_key ? $api_key->value : '';
             if (!empty($apiKeyVal) && $apiKeyVal !== 'vedicastro') {
                 try {
-                    $Todayspanchang = Http::timeout(4)->get('https://api.vedicastroapi.com/v3-json/panchang/panchang', [
+                    $Todayspanchang = Http::timeout(3)->get('https://api.vedicastroapi.com/v3-json/panchang/panchang', [
                         'date' => $date,
                         'time' => $time,
-                        'tz' => $this->getTimezoneOffset($timezone),
+                        'tz' => 5.5,
                         'lat' => $latitude,
                         'lon' => $longitude,
                         'api_key' => $apiKeyVal,
                         'lang' => 'en'
                     ]);
                     if ($Todayspanchang->successful()) {
-                        $Tpanchangs = $Todayspanchang->json();
+                        return $Todayspanchang->json();
                     }
                 } catch (\Throwable $e) {
                     \Log::warning("Home Panchang API timeout/error: " . $e->getMessage());
                 }
             }
-
-            // Store the panchang data in the session with a 24-hour expiry
-            $session->set($sessionKey, [
-                'data' => $Tpanchangs,
-                'expires_at' => time() + (24 * 60 * 60),  // 24 hours from now
-            ]);
-        }
+            return [];
+        });
 
         if ($request->ref) {
             $session->set('referrel_token', $request->ref);
@@ -384,7 +377,7 @@ class HomeController extends Controller
             ]);
         }
 
-        $getsystemflag = SystemFlag::all();
+        // Reuse cached system flags
         $currency = $getsystemflag->where('name', 'currencySymbol')->first();
         $Callsection = $getsystemflag->where('name', 'Callsection')->first();
         $userWalletAmount = 0;

@@ -1,4 +1,4 @@
-@extends('frontend.layout.master')
+﻿@extends('frontend.layout.master')
 
 @section('title', 'Online Puja Booking & Online Pandit Booking in Varanasi | Authentic Vedic Pujas')
 @section('meta_description', 'India\'s #1 platform for online puja booking & online pandit booking for puja in Varanasi. Perform authentic Vedic rituals at Kashi Vishwanath with live video and sanctum Prasad delivery.')
@@ -326,7 +326,7 @@ return Str::startsWith($path, ['http://','https://']) ? $path : asset(ltrim($pat
                                 ? imgSrc($homeBanner->value) 
                                 : asset('public/frontend/homeimage/home-analyze.png');
                         @endphp
-                        <img src="{{ $centerImg }}" alt="Zodiac Central" class="taramandal-logo img-fluid" onerror="this.onerror=null; this.src='{{ asset('public/frontend/homeimage/home-analyze.png') }}';">
+                        <img src="{{ $centerImg }}" alt="Zodiac Central" class="taramandal-logo img-fluid" width="110" height="110" fetchpriority="high" decoding="async" onerror="this.onerror=null; this.src='{{ asset('public/frontend/homeimage/home-analyze.png') }}';">
                     </div>
                 </div>
             </div>
@@ -523,7 +523,7 @@ return Str::startsWith($path, ['http://','https://']) ? $path : asset(ltrim($pat
             <div class="dyn-astro-card">
                 <div class="dyn-astro-card-top d-flex gap-3 align-items-center">
                     <div class="dyn-astro-avatar-container">
-                        <img src="{{ $astroImg }}" alt="{{ $astro->name }}" class="dyn-astro-avatar" onerror="this.onerror=null; this.src='{{ $defaultImg }}';">
+                        <img src="{{ $astroImg }}" alt="{{ $astro->name }}" class="dyn-astro-avatar" width="60" height="60" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='{{ $defaultImg }}';">
                         @if ($astro->is_boosted == 1)
                         <span class="dyn-celebrity-badge">CELEBRITY</span>
                         @endif
@@ -554,7 +554,7 @@ return Str::startsWith($path, ['http://','https://']) ? $path : asset(ltrim($pat
                     <div class="dyn-astro-price">
                         <span class="price-val font-weight-extrabold">{{ $currency->value ?? '₹' }}{{ number_format($astro->charge) }}</span><span class="price-unit">/min</span>
                     </div>
-                    <a href="{{ route('front.astrologerDetails', ['slug' => $astro->slug]) }}" class="dyn-chat-btn">
+                    <a href="{{ route('front.astrologerDetails', ['slug' => $astro->slug ?: ($astro->id ?? 1)]) }}" class="dyn-chat-btn">
                         Chat
                     </a>
                 </div>
@@ -674,7 +674,7 @@ return Str::startsWith($path, ['http://','https://']) ? $path : asset(ltrim($pat
             <div class="col-lg-3 col-md-6 mb-4">
                 <a href="{{ route('front.getBlogDetails', ['slug' => $bloglist->slug]) }}" class="journal-blog-card text-decoration-none d-block">
                     <div class="journal-blog-img-wrapper">
-                        <img class="journal-blog-img" src="{{ imgSrc($bloglist->blogImage) }}" alt="{{ $bloglist->title }}">
+                        <img class="journal-blog-img" src="{{ imgSrc($bloglist->blogImage) }}" alt="{{ $bloglist->title }}" width="400" height="240" loading="lazy" decoding="async">
                     </div>
                     <div class="journal-blog-content p-3">
                         <h3 class="journal-blog-title font-weight-bold">{{ $bloglist->title }}</h3>
@@ -813,7 +813,7 @@ return Str::startsWith($path, ['http://','https://']) ? $path : asset(ltrim($pat
             <div class="news-item-card">
                 <a href="{{ $news->link ?? route('news.show', $news->id) }}" target="_blank" class="text-decoration-none d-block h-100">
                     <div class="news-img-wrapper">
-                        <img class="news-img" src="{{ $newsImg }}" alt="{{ $news->channel }}">
+                        <img class="news-img" src="{{ $newsImg }}" alt="{{ $news->channel }}" width="300" height="169" loading="lazy" decoding="async">
                     </div>
                     <div class="news-card-content p-3 d-flex flex-column justify-content-between">
                         <h3 class="news-title font-weight-bold">{{ $news->description ?? 'News Headline' }}</h3>
@@ -1052,7 +1052,7 @@ return Str::startsWith($path, ['http://','https://']) ? $path : asset(ltrim($pat
                             $saLangs = $sa->languageKnown ? implode(', ', array_slice(explode(',', $sa->languageKnown), 0, 3)) : 'English, Hindi';
                             @endphp
                             <div class="sidebar-astro-row">
-                                <img src="{{ $saImg }}" alt="{{ $sa->name }}" class="sidebar-astro-avatar">
+                                <img src="{{ $saImg }}" alt="{{ $sa->name }}" class="sidebar-astro-avatar" width="46" height="46" loading="lazy" decoding="async">
                                 <div class="sidebar-astro-info">
                                     <h5 class="sidebar-astro-name">{{ $sa->name }}</h5>
                                     <p class="sidebar-astro-skill">{{ $saSkills }}</p>
@@ -1294,9 +1294,7 @@ return Str::startsWith($path, ['http://','https://']) ? $path : asset(ltrim($pat
             data-astrologer-id="{{ $story->astrologerId }}"
             data-astrologer-name="{{ $story->name }}"
             data-astrologer-profile="{{ $story->profileImage }}">
-            <img src="{{ $storyImg }}"
-
-                alt="{{ $story->name }}">
+            <img src="{{ $storyImg }}" alt="{{ $story->name }}" width="80" height="80" loading="lazy" decoding="async">
             <p>{{ $story->name }}</p>
         </div>
         @endforeach
@@ -1309,8 +1307,7 @@ return Str::startsWith($path, ['http://','https://']) ? $path : asset(ltrim($pat
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <img id="astrologerProfileImage" src="" alt="Astrologer Profile Image"
-                    class="rounded-circle" style="height:40px;width:40px">
+                <img id="astrologerProfileImage" src="" alt="Astrologer Profile Image" class="rounded-circle" width="40" height="40" style="height:40px;width:40px" loading="lazy" decoding="async">
                 <span class="modal-title mt-2 ml-2" id="astrologerName"></span>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -1337,7 +1334,6 @@ return Str::startsWith($path, ['http://','https://']) ? $path : asset(ltrim($pat
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     // ─── Shared config ────────────────────────────────────────────────────────────

@@ -28,14 +28,9 @@ use App\Http\Controllers\frontend\PujaController;
 use App\Http\Controllers\frontend\ReportController;
 use App\Http\Controllers\frontend\WalletController;
 use Illuminate\Support\Facades\Route;
-use Symfony\Component\HttpFoundation\Session\Session;
 
 // Use helper function to get cached profession title
 $professionTitle = strtolower(getProfessionTitle() ?: 'partner');
-
-// $prefix='partner';
-$session = new Session();
-$token = $session->get('token');
 
 /*
  * |--------------------------------------------------------------------------

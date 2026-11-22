@@ -1,16 +1,16 @@
-﻿<!-- 🕉️ OnlinePuja AI: Vedic Voice Assistant Widget ("Pandit Ji Voice AI") -->
+﻿<!-- 🕉️ OnlinePuja AI: Advanced Vedic Voice & Jyotish Assistant Widget ("पंडित जी Voice AI") -->
 <style>
   #onlinepuja-voice-widget-btn {
     position: fixed;
     bottom: 24px;
     right: 20px;
     z-index: 999998;
-    background: linear-gradient(135deg, #FF7A00 0%, #D84315 100%);
+    background: linear-gradient(135deg, #FF6F00 0%, #D84315 100%);
     color: #fff;
     border: 2px solid #FFE082;
     border-radius: 50px;
     padding: 12px 20px;
-    box-shadow: 0 10px 25px rgba(230, 81, 0, 0.45), 0 0 15px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 10px 25px rgba(230, 81, 0, 0.45), 0 0 15px rgba(255, 215, 0, 0.35);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -43,14 +43,14 @@
     position: fixed;
     bottom: 84px;
     right: 20px;
-    width: 390px;
+    width: 400px;
     max-width: calc(100vw - 32px);
-    height: 560px;
-    max-height: calc(100vh - 120px);
+    height: 590px;
+    max-height: calc(100vh - 100px);
     background: #FFFDF9;
-    border: 1.5px solid #FFE082;
-    border-radius: 20px;
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25), 0 0 30px rgba(255, 152, 0, 0.15);
+    border: 1.5px solid #FFD54F;
+    border-radius: 22px;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.3), 0 0 35px rgba(255, 152, 0, 0.2);
     z-index: 999999;
     display: none;
     flex-direction: column;
@@ -63,16 +63,15 @@
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
+  /* Header */
   .op-voice-header {
     background: linear-gradient(135deg, #FF6F00 0%, #BF360C 100%);
     color: white;
-    padding: 13px 16px;
+    padding: 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid #FFD54F;
-    border-top-left-radius: 18px;
-    border-top-right-radius: 18px;
   }
   .op-voice-header h3 {
     margin: 0;
@@ -86,7 +85,7 @@
   .op-voice-header .header-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
   .op-voice-header .header-btn {
     background: rgba(255,255,255,0.22);
@@ -96,16 +95,68 @@
     height: 28px;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.2s;
   }
   .op-voice-header .header-btn:hover {
-    background: rgba(255,255,255,0.38);
+    background: rgba(255,255,255,0.4);
   }
 
+  /* Kundali Quick Banner */
+  .op-kundali-strip {
+    background: #FFF8E1;
+    border-bottom: 1px solid #FFE082;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #BF360C;
+    font-weight: 600;
+  }
+  .op-kundali-strip button {
+    background: #FF6F00;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  /* Kundali Drawer */
+  #op-kundali-drawer {
+    display: none;
+    background: #FFF3E0;
+    border-bottom: 1.5px solid #FFB74D;
+    padding: 12px 14px;
+    font-size: 12.5px;
+  }
+  #op-kundali-drawer input {
+    width: 100%;
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    border: 1px solid #FFCC80;
+    border-radius: 6px;
+    font-size: 12px;
+    box-sizing: border-box;
+  }
+  #op-kundali-drawer .save-btn {
+    width: 100%;
+    background: #FF6F00;
+    color: white;
+    border: none;
+    padding: 7px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* Messages Body */
   .op-voice-body {
     flex: 1;
     overflow-y: auto;
@@ -122,9 +173,15 @@
     border-radius: 14px;
     font-size: 13.5px;
     line-height: 1.55;
-    max-width: 88%;
+    max-width: 90%;
     word-break: break-word;
+    animation: op-fade-in 0.25s ease-out;
   }
+  @keyframes op-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   .op-msg.pandit {
     background: #FFF3E0;
     color: #3E2723;
@@ -134,48 +191,115 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.04);
   }
   .op-msg.devotee {
-    background: #FF7043;
+    background: linear-gradient(135deg, #FF7043 0%, #F4511E 100%);
     color: white;
     align-self: flex-end;
     border-bottom-right-radius: 4px;
-    box-shadow: 0 2px 6px rgba(255,112,67,0.3);
+    box-shadow: 0 3px 8px rgba(244, 81, 30, 0.3);
   }
 
-  /* Recommended Puja Card inside Chat */
-  .op-puja-recommend-card {
+  /* Card Containers inside Pandit's Message */
+  .op-action-cards {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* 1. Recommended Puja Card */
+  .op-card-puja {
     background: #FFFFFF;
     border: 1.5px solid #FFB74D;
     border-radius: 12px;
-    padding: 12px;
-    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.12);
-    margin-top: 10px;
+    padding: 11px;
+    box-shadow: 0 3px 10px rgba(255, 152, 0, 0.12);
   }
-  .op-puja-recommend-card .title {
+  .op-card-puja .title {
     font-weight: 700;
     color: #BF360C;
     font-size: 13.5px;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
-  .op-puja-recommend-card .place {
+  .op-card-puja .details {
     font-size: 11.5px;
     color: #6D4C41;
     margin-bottom: 8px;
   }
-  .op-puja-recommend-card .book-btn {
+  .op-card-puja .book-btn {
     display: block;
     text-align: center;
     background: linear-gradient(135deg, #FF6F00 0%, #E65100 100%);
-    color: white;
-    padding: 8px 12px;
+    color: white !important;
+    padding: 7px 12px;
     border-radius: 8px;
     text-decoration: none;
     font-weight: 700;
     font-size: 12.5px;
     transition: transform 0.2s;
   }
-  .op-puja-recommend-card .book-btn:hover {
-    transform: scale(1.02);
-    color: white;
+
+  /* 2. Gemstone Card */
+  .op-card-gemstone {
+    background: #F1F8E9;
+    border: 1.5px solid #AED581;
+    border-radius: 10px;
+    padding: 9px 11px;
+    font-size: 12px;
+    color: #33691E;
+  }
+  .op-card-gemstone strong {
+    color: #1B5E20;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* 3. Mantra Card */
+  .op-card-mantra {
+    background: #EDE7F6;
+    border: 1px dashed #9575CD;
+    border-radius: 10px;
+    padding: 8px 11px;
+    font-size: 12px;
+    color: #4A148C;
+    font-family: inherit;
+  }
+
+  /* 4. Astrologer Live CTA */
+  .op-card-astro {
+    background: #FFFDE7;
+    border: 1px solid #FFF176;
+    border-radius: 10px;
+    padding: 8px 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #F57F17;
+  }
+  .op-card-astro a {
+    background: #FBC02D;
+    color: #212121 !important;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 11.5px;
+  }
+
+  /* 5. WhatsApp Share Button */
+  .op-share-wa-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #25D366;
+    color: white !important;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    text-decoration: none;
+    font-weight: 700;
+    margin-top: 6px;
+    align-self: flex-start;
   }
 
   /* Quick Suggestion Chips */
@@ -276,11 +400,13 @@
       font-size: 13px;
     }
     #onlinepuja-voice-modal {
-      bottom: 12px;
+      bottom: 10px;
       right: 10px;
       left: 10px;
       width: calc(100vw - 20px);
-      max-height: calc(100vh - 40px);
+      max-height: calc(100vh - 20px);
+      height: 90vh;
+      border-radius: 18px;
     }
   }
 </style>
@@ -293,27 +419,45 @@
 
 <!-- Divine Assistant Popup Modal -->
 <div id="onlinepuja-voice-modal">
+  <!-- Header -->
   <div class="op-voice-header">
     <h3>
       <span>🕉️</span>
       <span>पंडित जी (OnlinePuja AI)</span>
     </h3>
     <div class="header-controls">
-      <button id="op-audio-toggle-btn" class="header-btn" onclick="window.togglePanditAudio()" title="आवाज बंद/चालू करें">🔊</button>
+      <button id="op-audio-toggle-btn" class="header-btn" onclick="window.togglePanditAudio()" title="आवाज बंद / चालू करें">🔊</button>
+      <button class="header-btn" onclick="window.clearPanditChat()" title="चैट रीसेट करें">🗑️</button>
       <button class="header-btn" onclick="window.toggleOnlinePujaVoiceModal()" title="बंद करें">✕</button>
     </div>
+  </div>
+
+  <!-- Kundali Details Strip -->
+  <div class="op-kundali-strip">
+    <span id="op-kundali-label">🔮 व्यक्तिगत कुंडली विश्लेषण जोड़ें</span>
+    <button onclick="window.toggleKundaliDrawer()">+ विवरण</button>
+  </div>
+
+  <!-- Collapsible Kundali Drawer -->
+  <div id="op-kundali-drawer">
+    <div style="font-weight:700;color:#BF360C;margin-bottom:6px;">जन्म विवरण (Personal Vedic Profile)</div>
+    <input type="text" id="op-user-name" placeholder="आपका नाम (Name)" />
+    <input type="date" id="op-user-dob" placeholder="जन्म तिथि (DOB)" />
+    <input type="time" id="op-user-tob" placeholder="जन्म समय (Birth Time)" />
+    <input type="text" id="op-user-pob" placeholder="जन्म स्थान / शहर (Birth Place)" />
+    <button class="save-btn" onclick="window.saveKundaliDetails()">सहेजें व कुंडली विश्लेषण शुरू करें</button>
   </div>
 
   <!-- Messages Body -->
   <div class="op-voice-body" id="op-voice-chat-stream">
     <div class="op-msg pandit">
-      🙏 <strong>ॐ नमः शिवाय।</strong><br>
-      मैं पंडित जी (OnlinePuja AI) हूँ। अपनी कुंडली, विवाह, व्यापार, स्वास्थ्य अथवा किसी भी दोष के निवारण हेतु बोलकर या लिखकर पूछें।
+      🙏 <strong>ॐ नमः शिवाय। आयुष्मान भव!</strong><br>
+      मैं पंडित जी (OnlinePuja AI) हूँ। अपनी कुंडली, विवाह, व्यापार, स्वास्थ्य अथवा किसी भी ग्रह दोष के निवारण हेतु बोलकर या लिखकर पूछें।
     </div>
   </div>
 
   <!-- Quick Prompts Chips -->
-  <div class="op-quick-chips">
+  <div class="op-quick-chips" id="op-quick-chips-bar">
     <button onclick="window.sendVoiceQueryDirect('विवाह में बाधा और मंगल दोष के उपाय बताइए')">💍 विवाह में बाधा</button>
     <button onclick="window.sendVoiceQueryDirect('व्यापार वृद्धि एवं धन लाभ के सरल उपाय')">💼 व्यापार वृद्धि</button>
     <button onclick="window.sendVoiceQueryDirect('कालसर्प दोष और नवग्रह शांति के उपाय')">🐍 कालसर्प व ग्रह शांति</button>
@@ -338,6 +482,50 @@
   let opIsListening = false;
   let opAudioEnabled = true;
 
+  // Load saved Kundali profile
+  function getSavedKundali() {
+    try {
+      return JSON.parse(localStorage.getItem('op_kundali_profile') || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  window.toggleKundaliDrawer = function() {
+    const d = document.getElementById('op-kundali-drawer');
+    if (!d) return;
+    d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+  };
+
+  window.saveKundaliDetails = function() {
+    const name = document.getElementById('op-user-name').value.trim();
+    const dob = document.getElementById('op-user-dob').value;
+    const tob = document.getElementById('op-user-tob').value;
+    const pob = document.getElementById('op-user-pob').value.trim();
+
+    const profile = { name, dob, tob, pob };
+    localStorage.setItem('op_kundali_profile', JSON.stringify(profile));
+
+    const lbl = document.getElementById('op-kundali-label');
+    if (lbl) lbl.innerText = `🔮 कुंडली सक्रिय: ${name || 'भक्त'} (${dob || ''})`;
+    window.toggleKundaliDrawer();
+
+    window.sendVoiceQueryDirect(`मेरी जन्म कुंडली के अनुसार गृह दशा एवं आगामी भविष्य बताइए`);
+  };
+
+  window.clearPanditChat = function() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    const chatStream = document.getElementById('op-voice-chat-stream');
+    if (chatStream) {
+      chatStream.innerHTML = `
+        <div class="op-msg pandit">
+          🙏 <strong>ॐ नमः शिवाय। आयुष्मान भव!</strong><br>
+          नवीन परामर्श प्रारंभ हो चुका है। अपनी किसी भी समस्या या मनोकामना का शास्त्रसम्मत समाधान पूछें।
+        </div>
+      `;
+    }
+  };
+
   window.togglePanditAudio = function() {
     opAudioEnabled = !opAudioEnabled;
     const btn = document.getElementById('op-audio-toggle-btn');
@@ -351,6 +539,7 @@
     const modal = document.getElementById('onlinepuja-voice-modal');
     const launcher = document.getElementById('onlinepuja-voice-widget-btn');
     if (!modal) return;
+
     if (modal.style.display === 'flex') {
       modal.style.display = 'none';
       if (launcher) launcher.style.display = 'flex';
@@ -358,6 +547,14 @@
     } else {
       modal.style.display = 'flex';
       if (launcher) launcher.style.display = 'none';
+
+      // Check existing profile
+      const prof = getSavedKundali();
+      if (prof.name || prof.dob) {
+        const lbl = document.getElementById('op-kundali-label');
+        if (lbl) lbl.innerText = `🔮 कुंडली सक्रिय: ${prof.name || 'भक्त'} (${prof.dob || ''})`;
+      }
+
       setTimeout(() => {
         const inp = document.getElementById('op-voice-text-input');
         if (inp) inp.focus();
@@ -374,7 +571,7 @@
     const rec = new SpeechRecognition();
     rec.continuous = false;
     rec.interimResults = false;
-    rec.lang = 'hi-IN'; // Authentic Hindi speech recognition
+    rec.lang = 'hi-IN';
 
     rec.onstart = function() {
       opIsListening = true;
@@ -438,6 +635,19 @@
     window.submitTextVoiceQuery();
   };
 
+  window.updateFollowupChips = function(chips) {
+    if (!chips || !chips.length) return;
+    const bar = document.getElementById('op-quick-chips-bar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    chips.forEach(chipText => {
+      const btn = document.createElement('button');
+      btn.innerText = chipText;
+      btn.onclick = () => window.sendVoiceQueryDirect(chipText);
+      bar.appendChild(btn);
+    });
+  };
+
   window.submitTextVoiceQuery = function() {
     const input = document.getElementById('op-voice-text-input');
     const query = (input ? input.value : '').trim();
@@ -462,9 +672,15 @@
     chatStream.appendChild(loaderMsg);
     chatStream.scrollTop = chatStream.scrollHeight;
 
-    // 3. Dispatch to OnlinePuja Brain API with 20s timeout
-    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timeoutId = controller ? setTimeout(() => controller.abort(), 20000) : null;
+    // 3. Dispatch to OnlinePuja Brain API with fast timeout
+    const prof = getSavedKundali();
+    const payload = {
+      message: query,
+      name: prof.name || '',
+      dob: prof.dob || '',
+      tob: prof.tob || '',
+      pob: prof.pob || ''
+    };
 
     fetch('/api/brain/voice/consult', {
       method: 'POST',
@@ -472,40 +688,85 @@
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      signal: controller ? controller.signal : undefined,
-      body: JSON.stringify({ message: query })
+      body: JSON.stringify(payload)
     })
-    .then(r => {
-      if (timeoutId) clearTimeout(timeoutId);
-      return r.json();
-    })
+    .then(r => r.json())
     .then(res => {
       const loader = document.getElementById('op-current-loading-msg');
       if (loader) loader.remove();
 
       if (res && res.success && res.data) {
-        const panditReply = res.data.reply_text || '🙏 ॐ नमः शिवाय! आयुष्मान भव।';
+        const data = res.data;
+        const panditReply = data.reply_text || '🙏 ॐ नमः शिवाय! आयुष्मान भव।';
         const panditMsg = document.createElement('div');
         panditMsg.className = 'op-msg pandit';
         panditMsg.innerHTML = panditReply.replace(/\n/g, '<br>');
 
-        // Render Recommended Puja Card
-        if (res.data.recommended_puja) {
-          const puja = res.data.recommended_puja;
-          const card = document.createElement('div');
-          card.className = 'op-puja-recommend-card';
-          card.innerHTML = `
+        const cardsContainer = document.createElement('div');
+        cardsContainer.className = 'op-action-cards';
+
+        // A. Recommended Puja Card
+        if (data.recommended_puja) {
+          const puja = data.recommended_puja;
+          const pujaCard = document.createElement('div');
+          pujaCard.className = 'op-card-puja';
+          pujaCard.innerHTML = `
             <div class="title">🔱 ${puja.title}</div>
-            <div class="place">📍 ${puja.place} • दक्षिणा: ₹${puja.price}</div>
+            <div class="details">📍 ${puja.place} • दक्षिणा: ₹${puja.price}</div>
             <a href="${puja.booking_url}" class="book-btn" target="_blank">🙏 संकल्प लें व पूजा बुक करें</a>
           `;
-          panditMsg.appendChild(card);
+          cardsContainer.appendChild(pujaCard);
         }
 
+        // B. Auspicious Gemstone Card
+        if (data.recommended_gemstone) {
+          const gem = data.recommended_gemstone;
+          const gemCard = document.createElement('div');
+          gemCard.className = 'op-card-gemstone';
+          gemCard.innerHTML = `
+            <strong>💎 रत्न उपाय: ${gem.name} (${gem.metal})</strong>
+            <div>${gem.wearing_day} — ${gem.benefit}</div>
+          `;
+          cardsContainer.appendChild(gemCard);
+        }
+
+        // C. Sacred Vedic Mantra
+        if (data.mantra) {
+          const mantraCard = document.createElement('div');
+          mantraCard.className = 'op-card-mantra';
+          mantraCard.innerHTML = `<strong>📿 सिद्ध मंत्र जप:</strong> ${data.mantra}`;
+          cardsContainer.appendChild(mantraCard);
+        }
+
+        // D. 1-on-1 Astrologer Live Consultation CTA
+        const astroCard = document.createElement('div');
+        astroCard.className = 'op-card-astro';
+        astroCard.innerHTML = `
+          <span>📞 व्यक्तिगत विस्तृत फलादेश हेतु:</span>
+          <a href="/astrologers" target="_blank">ज्योतिषी से बात करें</a>
+        `;
+        cardsContainer.appendChild(astroCard);
+
+        // E. WhatsApp Share Button
+        if (data.whatsapp_share_url) {
+          const shareBtn = document.createElement('a');
+          shareBtn.className = 'op-share-wa-btn';
+          shareBtn.href = data.whatsapp_share_url;
+          shareBtn.target = '_blank';
+          shareBtn.innerHTML = `📲 व्हाट्सएप पर उपाय सेव करें`;
+          cardsContainer.appendChild(shareBtn);
+        }
+
+        panditMsg.appendChild(cardsContainer);
         chatStream.appendChild(panditMsg);
         chatStream.scrollTop = chatStream.scrollHeight;
 
-        // Speak aloud in sweet Hindi voice if audio enabled
+        // Update follow-up chips dynamically
+        if (data.suggested_followups) {
+          window.updateFollowupChips(data.suggested_followups);
+        }
+
+        // Speak aloud in sweet Hindi voice
         if (opAudioEnabled) {
           window.speakPanditVoice(panditReply);
         }
@@ -518,13 +779,12 @@
       }
     })
     .catch(err => {
-      if (timeoutId) clearTimeout(timeoutId);
       console.error('Pandit AI Error:', err);
       const loader = document.getElementById('op-current-loading-msg');
       if (loader) loader.remove();
       const errMsg = document.createElement('div');
       errMsg.className = 'op-msg pandit';
-      errMsg.innerHTML = '🙏 <strong>ॐ नमः शिवाय।</strong><br>मंगल दोष निवारण हेतु मंगलवार को हनुमान चालीसा का पाठ करें और शिवलिंग पर जल अर्पित करें। विस्तृत मार्गदर्शन हेतु पुनः प्रयास करें।';
+      errMsg.innerHTML = '🙏 <strong>ॐ नमः शिवाय।</strong><br>प्रभु कृपा से समस्त कष्ट दूर होंगे। विस्तृत समाधान हेतु पुनः प्रयास करें या ज्योतिषी से परामर्श लें।';
       chatStream.appendChild(errMsg);
       chatStream.scrollTop = chatStream.scrollHeight;
     });
@@ -534,19 +794,17 @@
     if (!opAudioEnabled || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
 
-    // Strip markdown formatting and special symbols for smooth speech
     const cleanSpeech = text
       .replace(/[*#_~`]/g, '')
       .replace(/ID\s*\d+/g, '')
       .replace(/https?:\/\/\S+/g, '')
-      .replace(/🌺|🙏|🔱|🪔|✨|📍/g, '');
+      .replace(/🌺|🙏|🔱|🪔|✨|📍|💎|📿|📞|📲|🚗|💍|💼|🐍|🌿/g, '');
 
     const utterance = new SpeechSynthesisUtterance(cleanSpeech);
     utterance.lang = 'hi-IN';
-    utterance.rate = 0.92; // Serene, measured Vedic pace
-    utterance.pitch = 0.98; // Warm Pandit resonance
+    utterance.rate = 0.92;
+    utterance.pitch = 0.98;
 
-    // Try to find natural Hindi voice if available
     const voices = window.speechSynthesis.getVoices();
     const hindiVoice = voices.find(v => (v.lang && v.lang.includes('hi')) || (v.name && v.name.includes('Hindi')));
     if (hindiVoice) utterance.voice = hindiVoice;
