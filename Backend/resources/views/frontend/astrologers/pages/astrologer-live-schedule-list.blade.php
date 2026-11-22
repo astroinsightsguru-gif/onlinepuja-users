@@ -13,23 +13,6 @@
     if (astroauthcheck()) {
     $session = new Session();
     $token = $session->get('astrotoken');
-    Artisan::call('cache:clear');
-    $getProfile = Http::withoutVerifying()
-    ->post(url('/') . '/api/getProfile', [
-    'token' => $token,
-    ])
-    ->json();
-    $profileBoostData = Http::withoutVerifying()
-    ->post(url('/') . '/api/getProfileboost', [
-    'token' => $token,
-    ])
-    ->json();
-    
-    $getUserNotification = Http::withoutVerifying()
-    ->post(url('/') . '/api/getUserNotification', [
-    'token' => $token,
-    ])
-    ->json();
     
     $chatrequest = DB::table('chatrequest')
     ->where('userId', astroauthcheck()['id'])
@@ -62,13 +45,8 @@
     ->select('astrologerId')
     ->first();
 
-    $getsystemflag = Http::withoutVerifying()
-    ->post(url('/') . '/api/getSystemFlag', [
-    'token' => $token,
-    ])
-    ->json();
-
-    $getsystemflag = collect($getsystemflag['recordList']);
+    $getsystemflags = DB::table('systemflag')->get();
+    $getsystemflag = $getsystemflags;
     $currency = SystemFlag::where('name', 'currencySymbol')->first();
     $OneSignalAppId = SystemFlag::where('name', 'OneSignalAppId')->first();
     $appId = $getsystemflag->where('name', 'firebaseappId')->first();
@@ -81,8 +59,6 @@
     $apiKey = $getsystemflag->where('name', 'firebaseapiKey')->first();
     $otplessAppId = $getsystemflag->where('name', 'otplessAppId')->first();
 
-    $getsystemflags = DB::table('systemflag')
-    ->get();
     $freekundali = $getsystemflags->where('name', 'FreeKundali')->first();
     $kundali_matching = $getsystemflags->where('name', 'KundaliMatching')->first();
     $panchang = $getsystemflags->where('name', 'TodayPanchang')->first();
