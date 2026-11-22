@@ -531,5 +531,7 @@ src="https://www.facebook.com/tr?id={{ $metaPixelId }}&ev=PageView&noscript=1"
     });
 </script>
 
+@include('partials.voice_assistant_widget')
+
 </body>
 </html>
