@@ -16,9 +16,18 @@ $configData = configItem();
     $ga4Id = \App\Brain\Vault::get('ga4_measurement_id', 'G-7T63JY1D93');
     $metaPixelId = \App\Brain\Vault::get('meta_pixel_id') ?: (\App\Brain\Vault::get('fb_app_id') ?: '1738490804042986');
     $gAdsId = \App\Brain\Vault::get('google_ads_id');
+    $gAdsLabel = \App\Brain\Vault::get('google_ads_label');
+    $resolvedUser = $user ?? (authcheck() ?: null);
     $activePayment = $payment ?? ($paymentcall ?? null);
     $paidValue = $activePayment ? (float)($activePayment->amount ?? 1500) : 1500.0;
     $orderId = 'OP_' . ($activePayment->id ?? time());
+
+    $userEmail = '';
+    $userPhone = '';
+    if ($resolvedUser) {
+        $userEmail = is_array($resolvedUser) ? ($resolvedUser['email'] ?? '') : ($resolvedUser->email ?? '');
+        $userPhone = is_array($resolvedUser) ? ($resolvedUser['contactNo'] ?? '') : ($resolvedUser->contactNo ?? '');
+    }
 @endphp
 
 @if(!empty($gtmId))
@@ -29,6 +38,26 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','{{ $gtmId }}');</script>
 <!-- End Google Tag Manager -->
+
+<!-- GTM Enhanced Ecommerce DataLayer Purchase Push -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ ecommerce: null });
+  window.dataLayer.push({
+    'event': 'purchase',
+    'ecommerce': {
+      'transaction_id': '{{ $orderId }}',
+      'value': {{ $paidValue }},
+      'currency': 'INR',
+      'items': [{
+        'item_id': '{{ $orderId }}',
+        'item_name': 'Vedic Consultation / Puja Service',
+        'price': {{ $paidValue }},
+        'quantity': 1
+      }]
+    }
+  });
+</script>
 @endif
 
 @if(!empty($ga4Id) || !empty($gAdsId))
@@ -38,14 +67,28 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+
   @if(!empty($ga4Id))
   gtag('config', '{{ $ga4Id }}');
   @endif
+
   @if(!empty($gAdsId))
   gtag('config', '{{ $gAdsId }}');
   @endif
 
-  // Google Analytics & Google Ads Purchase Event
+  @if(!empty($userEmail) || !empty($userPhone))
+  // Google Ads Enhanced Conversions (First-party user data)
+  gtag('set', 'user_data', {
+    @if(!empty($userEmail))
+    email: '{{ addslashes($userEmail) }}',
+    @endif
+    @if(!empty($userPhone))
+    phone_number: '{{ addslashes($userPhone) }}'
+    @endif
+  });
+  @endif
+
+  // Google Analytics 4 & Google Ads Purchase Event
   gtag('event', 'purchase', {
     transaction_id: '{{ $orderId }}',
     value: {{ $paidValue }},
@@ -57,6 +100,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       quantity: 1
     }]
   });
+
+  // Dedicated Google Ads Conversion Event
+  @if(!empty($gAdsId) && !empty($gAdsLabel))
+  gtag('event', 'conversion', {
+    'send_to': '{{ $gAdsId }}/{{ $gAdsLabel }}',
+    'value': {{ $paidValue }},
+    'currency': 'INR',
+    'transaction_id': '{{ $orderId }}'
+  });
+  @endif
 </script>
 @endif
 

@@ -934,6 +934,6 @@ class PaymentController extends Controller
             \Log::warning("Meta CAPI paymentSuccess dispatch failed non-fatally: " . $e->getMessage());
         }
 
-        return view('payment.payment-success', compact('payment', 'paymentcall'));
+        return view('payment.payment-success', compact('payment', 'paymentcall', 'user'));
     }
 }
