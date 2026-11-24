@@ -1,6 +1,6 @@
 <?php
 
-namespace App\services;
+namespace App\Services;
 use ZEGO\ZegoServerAssistant;
 use ZEGO\ZegoErrorCodes;
 

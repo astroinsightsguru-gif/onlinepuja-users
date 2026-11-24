@@ -13,13 +13,13 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\ProfileBoost;
 use App\Models\ProfileBoosted;
 use App\Models\UserModel\User;
-use App\services\OneSignalService;
+use App\Services\OneSignalService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use App\Models\UserModel\ChatRequest;
-use App\services\HundredMsService;
-use App\services\ZegoCloudService;
+use App\Services\HundredMsService;
+use App\Services\ZegoCloudService;
 use Aws\S3\S3Client;
 use Aws\Exception\AwsException;
 use Illuminate\Support\Facades\Storage;
@@ -90,6 +90,12 @@ public function addCallRequest(Request $req)
         if ($IsSchedule == 1) {
             // 1. Get Astrologer
             $astrologer = DB::table('astrologers')->where('id', $req['astrologerId'])->first();
+            if (!$astrologer) {
+                $astrologer = DB::table('astrologers')->where('userId', $req['astrologerId'])->first();
+                if ($astrologer) {
+                    $req->merge(['astrologerId' => $astrologer->id]);
+                }
+            }
             if (!$astrologer) {
                 return response()->json([
                     'message' => 'Astrologer not found',
@@ -185,6 +191,20 @@ public function addCallRequest(Request $req)
 
         $professionTitle = DB::table('systemflag')->where('name', 'professionTitle')->value('value') ?? 'Partner';
         $astrologerOnlineOffline = DB::table('astrologers')->where('id', '=', $req->astrologerId)->first();
+        if (!$astrologerOnlineOffline) {
+            $astrologerOnlineOffline = DB::table('astrologers')->where('userId', '=', $req->astrologerId)->first();
+            if ($astrologerOnlineOffline) {
+                $req->merge(['astrologerId' => $astrologerOnlineOffline->id]);
+            }
+        }
+        if (!$astrologerOnlineOffline) {
+            return response()->json([
+                'recordList' => [
+                    'message' => 'Call request cannot be sent. The ' . $professionTitle . ' is not found.',
+                ],
+                'status' => 400,
+            ], 400);
+        }
         if ($astrologerOnlineOffline->callStatus == "Offline" || $astrologerOnlineOffline->callStatus == "Busy") {
             if ($astrologerOnlineOffline->callStatus == "Offline" && !$astrologerOnlineOffline->emergencyCallStatus) {
                 return response()->json([

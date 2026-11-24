@@ -41,70 +41,76 @@ class FestivalCampaignEngine
     /**
      * Scan upcoming Hindu festivals within given horizon (in days)
      * and determine campaign readiness and milestone stage.
+     * Cached and in-memory optimized to eliminate N+1 DB table scans.
      *
      * @return array<int, array<string, mixed>>
      */
     public function getUpcomingFestivals(int $daysHorizon = 60): array
     {
-        $today = Carbon::today('Asia/Kolkata');
-        $endDate = $today->copy()->addDays($daysHorizon);
+        return \Illuminate\Support\Facades\Cache::remember("upcoming_festivals_radar_{$daysHorizon}", 3600, function () use ($daysHorizon) {
+            $today = Carbon::today('Asia/Kolkata');
+            $endDate = $today->copy()->addDays($daysHorizon);
 
-        $festivals = DB::table('hindu_festivals')
-            ->whereDate('date', '>=', $today->toDateString())
-            ->whereDate('date', '<=', $endDate->toDateString())
-            ->orderBy('date', 'asc')
-            ->get();
+            $festivals = DB::table('hindu_festivals')
+                ->whereDate('date', '>=', $today->toDateString())
+                ->whereDate('date', '<=', $endDate->toDateString())
+                ->orderBy('date', 'asc')
+                ->get();
 
-        $results = [];
-
-        foreach ($festivals as $f) {
-            $fDate = Carbon::parse($f->date, 'Asia/Kolkata')->startOfDay();
-            $diffDays = $today->diffInDays($fDate, false);
-
-            $milestone = match (true) {
-                $diffDays < 0 => 'passed',
-                $diffDays === 0 => 'day_0',
-                $diffDays === 1 => 't_minus_1',
-                $diffDays <= 3 => 't_minus_3',
-                $diffDays <= 7 => 't_minus_7',
-                $diffDays <= 14 => 't_minus_14',
-                default => 'upcoming_radar',
-            };
-
-            // Locate matching live or seeded puja
-            $nameTokens = explode(' ', trim(preg_replace('/\s*\(.*?\)\s*/', ' ', $f->name)));
-            $searchTerm = count($nameTokens) >= 2 ? ($nameTokens[0] . ' ' . $nameTokens[1]) : $nameTokens[0];
-
-            $puja = DB::table('pujas')
-                ->where(function ($q) use ($f, $searchTerm) {
-                    $q->where('puja_title', 'like', "%{$searchTerm}%")
-                      ->orWhere('slug', 'like', '%' . Str::slug($searchTerm) . '%')
-                      ->orWhere('long_description', 'like', "%{$searchTerm}%");
-                })
+            // Preload active pujas once into memory to eliminate 60+ sequential DB scans
+            $allPujas = DB::table('pujas')
                 ->select(['id', 'puja_title', 'slug', 'puja_price', 'puja_place', 'puja_status'])
-                ->first();
+                ->get();
 
-            $results[] = [
-                'id'         => $f->id,
-                'name'       => $f->name,
-                'date'       => $f->date,
-                'formatted_date' => $fDate->format('D, d M Y'),
-                'deity'      => $f->deity,
-                'days_left'  => $diffDays,
-                'milestone'  => $milestone,
-                'puja'       => $puja ? [
-                    'id'     => $puja->id,
-                    'title'  => $puja->puja_title,
-                    'slug'   => $puja->slug,
-                    'place'  => $puja->puja_place,
-                    'url'    => 'https://onlinepuja.live/pujas/' . $puja->slug,
-                    'status' => $puja->puja_status == 1 ? 'Live' : 'Draft',
-                ] : null,
-                'channels'   => json_decode($f->channels ?? '["whatsapp","email","push"]', true) ?: ['whatsapp', 'email', 'push'],
-            ];
-        }
+            $results = [];
 
-        return $results;
+            foreach ($festivals as $f) {
+                $fDate = Carbon::parse($f->date, 'Asia/Kolkata')->startOfDay();
+                $diffDays = $today->diffInDays($fDate, false);
+
+                $milestone = match (true) {
+                    $diffDays < 0 => 'passed',
+                    $diffDays === 0 => 'day_0',
+                    $diffDays === 1 => 't_minus_1',
+                    $diffDays <= 3 => 't_minus_3',
+                    $diffDays <= 7 => 't_minus_7',
+                    $diffDays <= 14 => 't_minus_14',
+                    default => 'upcoming_radar',
+                };
+
+                // Locate matching live or seeded puja in memory
+                $nameTokens = explode(' ', trim(preg_replace('/\s*\(.*?\)\s*/', ' ', $f->name)));
+                $searchTerm = mb_strtolower(count($nameTokens) >= 2 ? ($nameTokens[0] . ' ' . $nameTokens[1]) : $nameTokens[0]);
+                $searchSlug = Str::slug($searchTerm);
+
+                $puja = $allPujas->first(function ($p) use ($searchTerm, $searchSlug) {
+                    $titleLower = mb_strtolower($p->puja_title ?? '');
+                    $slugLower = mb_strtolower($p->slug ?? '');
+                    return str_contains($titleLower, $searchTerm) || str_contains($slugLower, $searchSlug);
+                });
+
+                $results[] = [
+                    'id'         => $f->id,
+                    'name'       => $f->name,
+                    'date'       => $f->date,
+                    'formatted_date' => $fDate->format('D, d M Y'),
+                    'deity'      => $f->deity,
+                    'days_left'  => $diffDays,
+                    'milestone'  => $milestone,
+                    'puja'       => $puja ? [
+                        'id'     => $puja->id,
+                        'title'  => $puja->puja_title,
+                        'slug'   => $puja->slug,
+                        'place'  => $puja->puja_place,
+                        'url'    => 'https://onlinepuja.live/pujas/' . $puja->slug,
+                        'status' => $puja->puja_status == 1 ? 'Live' : 'Draft',
+                    ] : null,
+                    'channels'   => json_decode($f->channels ?? '["whatsapp","email","push"]', true) ?: ['whatsapp', 'email', 'push'],
+                ];
+            }
+
+            return $results;
+        });
     }
 
     /**

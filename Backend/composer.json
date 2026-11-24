@@ -57,6 +57,7 @@
     "autoload": {
         "psr-4": {
             "App\\Services\\": "app/services/",
+            "App\\services\\": "app/services/",
             "App\\Service\\": ["app/Service/", "app/paygate/Service/"],
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",

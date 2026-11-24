@@ -513,12 +513,141 @@ class GrowthEngineController extends Controller
     /**
      * 10. GET /api/feed/shorts
      * High-converting Spiritual Shorts & Daily AI Reels Feed
+     * Bound to real active Pujas & authentic Temple Live Feeds
      */
     public function getSpiritualShorts(Request $request)
     {
         $shorts = [];
 
-        // 1. Fetch approved agent outputs from ai_agent_outputs
+        // 1. Fetch real active Pujas with authentic consecrated imagery
+        if (Schema::hasTable('pujas')) {
+            $pujas = DB::table('pujas')
+                ->where('puja_status', 1)
+                ->select('id', 'puja_title', 'slug', 'puja_place', 'puja_price', 'puja_images')
+                ->orderBy('id', 'asc')
+                ->limit(8)
+                ->get();
+
+            foreach ($pujas as $idx => $p) {
+                $images = [];
+                if (!empty($p->puja_images)) {
+                    $decoded = json_decode($p->puja_images, true);
+                    if (is_array($decoded)) {
+                        $images = $decoded;
+                    }
+                }
+                $rawImg = !empty($images[0]) ? $images[0] : null;
+                $thumbUrl = $rawImg ? asset($rawImg) : asset('public/storage/puja_images/puja_1764232697222466223.webp');
+                $priceText = $p->puja_price ? ('₹' . number_format($p->puja_price, 0)) : 'पावन संकल्प';
+
+                $shorts[] = [
+                    'id' => 'puja_' . $p->id,
+                    'title' => $p->puja_title,
+                    'subtitle' => $p->puja_place ?? 'काशी विश्वनाथ धाम',
+                    'category' => 'वैदिक पूजा संकल्प',
+                    'icon' => ($idx % 2 === 0) ? '🪔' : '🔱',
+                    'badge' => $priceText,
+                    'thumbnail_url' => $thumbUrl,
+                    'image' => $thumbUrl,
+                    'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-smoke-and-fire-from-a-burning-incense-during-a-ritual-42862-large.mp4',
+                    'caption' => ($p->puja_title) . ' - ' . ($p->puja_place ?? 'काशी धाम') . '। शास्त्रोक्त वैदिक अनुष्ठान एवं नाम-गोत्र संकल्प। लाइव वीडियो व्हाट्सएप पर भेजा जाएगा।',
+                    'cta_label' => 'संकल्प ' . $priceText,
+                    'cta_route' => '/puja-details/' . ($p->slug ?? $p->id),
+                    'likes_count' => 1840 + ($p->id * 45),
+                    'views_count' => 8200 + ($p->id * 210),
+                    'shares_count' => 450 + ($p->id * 18),
+                    'is_liked' => false,
+                    'index' => $idx,
+                ];
+            }
+        }
+
+        // 2. Official Temple Live Darshan & Daily Sanctum Aarti Streams
+        $liveAartiFeeds = [
+            [
+                'id' => 'live_kashi_vishwanath',
+                'title' => 'श्री काशी विश्वनाथ महा आरती',
+                'subtitle' => 'विश्वनाथ ज्योतिर्लिंग, काशी',
+                'category' => 'Live Mandir Aarti',
+                'icon' => '🔱',
+                'badge' => '🔴 LIVE AARTI',
+                'thumbnail_url' => asset('public/storage/puja_images/puja_17642331041781434446.png'),
+                'image' => asset('public/storage/puja_images/puja_17642331041781434446.png'),
+                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-oil-lamps-floating-in-the-sacred-ganges-river-42861-large.mp4',
+                'stream_url' => 'https://www.youtube.com/@ShriKashiVishwanathTempleTrust/live',
+                'caption' => 'द्वादश ज्योतिर्लिंगों में प्रधान श्री काशी विश्वनाथ मंदिर से 24x7 पावन गर्भग्रह दर्शन एवं दैनिक मंगला, भोग व शृंगार आरती।',
+                'cta_label' => 'लाइव दर्शन एवं आरती करें',
+                'cta_route' => '/live-darshan',
+                'likes_count' => 9420,
+                'views_count' => 42100,
+                'shares_count' => 2840,
+                'is_liked' => true,
+                'index' => count($shorts),
+            ],
+            [
+                'id' => 'live_ganga_aarti',
+                'title' => 'दशाश्वमेध घाट महा गंगा आरती',
+                'subtitle' => 'दशाश्वमेध घाट, वाराणसी',
+                'category' => 'Live Ganga Aarti',
+                'icon' => '🌊',
+                'badge' => '🔴 SANDHYA AARTI',
+                'thumbnail_url' => asset('public/storage/brain_media/brain_NBw7PwNZxf2gqejbRd_940x627.jpg'),
+                'image' => asset('public/storage/brain_media/brain_NBw7PwNZxf2gqejbRd_940x627.jpg'),
+                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-oil-lamps-floating-in-the-sacred-ganges-river-42861-large.mp4',
+                'stream_url' => 'https://www.youtube.com/@GangaAartiVaranasiOfficial/live',
+                'caption' => 'काशी के पावन दशाश्वमेध घाट पर विश्व-प्रसिद्ध महा गंगा आरती। वैदिक मंत्रोच्चार, शंखनाद और दिव्य दीपदान का दर्शन।',
+                'cta_label' => 'गंगा आरती दर्शन',
+                'cta_route' => '/live-darshan',
+                'likes_count' => 8140,
+                'views_count' => 36800,
+                'shares_count' => 2190,
+                'is_liked' => false,
+                'index' => count($shorts) + 1,
+            ],
+            [
+                'id' => 'live_mahakaleshwar',
+                'title' => 'उज्जैन महाकालेश्वर भस्म आरती',
+                'subtitle' => 'महाकाल ज्योतिर्लिंग, अवंतिका',
+                'category' => 'Bhasma Aarti',
+                'icon' => '🕉️',
+                'badge' => '🔴 4 AM BHASMA',
+                'thumbnail_url' => asset('public/storage/puja_images/puja_17642331041781434446.png'),
+                'image' => asset('public/storage/puja_images/puja_17642331041781434446.png'),
+                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-smoke-and-fire-from-a-burning-incense-during-a-ritual-42862-large.mp4',
+                'stream_url' => 'https://www.youtube.com/@shreemahakaleshwarmandiruj790/live',
+                'caption' => 'दक्षिणमुखी स्वयंभू श्री महाकालेश्वर ज्योतिर्लिंग की पावन प्रात:कालीन भस्म आरती एवं संध्या शृंगार दर्शन।',
+                'cta_label' => 'भस्म आरती दर्शन',
+                'cta_route' => '/live-darshan',
+                'likes_count' => 11200,
+                'views_count' => 54100,
+                'shares_count' => 3890,
+                'is_liked' => false,
+                'index' => count($shorts) + 2,
+            ],
+            [
+                'id' => 'live_somnath',
+                'title' => 'श्री सोमनाथ महादेव शृंगार आरती',
+                'subtitle' => 'प्रथम ज्योतिर्लिंग, प्रभास पाटन',
+                'category' => 'Jyotirlinga Darshan',
+                'icon' => '🛕',
+                'badge' => '🔴 LIVE AARTI',
+                'thumbnail_url' => asset('public/storage/puja_images/puja_1764232697222466223.webp'),
+                'image' => asset('public/storage/puja_images/puja_1764232697222466223.webp'),
+                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-smoke-and-fire-from-a-burning-incense-during-a-ritual-42862-large.mp4',
+                'stream_url' => 'https://www.youtube.com/@somnathtempletrust/live',
+                'caption' => 'समुद्र तट पर स्थित प्रथम ज्योतिर्लिंग श्री सोमनाथ महादेव के पावन शृंगार दर्शन एवं महाआरती।',
+                'cta_label' => 'सोमनाथ दर्शन',
+                'cta_route' => '/live-darshan',
+                'likes_count' => 7620,
+                'views_count' => 29400,
+                'shares_count' => 1840,
+                'is_liked' => false,
+                'index' => count($shorts) + 3,
+            ],
+        ];
+
+        // 3. Approved AI agent outputs (if any exist)
+        $agentOutputs = [];
         if (Schema::hasTable('ai_agent_outputs')) {
             $outputs = DB::table('ai_agent_outputs')
                 ->join('ai_agents', 'ai_agents.id', '=', 'ai_agent_outputs.agent_id')
@@ -529,7 +658,7 @@ class GrowthEngineController extends Controller
                     'ai_agents.icon as agent_icon'
                 )
                 ->orderByDesc('ai_agent_outputs.id')
-                ->limit(20)
+                ->limit(10)
                 ->get();
 
             foreach ($outputs as $out) {
@@ -537,18 +666,20 @@ class GrowthEngineController extends Controller
                 $mediaType = $out->media_type ?? 'image';
                 $payloadText = is_string($out->content_payload ?? null) ? $out->content_payload : json_encode($out->content_payload ?? '');
 
-                $videoUrl = ($mediaType === 'video') ? $mediaUrl : null;
                 $thumbUrl = ($mediaType === 'image' && !empty($mediaUrl))
                     ? $mediaUrl
-                    : 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1080&q=80';
+                    : asset('public/storage/puja_images/puja_1764232697222466223.webp');
 
-                $shorts[] = [
+                $agentOutputs[] = [
                     'id' => 'agent_' . $out->id,
                     'title' => $out->title ?? 'Vedic Spiritual Insight',
+                    'subtitle' => 'OnlinePuja Vedic AI',
                     'category' => $out->agent_name ?? 'Spiritual Update',
                     'icon' => $out->agent_icon ?? '🕉️',
+                    'badge' => 'AI INSIGHT',
                     'thumbnail_url' => $thumbUrl,
-                    'video_url' => $videoUrl ?? 'https://assets.mixkit.co/videos/preview/mixkit-oil-lamps-floating-in-the-sacred-ganges-river-42861-large.mp4',
+                    'image' => $thumbUrl,
+                    'video_url' => ($mediaType === 'video') ? $mediaUrl : 'https://assets.mixkit.co/videos/preview/mixkit-smoke-and-fire-from-a-burning-incense-during-a-ritual-42862-large.mp4',
                     'caption' => mb_substr(strip_tags($payloadText), 0, 160) . '...',
                     'cta_label' => 'Book Sacred Puja',
                     'cta_route' => '/pujas',
@@ -556,75 +687,12 @@ class GrowthEngineController extends Controller
                     'views_count' => 5400 + ($out->id * 142),
                     'shares_count' => 312 + ($out->id * 19),
                     'is_liked' => false,
+                    'index' => count($shorts) + count($liveAartiFeeds) + count($agentOutputs),
                 ];
             }
         }
 
-        // 2. Default high-reverence Dev Deepawali & Kashi sanctum shorts
-        $defaults = [
-            [
-                'id' => 'kashi_deepdaan_2026',
-                'title' => '🪔 Dev Deepawali 108 Deepdaan at Dashashwamedh Ghat',
-                'category' => 'Dev Deepawali 2026',
-                'icon' => '🪔',
-                'thumbnail_url' => 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1080&q=80',
-                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-oil-lamps-floating-in-the-sacred-ganges-river-42861-large.mp4',
-                'caption' => 'Witness 10 Lakh sacred lamps illuminating the holy ghats of Varanasi on Kartik Purnima. Offer your family gotra sankalp with sanctum video proof.',
-                'cta_label' => 'Offer 108 Deepdaan ₹1,500',
-                'cta_route' => '/puja-details/dev-deepawali-maha-deepdaan-kashi-vishwanath-sankalp',
-                'likes_count' => 4820,
-                'views_count' => 18400,
-                'shares_count' => 1240,
-                'is_liked' => true,
-            ],
-            [
-                'id' => 'panchang_daily_reel',
-                'title' => '☀️ Dainik Vedic Panchang & Shubh Muhurat',
-                'category' => 'Dainik Panchang',
-                'icon' => '🕉️',
-                'thumbnail_url' => 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=1080&q=80',
-                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-priest-performing-a-puja-with-fire-in-india-42858-large.mp4',
-                'caption' => 'Today Tithi, Nakshatra, Abhijit Muhurat & Rahu Kaal. Discover the most auspicious hour for sacred deeds and gotra sankalp.',
-                'cta_label' => 'View Full Panchang',
-                'cta_route' => '/panchang',
-                'likes_count' => 3120,
-                'views_count' => 12100,
-                'shares_count' => 840,
-                'is_liked' => false,
-            ],
-            [
-                'id' => 'rudrabhishek_kashi',
-                'title' => '🔱 Shri Kashi Vishwanath Somwar Rudrabhishek',
-                'category' => 'Jyotirlinga Seva',
-                'icon' => '🔱',
-                'thumbnail_url' => 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1080&q=80',
-                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-smoke-and-fire-from-a-burning-incense-during-a-ritual-42862-large.mp4',
-                'caption' => 'Panchamrit Abhishek with sacred Ganga Jal and sacred Bhasma. Individual Gotra recitation for removal of planetary doshas and health.',
-                'cta_label' => 'Book Rudrabhishek ₹1,501',
-                'cta_route' => '/puja-details/rudrabhishek-puja-in-varanasi',
-                'likes_count' => 6100,
-                'views_count' => 24500,
-                'shares_count' => 1950,
-                'is_liked' => false,
-            ],
-            [
-                'id' => 'lakshmi_kubera_yagya',
-                'title' => '💰 Diwali Maha Lakshmi & Kubera Dhan Labh Havan',
-                'category' => 'Festive Lakshmi Havan',
-                'icon' => '🪷',
-                'thumbnail_url' => 'https://images.unsplash.com/photo-1512418490979-92798cec1380?auto=format&fit=crop&w=1080&q=80',
-                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-oil-lamps-floating-in-the-sacred-ganges-river-42861-large.mp4',
-                'caption' => 'Invoke Ashta Lakshmi for enduring wealth, debt freedom, and business prosperity with 108 lotus seed oblations and Kanakadhara Stotra.',
-                'cta_label' => 'Book Lakshmi Havan ₹2,100',
-                'cta_route' => '/puja-details/shree-lakshmi-kubera-maha-dhan-labh-puja',
-                'likes_count' => 5230,
-                'views_count' => 19800,
-                'shares_count' => 1520,
-                'is_liked' => false,
-            ],
-        ];
-
-        $allShorts = array_merge($shorts, $defaults);
+        $allShorts = array_merge($liveAartiFeeds, $shorts, $agentOutputs);
 
         return response()->json([
             'status' => 200,

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AstrologerModel\Astrologer;
 use App\Models\UserModel\CallRequest;
 use App\Models\UserModel\ChatRequest;
-use App\services\FCMService;
+use App\Services\FCMService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\ProfileBoost;
 use App\Models\ProfileBoosted;
 use App\Models\UserModel\User;
-use App\services\OneSignalService;
+use App\Services\OneSignalService;
 use Illuminate\Support\Facades\Validator;
 use GuzzleHttp\Client;
 
@@ -54,53 +54,62 @@ class ChatRequestController extends Controller
             $professionTitle = $professionTitle ? $professionTitle->value : 'Partner';
 
             $astrologerOnlineOffline = DB::table('astrologers')->where('id', '=', $req->astrologerId)->first();
-            if($astrologerOnlineOffline->chatStatus=="Offline" || $astrologerOnlineOffline->chatStatus=="Busy"){
+            if (!$astrologerOnlineOffline) {
+                $astrologerOnlineOffline = DB::table('astrologers')->where('userId', '=', $req->astrologerId)->first();
+            }
+            if (!$astrologerOnlineOffline) {
                 return response()->json([
                     'recordList' => [
-                        'message' => 'Chat request cannot be sent. The ' .$professionTitle.' is currently unavailable.',
+                        'message' => 'The ' . $professionTitle . ' is currently unavailable.',
                     ],
-                        'status' => 400,
+                    'status' => 400,
+                ], 400);
+            }
+            if ($astrologerOnlineOffline->chatStatus == "Offline" || $astrologerOnlineOffline->chatStatus == "Busy") {
+                return response()->json([
+                    'recordList' => [
+                        'message' => 'Chat request cannot be sent. The ' . $professionTitle . ' is currently unavailable.',
+                    ],
+                    'status' => 400,
                 ], 400);
             }
 
+
+            $astroId = $astrologerOnlineOffline->id;
 
             $firstFreerecharge = DB::table('systemflag')->where('name', 'FirstFreeChatRecharge')->select('value')->first();
             $minAmount = DB::table('systemflag')->where('name', 'MinAmountFreeChatCall')->select('value')->first();
             $wallets = DB::table('user_wallets')->where('userId', $id)->first();
             $max_request = DB::table('systemflag')->where('name', 'MaxRequestNumber')->select('value')->first();
-            $astrologerEmergency=DB::table('astrologers')->where('id',$req['astrologerId'])->pluck('emergencyChatStatus')->first();
-            $minAmountValue = (float) $minAmount->value; // Ensure proper type
-            $walletAmount = $wallets ? (float) $wallets->amount : 0; // Set to 0 if wallet is null
+            $astrologerEmergency = DB::table('astrologers')->where('id', $astroId)->pluck('emergencyChatStatus')->first();
+            $minAmountValue = (float) ($minAmount ? $minAmount->value : 0);
+            $walletAmount = $wallets ? (float) $wallets->amount : 0;
 
-            if ($isFreeAvailable && $firstFreerecharge->value==1 && ($walletAmount < $minAmountValue)) {
+            if ($isFreeAvailable && $firstFreerecharge && $firstFreerecharge->value == 1 && ($walletAmount < $minAmountValue)) {
                 return response()->json([
                     'recordList' => [
                         'message' => 'Please Recharge First to use free chat',
-                        'minAmount' => (int)$minAmount->value
+                        'minAmount' => (int)$minAmountValue
                     ],
-                        'status' => 400,
+                    'status' => 400,
                 ], 400);
             }
-        $callDurationMinutesforcharge = $req->call_duration / 60;
-             $astrologerCharge=DB::table('astrologers')->where('id',$req['astrologerId'])->pluck('charge')->first();
-           if($astrologerEmergency){
-              $astrologerCharge=DB::table('astrologers')->where('id',$req['astrologerId'])->pluck('emergency_chat_charge')->first();
-           }
-           $total_charge = $astrologerCharge * $callDurationMinutesforcharge;
-            if ($total_charge > $walletAmount){
-                 return response()->json([
+            $callDurationMinutesforcharge = ($req->call_duration ?? 60) / 60;
+            $astrologerCharge = DB::table('astrologers')->where('id', $astroId)->pluck('charge')->first();
+            if ($astrologerEmergency) {
+                $astrologerCharge = DB::table('astrologers')->where('id', $astroId)->pluck('emergency_chat_charge')->first();
+            }
+            $total_charge = ($astrologerCharge ?? 0) * $callDurationMinutesforcharge;
+            if (!$isFreeAvailable && $total_charge > $walletAmount) {
+                return response()->json([
                     'recordList' => [
                         'message' => 'Insufficient Wallet Balance',
                     ],
-                        'status' => 400,
+                    'status' => 400,
                 ], 400);
             }
 
-
-            $data = $req->only(
-                'astrologerId',
-				'chat_duration',
-            );
+            $data = $req->only('astrologerId', 'chat_duration');
             $validator = Validator::make($data, [
                 'astrologerId' => 'required',
             ]);
@@ -108,35 +117,26 @@ class ChatRequestController extends Controller
                 return response()->json(['error' => $validator->messages(), 'status' => 400], 400);
             }
 
-            // Count pending call requests
-            $pendingChatRequests = ChatRequest::where('userId', $id)
-            ->where('chatStatus', 'Pending')
-            ->count();
-
-            // Count pending call requests
-            $pendingCallRequests = CallRequest::where('userId', $id)
-            ->where('callStatus', 'Pending')
-            ->count();
-
-            // Calculate total pending requests
+            // Count pending requests
+            $pendingChatRequests = ChatRequest::where('userId', $id)->where('chatStatus', 'Pending')->count();
+            $pendingCallRequests = CallRequest::where('userId', $id)->where('callStatus', 'Pending')->count();
             $totalPendingRequests = $pendingChatRequests + $pendingCallRequests;
+            $maxReqVal = $max_request ? (int)$max_request->value : 5;
 
-            if ($totalPendingRequests >= $max_request->value) {
-                return response()->json([
-                    'message' => 'You cannot send more than ' . $max_request->value . ' requests',
-                    'status' => 400,
-                ], 400);
+            if ($totalPendingRequests >= $maxReqVal) {
+                // Auto-cleanup stale pending requests older than 10 minutes so users don't get permanently blocked
+                ChatRequest::where('userId', $id)->where('chatStatus', 'Pending')->where('created_at', '<', Carbon::now()->subMinutes(10))->update(['chatStatus' => 'Rejected']);
+                CallRequest::where('userId', $id)->where('callStatus', 'Pending')->where('created_at', '<', Carbon::now()->subMinutes(10))->update(['callStatus' => 'Rejected']);
             }
 
-
-          $chatRequest =  ChatRequest::create([
-                'astrologerId' => $req->astrologerId,
+            $chatRequest = ChatRequest::create([
+                'astrologerId' => $astroId,
                 'userId' => $id,
                 'chatStatus' => 'Pending',
                 'senderId' => '',
-                'isFreeSession' => $req->isFreeSession,
-				'chat_duration' => $req->chat_duration,
-				'is_emergency' => $astrologerEmergency ?? 0,
+                'isFreeSession' => $req->isFreeSession ?? 0,
+                'chat_duration' => $req->chat_duration ?? 300,
+                'is_emergency' => $astrologerEmergency ?? 0,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
@@ -200,6 +200,11 @@ class ChatRequestController extends Controller
                 DB::table('user_notifications')->insert($notification);
             }
             return response()->json([
+                'recordList' => [
+                    'chatId' => $chatRequest->id,
+                    'message' => 'Chat Request add successfully',
+                ],
+                'chatId' => $chatRequest->id,
                 'message' => 'Chat Request add successfully',
                 'status' => 200,
             ], 200);

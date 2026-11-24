@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use App\Brain\Vault;
 use App\Media\ImageStudio;
-use App\services\BrevoService;
-use App\services\OneSignalService;
+use App\Services\BrevoService;
+use App\Services\OneSignalService;
 use App\Support\LiteSpeedCache;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -379,7 +379,7 @@ class ContentPublishCommand extends Command
             return 0;
         }
 
-        \App\services\FCMService::send($devices, $notification);
+        \App\Services\FCMService::send($devices, $notification);
 
         return $devices->count();
     }

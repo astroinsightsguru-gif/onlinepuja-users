@@ -1,8 +1,8 @@
 <?php
 
-namespace App\services;
+namespace App\Services;
 
-use App\services\ZegoTokenGenerator;
+use App\Services\ZegoTokenGenerator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;

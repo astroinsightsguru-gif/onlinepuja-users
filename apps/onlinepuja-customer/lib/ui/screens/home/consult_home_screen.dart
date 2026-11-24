@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:op_shared/op_shared.dart';
@@ -48,6 +50,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
   Map<String, dynamic>? _firstConsultOffer;
   List<Map<String, dynamic>> _prescriptions = const [];
   List<Map<String, dynamic>> _remoteBanners = const [];
+  List<Map<String, dynamic>> _shortsFeed = const [];
   int _bannerIndex = 0;
 
   @override
@@ -92,6 +95,20 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         setState(() {
           _remoteBanners = bannerList.whereType<Map<String, dynamic>>().toList();
         });
+      }
+    } catch (_) {}
+    try {
+      final res = await http.get(Uri.parse('https://onlinepuja.live/api/feed/shorts')).timeout(const Duration(seconds: 6));
+      if (res.statusCode == 200) {
+        final decoded = json.decode(res.body);
+        if (decoded['success'] == true && decoded['data'] is List) {
+          final items = List<Map<String, dynamic>>.from(decoded['data']);
+          if (mounted && items.isNotEmpty) {
+            setState(() {
+              _shortsFeed = items;
+            });
+          }
+        }
       }
     } catch (_) {}
   }
@@ -215,16 +232,6 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                   MaterialPageRoute(builder: (_) => const OnlinePujaAiScreen()),
                 ),
               ),
-              // Notifications Bell
-              IconButton(
-                tooltip: isHi ? 'सूचनाएं' : 'Notifications',
-                icon: Icon(
-                  Icons.notifications_none_rounded,
-                  size: 20,
-                  color: isDark ? Colors.white70 : const Color(0xFF475569),
-                ),
-                onPressed: () => Navigator.of(context).pushNamed(NotificationsScreen.route),
-              ),
               // Clean Wallet pill
               GestureDetector(
                 onTap: () => Navigator.of(context)
@@ -261,15 +268,17 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                   ),
                 ),
               ),
-              // Notifications
+              // Notifications Bell
               IconButton(
                 tooltip: isHi ? 'सूचनाएं' : 'Notifications',
-                icon: const Icon(Icons.notifications_none_rounded, size: 22),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                icon: Icon(
+                  Icons.notifications_none_rounded,
+                  size: 22,
+                  color: isDark ? Colors.white70 : const Color(0xFF475569),
                 ),
+                onPressed: () => Navigator.of(context).pushNamed(NotificationsScreen.route),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
             ],
           ),
           body: RefreshIndicator(
@@ -658,36 +667,51 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
     final searchBorder = isDark ? CustomerTheme.cosmicBorderDark : const Color(0xFFE2E8F0);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
       child: Column(
         children: [
           GestureDetector(
             onTap: () => _goToTab(1), // Jump to Consult tab (index 1)
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
                 color: searchBg,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: searchBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
-                    blurRadius: 6,
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                    blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search_rounded, color: Color(0xFFD97706), size: 20),
+                  const Icon(Icons.search_rounded, color: Color(0xFFD97706), size: 22),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       AppStrings.searchPlaceholder,
                       style: TextStyle(
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.8),
-                        fontSize: 13,
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+                        fontSize: 13.5,
+                        height: 1.25,
                       ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const OnlinePujaAiScreen()),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD97706).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.mic_none_rounded, color: Color(0xFFD97706), size: 18),
                     ),
                   ),
                 ],
@@ -699,23 +723,23 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFFEF3C7),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFFDE68A)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("🕉️ ", style: TextStyle(fontSize: 10)),
+                  const Text("🕉️ ", style: TextStyle(fontSize: 10.5)),
                   Flexible(
                     child: Text(
                       AppStrings.shubhMuhuratActive,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF92400E),
                       ),
@@ -737,50 +761,55 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
             ? '🪔 काशी देव दीपावली एवं दीपोत्सव 2026'
             : '🪔 Kashi Dev Deepawali & Diwali 2026',
         subtitle: isHi
-            ? 'गंगा घाट पर 108 दीपदान, महालक्ष्मी पूजन एवं विशेष गो-सेवा संकल्प'
-            : '108 Deepdaan on Ganga Ghats & Maha Lakshmi Havan Sankalp',
+            ? 'गंगा घाट पर 108 दीपदान, महालक्ष्मी पूजन एवं विशेष गो-सेवा'
+            : '108 Deepdaan on Ganga Ghats & Maha Lakshmi Havan',
         cta: isHi ? 'पर्व संकल्प बुक करें ✨' : 'Book Festive Sankalp ✨',
         icon: Icons.brightness_high_rounded,
+        image: 'https://onlinepuja.live/public/storage/puja_images/puja_1764232697222466223.webp',
         gradient: const [Color(0xFF78350F), Color(0xFFD97706)],
         onTap: () => _goToTab(2), // Puja tab (index 2)
       ),
       (
         title: isHi ? 'प्रामाणिक ऑनलाइन पूजा एवं हवन' : 'Authentic Online Puja & Hawan',
         subtitle: isHi
-            ? 'लाइव संकल्प और प्रसाद के साथ विशेष नवग्रह एवं तीर्थ अनुष्ठान'
-            : 'Special Navgrah & Temple Rituals with Live Sankalp & Prasad',
+            ? 'काशी व उज्जैन से लाइव संकल्प, वीडियो प्रमाण और प्रसाद'
+            : 'Live Sankalp & Consecrated Prasad from Holy Dhams',
         cta: isHi ? 'पूजा बुक करें 🙏' : 'Book Puja 🙏',
         icon: Icons.local_fire_department_rounded,
-        gradient: const [Color(0xFFB71C1C), Color(0xFFE53935)],
+        image: 'https://onlinepuja.live/public/storage/puja_images/puja_17642331041781434446.png',
+        gradient: const [Color(0xFF8B0000), Color(0xFFE53935)],
         onTap: () => _goToTab(2), // Puja tab (index 2)
       ),
       (
-        title: isHi ? 'वैदिक आचार्यों से सटीक भविष्यफल' : 'Accurate Predictions by Vedic Astrologers',
+        title: isHi ? 'वैदिक आचार्यों से सटीक परामर्श' : 'Accurate Predictions by Vedic Astrologers',
         subtitle: isHi
-            ? 'प्रथम सत्र ₹1/मिनट · प्रेम, विवाह, करियर व धन मार्गदर्शन'
-            : 'First session FREE · Guidance on Love, Marriage, Career & Wealth',
+            ? 'प्रथम सत्र ₹1/मिनट · कुंडली, विवाह, करियर व दोष निवारण'
+            : 'First session ₹1/min · Kundli, Marriage & Career Guidance',
         cta: isHi ? 'ज्योतिषी से बात करें' : 'Consult Astrologer',
         icon: Icons.self_improvement_rounded,
+        image: 'https://onlinepuja.live/public/storage/puja_images/puja_17642330451605364386.jpg',
         gradient: const [Color(0xFF8E2B12), Color(0xFFD97706)],
         onTap: () => _goToTab(1), // Consult tab (index 1)
       ),
       (
         title: isHi ? '24/7 लाइव मंदिर दर्शन एवं आरती' : '24/7 Live Sanctum Darshan & Aarti',
         subtitle: isHi
-            ? 'काशी विश्वनाथ, महाकालेश्वर एवं सोमनाथ लाइव दर्शन'
-            : 'Kashi Vishwanath, Mahakaleshwar & Somnath Temple Feeds',
+            ? 'काशी विश्वनाथ, महाकालेश्वर एवं गंगा आरती लाइव'
+            : 'Kashi Vishwanath, Mahakaleshwar & Ganga Aarti Feeds',
         cta: isHi ? 'लाइव दर्शन 🪔' : 'Watch Live 🪔',
         icon: Icons.temple_hindu_rounded,
+        image: 'https://onlinepuja.live/public/storage/brain_media/brain_NBw7PwNZxf2gqejbRd_940x627.jpg',
         gradient: const [Color(0xFF4A148C), Color(0xFF7B1FA2)],
         onTap: () => Navigator.of(context).pushNamed(LiveDarshanScreen.route),
       ),
       (
         title: isHi ? 'वैदिक भण्डार एवं सिद्ध रुद्राक्ष' : 'Sacred Store & Energized Rudraksha',
         subtitle: isHi
-            ? '100% प्रमाणित वैदिक सामग्री, राशि रत्न एवं स्फटिक माला'
-            : '100% Certified Vedic Samagri, Gemstones & Sphatik Malas',
+            ? '100% प्रमाणित प्राण-प्रतिष्ठित रुद्राक्ष, रत्न एवं माला'
+            : '100% Consecrated Rudraksha, Gemstones & Sphatik Malas',
         cta: isHi ? 'भण्डार देखें 📿' : 'Explore Store 📿',
         icon: Icons.storefront_rounded,
+        image: 'https://onlinepuja.live/public/storage/puja_images/puja_1764232697222466223.webp',
         gradient: const [Color(0xFF1B5E20), Color(0xFF2E7D32)],
         onTap: () => _goToTab(3), // Vedic Store tab (index 3)
       ),
@@ -791,7 +820,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
     return Column(
       children: [
         SizedBox(
-          height: 154,
+          height: 162,
           child: PageView.builder(
             itemCount: totalCount,
             onPageChanged: (i) => setState(() => _bannerIndex = i),
@@ -934,10 +963,46 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            CircleAvatar(
-              radius: 32,
-              backgroundColor: Colors.white.withValues(alpha: 0.22),
-              child: Icon(b.icon, size: 34, color: Colors.white),
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CachedNetworkImage(
+                    imageUrl: b.image,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(color: Colors.white.withValues(alpha: 0.15)),
+                    errorWidget: (_, error, stack) => Container(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      child: Center(
+                        child: Icon(b.icon, size: 36, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.35)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -946,40 +1011,55 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
   }
 
   Widget _spiritualShortsStrip(BuildContext context, bool isDark, bool isHi) {
-    final shortsList = [
+    final defaultShorts = [
       {
-        'title': isHi ? 'देव दीपावली दीपदान' : 'Dev Deepawali 108 Deepdaan',
-        'subtitle': isHi ? 'दशाश्वमेध घाट, काशी' : 'Dashashwamedh Ghat',
-        'icon': '🪔',
-        'badge': '10 Lakh Diya',
-        'image': 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=400&q=80',
+        'title': isHi ? 'श्री काशी विश्वनाथ महा आरती' : 'Shri Kashi Vishwanath Maha Aarti',
+        'subtitle': isHi ? 'विश्वनाथ ज्योतिर्लिंग, काशी' : 'Vishwanath Jyotirlinga, Kashi',
+        'icon': '🔱',
+        'badge': '🔴 LIVE AARTI',
+        'image': 'https://onlinepuja.live/public/storage/puja_images/puja_17642331041781434446.png',
         'index': 0,
       },
       {
-        'title': isHi ? 'दैनिक पंचांग व मुहूर्त' : 'Dainik Panchang & Muhurat',
-        'subtitle': isHi ? 'शुभ अभिजित मुहूर्त' : 'Shubh Muhurat',
-        'icon': '☀️',
-        'badge': 'Daily Reel',
-        'image': 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=400&q=80',
+        'title': isHi ? 'दशाश्वमेध घाट महा गंगा आरती' : 'Dashashwamedh Maha Ganga Aarti',
+        'subtitle': isHi ? 'दशाश्वमेध घाट, वाराणसी' : 'Dashashwamedh Ghat, Varanasi',
+        'icon': '🌊',
+        'badge': '🔴 LIVE AARTI',
+        'image': 'https://onlinepuja.live/public/storage/brain_media/brain_NBw7PwNZxf2gqejbRd_940x627.jpg',
         'index': 1,
       },
       {
-        'title': isHi ? 'काशी रुद्राभिषेक' : 'Kashi Rudrabhishek',
-        'subtitle': isHi ? 'विश्वनाथ ज्योतिर्लिंग' : 'Vishwanath Dham',
-        'icon': '🔱',
-        'badge': 'Live Seva',
-        'image': 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=400&q=80',
+        'title': isHi ? 'श्री लक्ष्मी-कुबेर महा धन लाभ पूजा' : 'Shree Lakshmi-Kubera Maha Puja',
+        'subtitle': isHi ? 'कनकधारा हवन एवं धन संचय' : 'Wealth & Prosperity Havan',
+        'icon': '🪔',
+        'badge': '₹501 संकल्प',
+        'image': 'https://onlinepuja.live/public/storage/puja_images/puja_1764232697222466223.webp',
         'index': 2,
       },
       {
-        'title': isHi ? 'महालक्ष्मी हवन' : 'Maha Lakshmi Havan',
-        'subtitle': isHi ? 'धन व ऐश्वर्य प्राप्ति' : 'Wealth & Prosperity',
-        'icon': '🪷',
-        'badge': 'Diwali Seva',
-        'image': 'https://images.unsplash.com/photo-1512418490979-92798cec1380?auto=format&fit=crop&w=400&q=80',
+        'title': isHi ? 'महामृत्युंजय आयुष्य हवन' : 'Maha Mrityunjaya Ayushya Havan',
+        'subtitle': isHi ? 'संजीवनी महाजाप एवं आरोग्य' : 'Sanjeevani Jaap & Health',
+        'icon': '🔱',
+        'badge': '₹1,501 संकल्प',
+        'image': 'https://onlinepuja.live/public/storage/puja_images/puja_17642330451605364386.jpg',
         'index': 3,
       },
     ];
+
+    final rawList = _shortsFeed.isNotEmpty ? _shortsFeed : defaultShorts;
+    final shortsList = rawList.asMap().entries.map((entry) {
+      final i = entry.key;
+      final s = entry.value;
+      final img = (s['image'] ?? s['thumbnail_url'] ?? '').toString();
+      return {
+        'title': (s['title'] ?? '').toString(),
+        'subtitle': (s['subtitle'] ?? s['category'] ?? '').toString(),
+        'icon': (s['icon'] ?? '🪔').toString(),
+        'badge': (s['badge'] ?? 'VEDIC REEL').toString(),
+        'image': img.isNotEmpty ? img : 'https://onlinepuja.live/public/storage/puja_images/puja_1764232697222466223.webp',
+        'index': (s['index'] is int) ? (s['index'] as int) : i,
+      };
+    }).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1017,15 +1097,22 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                         decoration: BoxDecoration(
-                          color: Colors.redAccent.withValues(alpha: 0.15),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+                          ),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+                          border: Border.all(color: const Color(0xFFF59E0B)),
                         ),
-                        child: const Text(
-                          'AI REELS',
-                          style: TextStyle(color: Colors.redAccent, fontSize: 9, fontWeight: FontWeight.w900),
+                        child: Text(
+                          isHi ? '✨ वैदिक रील्स' : '✨ VEDIC SHORTS',
+                          style: const TextStyle(
+                            color: Color(0xFF92400E),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.2,
+                          ),
                         ),
                       ),
                     ],
@@ -1048,14 +1135,15 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
           ),
           const SizedBox(height: 6),
           SizedBox(
-            height: 135,
+            height: 168,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
               itemCount: shortsList.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 10),
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
               itemBuilder: (context, i) {
                 final s = shortsList[i];
+                final isLive = s['badge'].toString().toUpperCase().contains('LIVE');
                 return GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -1064,14 +1152,24 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                     );
                   },
                   child: Container(
-                    width: 105,
+                    width: 125,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                       color: const Color(0xFF0F172A),
                       border: Border.all(
-                        color: i == 0 ? CustomerTheme.brandGold : Colors.white24,
-                        width: i == 0 ? 1.5 : 0.8,
+                        color: isLive
+                            ? const Color(0xFFEF4444)
+                            : (i == 0 ? CustomerTheme.brandGold : Colors.white24),
+                        width: isLive || i == 0 ? 1.5 : 0.8,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isLive ? const Color(0xFFEF4444) : CustomerTheme.brandGold)
+                              .withValues(alpha: 0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: Stack(
@@ -1084,7 +1182,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                           errorWidget: (context, url, error) => Container(
                             color: const Color(0xFF1E293B),
                             child: Center(
-                              child: Text(s['icon'] as String, style: const TextStyle(fontSize: 24)),
+                              child: Text(s['icon'] as String, style: const TextStyle(fontSize: 28)),
                             ),
                           ),
                         ),
@@ -1093,8 +1191,10 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                             gradient: LinearGradient(
                               colors: [
                                 Colors.transparent,
-                                Colors.black.withValues(alpha: 0.85),
+                                Colors.black.withValues(alpha: 0.3),
+                                Colors.black.withValues(alpha: 0.92),
                               ],
+                              stops: const [0.0, 0.45, 1.0],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                             ),
@@ -1104,21 +1204,53 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                           top: 8,
                           left: 8,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                             decoration: BoxDecoration(
-                              color: Colors.black87,
+                              color: isLive ? const Color(0xFFDC2626) : Colors.black87,
                               borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isLive ? Colors.white70 : CustomerTheme.brandGold.withValues(alpha: 0.5),
+                                width: 0.8,
+                              ),
                             ),
-                            child: Text(
-                              s['badge'] as String,
-                              style: const TextStyle(color: CustomerTheme.brandGold, fontSize: 8.5, fontWeight: FontWeight.bold),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isLive) ...[
+                                  Container(
+                                    width: 5,
+                                    height: 5,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                Text(
+                                  s['badge'] as String,
+                                  style: TextStyle(
+                                    color: isLive ? Colors.white : CustomerTheme.brandGold,
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                         Positioned(
                           top: 8,
                           right: 8,
-                          child: const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 20),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.45),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 18),
+                          ),
                         ),
                         Positioned(
                           left: 8,
@@ -1130,14 +1262,19 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                             children: [
                               Text(
                                 s['title'] as String,
-                                style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w800),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.25,
+                                ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 1),
+                              const SizedBox(height: 2),
                               Text(
                                 s['subtitle'] as String,
-                                style: const TextStyle(color: Colors.white70, fontSize: 9),
+                                style: const TextStyle(color: Colors.white70, fontSize: 9.5),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -1207,9 +1344,9 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
             itemCount: tools.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
-              childAspectRatio: 0.88,
+              childAspectRatio: 0.86,
               crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
+              mainAxisSpacing: 10,
             ),
             itemBuilder: (context, i) {
               final t = tools[i];
@@ -1223,35 +1360,35 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
-                        color: isDark ? t.$4.withValues(alpha: 0.16) : t.$3,
+                        color: isDark ? t.$4.withValues(alpha: 0.18) : t.$3,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? t.$4.withValues(alpha: 0.35) : t.$4.withValues(alpha: 0.25),
+                          color: isDark ? t.$4.withValues(alpha: 0.4) : t.$4.withValues(alpha: 0.28),
                           width: 1.2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: t.$4.withValues(alpha: 0.08),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+                            color: t.$4.withValues(alpha: 0.12),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      child: Icon(t.$2, color: t.$4, size: 24),
+                      child: Icon(t.$2, color: t.$4, size: 26),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 6),
                     Text(
                       t.$1,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white70 : const Color(0xFF334155),
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
                         letterSpacing: -0.2,
                       ),
                     ),
