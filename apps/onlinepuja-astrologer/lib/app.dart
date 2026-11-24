@@ -8,6 +8,7 @@ import 'ui/screens/auth/otp_screen.dart';
 import 'ui/screens/auth/partner_register_screen.dart';
 import 'ui/screens/call/call_session_screen.dart';
 import 'ui/screens/chat/chat_session_screen.dart';
+import 'ui/screens/chat/master_ai_chatbot_screen.dart';
 import 'ui/screens/home/availability_screen.dart';
 import 'ui/screens/home/home_shell.dart';
 import 'ui/screens/home/requests_screen.dart';
@@ -47,6 +48,7 @@ class OnlinePujaPartnerApp extends StatelessWidget {
         WalletScreen.route: (_) => const WalletScreen(),
         AstrologerSocialGrowthScreen.route: (_) => const AstrologerSocialGrowthScreen(),
         VedicToolkitScreen.route: (_) => const VedicToolkitScreen(),
+        MasterAiChatbotScreen.route: (_) => const MasterAiChatbotScreen(),
       },
       onGenerateRoute: (settings) {
         final args = settings.arguments;

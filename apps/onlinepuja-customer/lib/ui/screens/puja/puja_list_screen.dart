@@ -64,18 +64,6 @@ class _PujaListScreenState extends State<PujaListScreen> {
     }
   }
 
-  static String _formatTithi(dynamic rawDate, [bool isHi = false]) {
-    if (rawDate == null) {
-      return isHi ? "शुभ वेदोक्त तिथि एवं मुहूर्त" : "Auspicious Vedic Tithi";
-    }
-    final s = rawDate.toString();
-    if (s.length >= 10) {
-      final date = s.substring(0, 10);
-      return isHi ? "$date • पावन वेदोक्त तिथि" : "$date • Sacred Tithi";
-    }
-    return s;
-  }
-
   List<Puja> get _filteredItems {
     if (_items == null) return const [];
     var list = _items!;
@@ -149,63 +137,95 @@ class _PujaListScreenState extends State<PujaListScreen> {
         final isHi = lang != AppLanguage.en;
 
         return Scaffold(
-          backgroundColor: scheme.surface,
+          backgroundColor: isDark ? scheme.surface : const Color(0xFFFBF9F5),
           appBar: AppBar(
-            backgroundColor: scheme.surface,
+            backgroundColor: isDark ? scheme.surface : const Color(0xFFFBF9F5),
             foregroundColor: scheme.onSurface,
-            elevation: 0.5,
-            titleSpacing: 16,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'OnlinePuja',
-                            style: TextStyle(
-                              fontSize: 16.5,
-                              fontWeight: FontWeight.w900,
-                              color: textPrimary,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const TextSpan(
-                            text: '.live',
-                            style: TextStyle(
-                              fontSize: 16.5,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFFD97706),
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Text('🛕', style: TextStyle(fontSize: 15)),
-                  ],
+            elevation: 0,
+            titleSpacing: 12,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: Center(
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEA580C).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFEA580C).withValues(alpha: 0.25)),
+                  ),
+                  child: const Icon(Icons.person_rounded, size: 22, color: Color(0xFFEA580C)),
                 ),
-                const SizedBox(height: 1),
-                Text(
-                  isHi
-                      ? '५१ पवित्र तीर्थों एवं शक्तिपीठों से वेदोक्त संकल्प'
-                      : 'Vedic Sankalp at 51 Holy Teerths & Shaktipeeths',
-                  style: TextStyle(fontSize: 10.5, color: textSecondary, fontWeight: FontWeight.w500),
-                ),
-              ],
+              ),
+            ),
+            title: Text(
+              isHi ? 'पूजा सेवा' : 'Puja Seva',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: textPrimary,
+                letterSpacing: -0.3,
+              ),
             ),
             actions: [
+              // Search Icon Button
+              InkWell(
+                onTap: () {},
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.search_rounded, size: 20, color: textPrimary),
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Sri Mandir Bookings Pill
+              InkWell(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const HistoryScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFFDBA74)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.shopping_bag_outlined, size: 14, color: Color(0xFFEA580C)),
+                      const SizedBox(width: 4),
+                      Text(
+                        isHi ? "बुकिंग्स" : "Bookings",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFEA580C),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+
               // Language Switch Pill
               GestureDetector(
                 onTap: () => LocaleManager.instance.setLanguage(
                   isHi ? AppLanguage.en : AppLanguage.hi,
                 ),
                 child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: isHi
                         ? const Color(0xFFD97706).withValues(alpha: 0.15)
@@ -215,58 +235,14 @@ class _PujaListScreenState extends State<PujaListScreen> {
                       color: isHi ? const Color(0xFFD97706) : Colors.transparent,
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.translate_rounded, size: 12, color: Color(0xFFD97706)),
-                      const SizedBox(width: 3),
-                      Text(
-                        isHi ? 'हिंदी' : 'EN',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: isHi
-                              ? const Color(0xFFD97706)
-                              : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Bookings Pill
-              Padding(
-                padding: const EdgeInsets.only(right: 14),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const HistoryScreen()),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text("🛍️", style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 4),
-                        Text(
-                          isHi ? "मेरे संकल्प" : "Bookings",
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF92400E),
-                          ),
-                        ),
-                      ],
+                  child: Text(
+                    isHi ? 'हिंदी' : 'EN',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      color: isHi
+                          ? const Color(0xFFD97706)
+                          : (isDark ? Colors.white70 : const Color(0xFF334155)),
                     ),
                   ),
                 ),
@@ -654,24 +630,38 @@ class _PujaListScreenState extends State<PujaListScreen> {
     return raw.trim();
   }
 
-  String _cleanPujaSubtitle(Puja p, [bool isHi = false]) {
-    if (isHi) {
-      return VedicHindiLocalizer.localizeSubtitle(p.subtitle?.toString(), p.title?.toString(), true);
+  String _getFestivalTag(Puja p, bool isHi) {
+    final t = (p.title ?? '').toLowerCase();
+    if (t.contains('bhairav') || t.contains('kalbhairav')) return isHi ? 'कालभैरव जयंती 🔱' : 'Kaal Bhairav Jayanti 🔱';
+    if (t.contains('mrityunjay') || t.contains('mahamrityunjay')) return isHi ? 'संजीवनी महामृत्युंजय 🔱' : 'Mahamrityunjay Mahayajna 🔱';
+    if (t.contains('deepdaan') || t.contains('deepawali')) return isHi ? 'काशी देव दीपावली 🪔' : 'Dev Deepavali Mahotsav 🪔';
+    if (t.contains('rudrabhishek') || t.contains('rudra')) return isHi ? 'द्वादश ज्योतिर्लिंग रुद्राभिषेक 🔱' : 'Dwadas Jyotirling Rudra 🔱';
+    if (t.contains('kalsarp') || t.contains('rahu')) return isHi ? 'कालसर्प व राहु गोचर शांति 🐍' : 'Kaal Sarp Shanti 🐍';
+    if (t.contains('pind daan') || t.contains('shradh')) return isHi ? 'गयाजी मोक्ष पिंडदान 🪷' : 'Gaya Teerth Pind Daan 🪷';
+    if (t.contains('baglamukhi')) return isHi ? 'मां बगलामुखी शत्रु विजय ⚔️' : 'Maa Baglamukhi Seva ⚔️';
+    if (t.contains('lakshmi') || t.contains('kuber')) return isHi ? 'महालक्ष्मी कुबेर अखंड धन 💰' : 'Mahalakshmi Kuber Yajna 💰';
+    return isHi ? 'विशेष सिद्ध महापूजा 🪔' : 'Auspicious Vedic Puja 🪔';
+  }
+
+  String _getSubTag(Puja p, bool isHi) {
+    final t = (p.title ?? '').toLowerCase();
+    if (t.contains('bhairav') || t.contains('kalbhairav')) return isHi ? 'कालभैरव जयंती - काली-शनि-भैरव विशेष संगम' : 'Kaal Bhairav Jayanti - Special Trideva Sangam';
+    if (t.contains('mrityunjay')) return isHi ? 'अकाल मृत्यु व रोग निवारक - संजीवनी महामंत्र जाप' : 'Sanjeevani Mahamrityunjay Japa for Critical Illness';
+    if (t.contains('deepdaan') || t.contains('deepawali')) return isHi ? 'काशी देव दीपावली - गंगा घाट १०८ दीपदान व महाआरती' : 'Kashi Ghats 108 Deepdaan & Ganga Maha Aarti';
+    if (t.contains('rudrabhishek')) return isHi ? 'दारिद्र्य दहन व शिव कृपा - षोडशोपचार महा रुद्राभिषेक' : 'Shiva Shodashopachar Rudrabhishek at Sacred Jyotirling';
+    if (t.contains('kalsarp')) return isHi ? 'त्र्यंबकेश्वर - कालसर्प व राहु-केतु दोष निवारण महापूजा' : 'Trimbakeshwar Kaal Sarp & Rahu Dosha Nivarana';
+    if (t.contains('pind daan')) return isHi ? 'गयाजी तीर्थ - फल्गु नदी व अक्षयवट वेदोक्त पिंडदान' : 'Gaya Teerth Falgu River Vedic Pind Daan';
+    return isHi ? 'काशी के वेदमूर्ति तीर्थ पुरोहितों द्वारा सस्वर संकल्प' : 'Vedic Sankalp by certified Kashi Teerth Purohits';
+  }
+
+  String _formatTithiSriMandir(dynamic rawDate, bool isHi) {
+    if (rawDate == null) return isHi ? '१ दिसम्बर, मंगलवार, मार्गशीर्ष कृष्ण अष्टमी' : '1 Dec, Tuesday, Margashirsha Ashtami';
+    final s = rawDate.toString();
+    if (s.length >= 10) {
+      final date = s.substring(0, 10);
+      return isHi ? '$date, पावन वेदोक्त तिथि व शुभ मुहूर्त' : '$date, Auspicious Vedic Tithi';
     }
-    final sub = p.subtitle?.toString() ?? '';
-    if (sub.isNotEmpty) {
-      if (sub.length > 80) return '${sub.substring(0, 77)}...';
-      return sub;
-    }
-    final rawTitle = p.title?.toString() ?? '';
-    if (rawTitle.contains(' - ')) {
-      final part = rawTitle.split(' - ').sublist(1).join(' - ').trim();
-      if (part.length > 80) return '${part.substring(0, 77)}...';
-      return part;
-    }
-    return isHi
-        ? 'प्रमाणित काशी तीर्थ पुरोहितों द्वारा सस्वर गोत्रोच्चार व वेदोक्त संकल्प विधि'
-        : 'Vedic Sankalp & Vidhi by certified Kashi Shastris';
+    return s;
   }
 
   /// High Quality Sri Mandir-Grade Puja Card
@@ -685,23 +675,23 @@ class _PujaListScreenState extends State<PujaListScreen> {
     bool isDark, [
     bool isHi = false,
   ]) {
-    final price = p.startingPrice ?? 501;
-    final strikePrice = (price * 2.2).round();
     final place = (p.place != null && p.place.toString().isNotEmpty)
         ? VedicHindiLocalizer.localizePlace(p.place.toString(), isHi)
         : (isHi ? "पावन तीर्थ धाम" : "Holy Pilgrimage Teerth");
-    final tithi = _formatTithi(p.startDatetime, isHi);
+    final tithi = _formatTithiSriMandir(p.startDatetime, isHi);
+    final festivalTag = _getFestivalTag(p, isHi);
+    final subTag = _getSubTag(p, isHi);
 
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cardBorder),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? cardBorder : const Color(0xFFE2E8F0), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -713,286 +703,205 @@ class _PujaListScreenState extends State<PujaListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Cover Image with Sacred Gradient & Badges
+            // 1. Cover Image with Sri Mandir Badges
             Stack(
               children: [
                 SizedBox(
-                  height: 165,
+                  height: 185,
                   width: double.infinity,
                   child: _buildPujaCoverImage(p),
                 ),
-                // Gradient Scrim for contrast
+                // Gradient Scrim for Contrast
                 Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.black.withValues(alpha: 0.45),
+                          Colors.black.withValues(alpha: 0.35),
                           Colors.transparent,
-                          Colors.black.withValues(alpha: 0.8),
+                          Colors.black.withValues(alpha: 0.75),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        stops: const [0.0, 0.4, 1.0],
+                        stops: const [0.0, 0.45, 1.0],
                       ),
                     ),
                   ),
                 ),
-                // Top Badges
+
+                // Top Center YouTube Live Badge (Exact Sri Mandir Pill)
                 Positioned(
                   top: 10,
-                  left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFD97706), Color(0xFFB45309)],
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE11D48),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                          ),
+                        ],
                       ),
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text("⭐ ", style: TextStyle(fontSize: 10)),
-                        Text(
-                          isHi ? "वैदिक महापूजा" : "Vedic Mahapuja",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          isHi ? "🔥 १,२८०+ यजमान जुड़े" : "🔥 1,280+ Devotees",
-                          style: const TextStyle(
-                            color: Color(0xFFFDE68A),
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Bottom Date Pill on Image
-                Positioned(
-                  bottom: 10,
-                  left: 12,
-                  right: 12,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.calendar_month_rounded, size: 11, color: Colors.white),
-                            const SizedBox(width: 4),
-                            Text(
-                              tithi,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                              ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.play_circle_fill, size: 13, color: Colors.white),
+                          const SizedBox(width: 4),
+                          Text(
+                            isHi ? "लाइव स्ट्रीम | पूजा के दिन YouTube पर" : "Live Stream | On YouTube",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Bottom Center Gold Festival Medallion Badge
+                Positioned(
+                  bottom: 8,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF450A0A), Color(0xFF7F1D1D), Color(0xFF450A0A)],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        festivalTag,
+                        style: const TextStyle(
+                          color: Color(0xFFFDE68A),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.2,
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ],
             ),
 
-            // 2. Card Content
+            // 2. Card Content Below Image
             Padding(
               padding: const EdgeInsets.all(14.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title (Cleaned up, no delimiter spam)
+                  // Pink/Crimson Category Tag
                   Text(
-                    _cleanPujaTitle(p.title?.toString(), isHi),
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w900,
-                      color: textPrimary,
-                      letterSpacing: -0.2,
-                      height: 1.25,
+                    subTag,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFBE185D),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Subtitle (Concise, single-line)
-                  Text(
-                    _cleanPujaSubtitle(p, isHi),
-                    style: TextStyle(fontSize: 11, color: textSecondary, height: 1.3),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
 
-                  // Teerth Location
+                  // High-Impact Bold 2-Line Title
+                  Text(
+                    _cleanPujaTitle(p.title?.toString(), isHi),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: textPrimary,
+                      height: 1.3,
+                      letterSpacing: -0.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Mandir Location Row
                   Row(
                     children: [
-                      const Icon(Icons.temple_hindu_rounded, size: 14, color: Color(0xFFD97706)),
-                      const SizedBox(width: 5),
+                      const Icon(Icons.temple_hindu_outlined, size: 16, color: Color(0xFFEA580C)),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           place,
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: textSecondary),
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 5),
 
-                  // 3 Key Guarantees Pill Strip
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isDark ? CustomerTheme.cosmicCardElevated : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: cardBorder),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _PujaPerk(
-                          icon: "📹",
-                          label: isHi ? "प्रत्यक्ष अनुष्ठान दर्शन" : "Video Proof",
-                          isDark: isDark,
-                        ),
-                        _PujaPerk(
-                          icon: "🌸",
-                          label: isHi ? "सस्वर गोत्रोच्चार" : "Gotra Chanted",
-                          isDark: isDark,
-                        ),
-                        _PujaPerk(
-                          icon: "📦",
-                          label: isHi ? "अभिमंत्रित महाप्रसाद" : "Home Prasad",
-                          isDark: isDark,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Price & CTA Row
+                  // Date & Tithi Row
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                isHi ? "संकल्प दक्षिणा " : "Sankalp Starts ",
-                                style: TextStyle(fontSize: 9.5, color: textSecondary),
-                              ),
-                              Text(
-                                "₹$strikePrice",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: textSecondary,
-                                  decoration: TextDecoration.lineThrough,
-                                ),
-                              ),
-                            ],
+                      const Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFFEA580C)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          tithi,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
                           ),
-                          Row(
-                            children: [
-                              Text(
-                                "₹${price.toStringAsFixed(0)}",
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFFD97706),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFDCFCE7),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  isHi ? "५४% छूट" : "54% OFF",
-                                  style: const TextStyle(
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF15803D),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      ElevatedButton(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => PujaDetailScreen(puja: p)),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF059669),
-                          elevation: 2,
-                          shadowColor: const Color(0xFF059669).withValues(alpha: 0.4),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              isHi ? "संकल्प लें" : "PARTICIPATE",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            const Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.white),
-                          ],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Full-Width High-Contrast Emerald Button (Exact Sri Mandir "भाग लें ›")
+                  Container(
+                    width: double.infinity,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D9488),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          isHi ? "भाग लें" : "Participate",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.chevron_right_rounded, size: 18, color: Colors.white),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -1097,32 +1006,6 @@ class _PujaListScreenState extends State<PujaListScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PujaPerk extends StatelessWidget {
-  const _PujaPerk({required this.icon, required this.label, this.isDark = false});
-  final String icon;
-  final String label;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(icon, style: const TextStyle(fontSize: 10.5)),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white70 : const Color(0xFF475569),
-          ),
-        ),
-      ],
     );
   }
 }

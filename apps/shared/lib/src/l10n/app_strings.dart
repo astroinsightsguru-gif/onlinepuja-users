@@ -383,12 +383,12 @@ class AppStrings {
     },
     'new_address': {
       AppLanguage.en: 'New address',
-      AppLanguage.hi: '+ नया पता',
-      AppLanguage.sa: '+ नूतनसङ्केतः',
-      AppLanguage.gu: '+ નવું સરનામું',
-      AppLanguage.mr: '+ नवीन पत्ता',
-      AppLanguage.bho: '+ नया पता',
-      AppLanguage.mai: '+ नव पता',
+      AppLanguage.hi: 'नया पता',
+      AppLanguage.sa: 'नूतनसङ्केतः',
+      AppLanguage.gu: 'નવું સરનામું',
+      AppLanguage.mr: 'नवीन पत्ता',
+      AppLanguage.bho: 'नया पता',
+      AppLanguage.mai: 'नव पता',
     },
     'order_item': {
       AppLanguage.en: 'Item',

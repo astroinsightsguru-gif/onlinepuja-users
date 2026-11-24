@@ -48,8 +48,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     final user = context.read<AppSession>().user;
+    final isHi = LocaleManager.instance.currentLanguage.value != AppLanguage.en;
     _devoteeNameCtrl = TextEditingController(text: user?.name ?? '');
-    _gotraCtrl = TextEditingController(text: '');
+    _gotraCtrl = TextEditingController(text: isHi ? 'कश्यप' : 'Kashyap');
     _sankalpWishCtrl = TextEditingController(text: '');
     _whatsappCtrl = TextEditingController(text: user?.contactNo ?? '');
     _loadAddresses();
@@ -63,8 +64,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         final vault = await MiscApi.instance.getGotraVault(userId: userId);
         final gotra = vault['gotra']?.toString();
         if (gotra != null && gotra.isNotEmpty && mounted) {
+          final isHi = LocaleManager.instance.currentLanguage.value != AppLanguage.en;
+          String val = gotra;
+          if (isHi && gotra.toLowerCase() == 'kashyap') val = 'कश्यप';
           setState(() {
-            _gotraCtrl.text = gotra;
+            _gotraCtrl.text = val;
           });
         }
       } catch (_) {}
@@ -90,6 +94,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final p = widget.product;
     if (p != null) return p.name?.toString() ?? 'Product';
     return widget.puja?.title?.toString() ?? 'Puja';
+  }
+
+  String _localizedTitle(bool isHi) {
+    if (!isHi) return _title;
+    final p = widget.puja;
+    if (p != null) {
+      final t = (p.title ?? '').toLowerCase();
+      if (t.contains('bhairav')) return 'कालभैरव जयंती महायज्ञ एवं विशेष अनुष्ठान 🔱';
+      if (t.contains('mrityunjay') || t.contains('mahamrityunjay')) return 'अकाल मृत्यु व रोग निवारक महामृत्युंजय महाजाप अनुष्ठान 🔱';
+      if (t.contains('nagbali') || t.contains('narayan nagbali')) return 'काशी गंगा तट नारायण नागबलि एवं कालसर्प शांति महापूजा 🐍';
+      if (t.contains('rudrabhishek') || t.contains('rudra')) return 'द्वादश ज्योतिर्लिंग षोडशोपचार रुद्राभिषेक एवं महाआरती 🔱';
+      if (t.contains('kalsarp') || t.contains('rahu')) return 'कालसर्प व राहु गोचर शांति महापूजा 🐍';
+      if (t.contains('pind daan') || t.contains('shradh')) return 'गयाजी तीर्थ वेदोक्त पिंडदान एवं त्रिपिंडी श्राद्ध 🪷';
+      if (t.contains('deepdaan') || t.contains('deepawali')) return 'काशी देव दीपावली १०८ दीपदान एवं गंगा महाआरती 🪔';
+      if (t.contains('baglamukhi')) return 'मां बगलामुखी शत्रु विनाशक एवं विजय प्राप्ति अनुष्ठान ⚔️';
+      if (t.contains('lakshmi') || t.contains('kuber')) return 'महालक्ष्मी कुबेर अखंड धन एवं व्यापार वृद्धि महायज्ञ 💰';
+      final clean = p.title?.toString() ?? '';
+      if (clean.contains(' - ')) return clean.split(' - ').first.trim();
+      return clean;
+    }
+    return widget.product?.name?.toString() ?? _title;
   }
 
   Future<void> _loadAddresses() async {
@@ -450,10 +475,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     controller: _gotraCtrl,
                                     style: TextStyle(color: fieldTextColor, fontSize: 13.5),
                                     decoration: inputDecorationTheme.copyWith(
-                                      labelText: AppStrings.gotraHint,
-                                      hintText: 'e.g. Kashyap, Bharadwaj',
+                                      labelText: isHi ? 'गोत्र (अथवा कश्यप)' : AppStrings.gotraHint,
+                                      hintText: isHi ? 'उदा. कश्यप, भारद्वाज' : 'e.g. Kashyap, Bharadwaj',
+                                      contentPadding: const EdgeInsets.fromLTRB(10, 12, 0, 12),
                                       prefixIcon: Icon(Icons.stars_outlined, size: 20, color: subText),
                                       suffixIcon: IconButton(
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                                         icon: const Icon(Icons.account_tree_outlined, size: 18, color: Color(0xFFF59E0B)),
                                         tooltip: AppStrings.familyGotraVault,
                                         onPressed: () async {
@@ -566,18 +594,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                       ),
                       icon: const Icon(Icons.add_rounded),
-                      label: Text(AppStrings.newAddress),
+                      label: Text(isHi ? 'नया पता जोड़ें' : AppStrings.newAddress),
                     ),
-                    const Divider(height: 32),
-                    _row(AppStrings.orderItem, _title, textPrimary, textSecondary),
-                    _row(AppStrings.orderPrice, '$currency${_price.toStringAsFixed(0)}', textPrimary, textSecondary),
-                    _row(
-                        AppStrings.orderPayment,
-                        '${AppStrings.walletBalanceText} $currency${context.read<AppSession>().user?.walletAmount.toStringAsFixed(0) ?? '0'}',
-                        textPrimary,
-                        textSecondary,
-                        isHighlight: true),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
+                    _buildOrderSummaryCard(
+                      isHi,
+                      currency,
+                      cardBg,
+                      cardBorder,
+                      textPrimary,
+                      textSecondary,
+                      subText,
+                    ),
+                    const SizedBox(height: 10),
                     Text(
                       AppStrings.walletDeductNotice,
                       style: TextStyle(
@@ -590,6 +619,140 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
         );
       },
+    );
+  }
+
+  Widget _buildOrderSummaryCard(
+    bool isHi,
+    String currency,
+    Color cardBg,
+    Color cardBorder,
+    Color textPrimary,
+    Color textSecondary,
+    Color subText,
+  ) {
+    final title = _localizedTitle(isHi);
+    final packageName = widget.package != null
+        ? VedicHindiLocalizer.localizePackageName(widget.package?.name, isHi)
+        : null;
+    final walletBal = context.read<AppSession>().user?.walletAmount.toStringAsFixed(0) ?? '0';
+
+    return Container(
+      margin: const EdgeInsets.only(top: 10, bottom: 4),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.receipt_long_rounded, size: 18, color: Color(0xFFEA580C)),
+              const SizedBox(width: 8),
+              Text(
+                isHi ? 'संकल्प एवं सेवा विवरण' : 'Booking Summary',
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  color: textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Divider(height: 1, color: cardBorder.withValues(alpha: 0.6)),
+          const SizedBox(height: 10),
+
+          // Puja Name (Full Width clean wrap, no squeeze!)
+          Text(
+            isHi ? 'पावन पूजा अनुष्ठान:' : 'Sacred Puja Ritual:',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: subText),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: textPrimary,
+              height: 1.3,
+            ),
+          ),
+
+          if (packageName != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              isHi ? 'सेवा संकल्प पैकेज:' : 'Seva Package Tier:',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: subText),
+            ),
+            const SizedBox(height: 2),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFF059669).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                packageName,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF059669),
+                ),
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 12),
+          Divider(height: 1, color: cardBorder.withValues(alpha: 0.6)),
+          const SizedBox(height: 10),
+
+          // Dakshina / Price Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                isHi ? 'दक्षिणा / मूल्य' : AppStrings.orderPrice,
+                style: TextStyle(fontSize: 13.5, color: textSecondary, fontWeight: FontWeight.w600),
+              ),
+              Text(
+                '$currency${_price.toStringAsFixed(0)}',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: textPrimary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Payment Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                isHi ? 'भुगतान प्रकार' : AppStrings.orderPayment,
+                style: TextStyle(fontSize: 13.5, color: textSecondary, fontWeight: FontWeight.w600),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${isHi ? "वॉलेट शेष" : "Wallet Balance"} $currency$walletBal',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF10B981),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

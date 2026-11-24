@@ -55,19 +55,21 @@ class KundliApi {
   /// Basic details (Tithi/Karan/Yog/Nakshatra/sunrise…) — legacy
   /// `kundali/basic` (astrologyapi basic_panchang passthrough).
   Future<KundliBasic> basic({
+    int? id,
     required DateTime date,
     required String time,
     required double lat,
     required double lng,
     required double tz,
   }) async {
-    final decoded = await _api.post('/kundali/basic', body: _astroBody(date, time, lat, lng, tz));
+    final decoded = await _api.post('/kundali/basic', body: _astroBody(date, time, lat, lng, tz, id: id));
     final map = decoded is Map<String, dynamic> ? decoded : _asMap(decoded);
     return KundliBasic.fromJson(map);
   }
 
   /// Full chart + planet details — legacy `kundali/chart`.
   Future<Map<String, dynamic>> chart({
+    int? id,
     required DateTime date,
     required String time,
     required double lat,
@@ -75,12 +77,13 @@ class KundliApi {
     required double tz,
   }) async {
     final decoded =
-        await _api.post('/kundali/chart', body: _astroBody(date, time, lat, lng, tz));
+        await _api.post('/kundali/chart', body: _astroBody(date, time, lat, lng, tz, id: id));
     return _asMap(decoded);
   }
 
   /// Vimshottari dasha tree — legacy `kundali/dasha`.
   Future<Map<String, dynamic>> dasha({
+    int? id,
     required DateTime date,
     required String time,
     required double lat,
@@ -88,12 +91,13 @@ class KundliApi {
     required double tz,
   }) async {
     final decoded =
-        await _api.post('/kundali/dasha', body: _astroBody(date, time, lat, lng, tz));
+        await _api.post('/kundali/dasha', body: _astroBody(date, time, lat, lng, tz, id: id));
     return _asMap(decoded);
   }
 
   /// Dosha report — legacy `kundali/dosha`.
   Future<Map<String, dynamic>> dosha({
+    int? id,
     required DateTime date,
     required String time,
     required double lat,
@@ -101,12 +105,13 @@ class KundliApi {
     required double tz,
   }) async {
     final decoded =
-        await _api.post('/kundali/dosha', body: _astroBody(date, time, lat, lng, tz));
+        await _api.post('/kundali/dosha', body: _astroBody(date, time, lat, lng, tz, id: id));
     return _asMap(decoded);
   }
 
   /// Ashtakvarga points — legacy `kundali/astakvarga`.
   Future<Map<String, dynamic>> astakvarga({
+    int? id,
     required DateTime date,
     required String time,
     required double lat,
@@ -114,12 +119,13 @@ class KundliApi {
     required double tz,
   }) async {
     final decoded = await _api
-        .post('/kundali/astakvarga', body: _astroBody(date, time, lat, lng, tz));
+        .post('/kundali/astakvarga', body: _astroBody(date, time, lat, lng, tz, id: id));
     return _asMap(decoded);
   }
 
   /// Planet report — legacy `kundali/planet-report`.
   Future<Map<String, dynamic>> planetReport({
+    int? id,
     required DateTime date,
     required String time,
     required double lat,
@@ -127,12 +133,13 @@ class KundliApi {
     required double tz,
   }) async {
     final decoded = await _api
-        .post('/kundali/planet-report', body: _astroBody(date, time, lat, lng, tz));
+        .post('/kundali/planet-report', body: _astroBody(date, time, lat, lng, tz, id: id));
     return _asMap(decoded);
   }
 
   /// Ascendant report — legacy `kundali/ascendant-report`.
   Future<Map<String, dynamic>> ascendantReport({
+    int? id,
     required DateTime date,
     required String time,
     required double lat,
@@ -140,7 +147,7 @@ class KundliApi {
     required double tz,
   }) async {
     final decoded = await _api.post('/kundali/ascendant-report',
-        body: _astroBody(date, time, lat, lng, tz));
+        body: _astroBody(date, time, lat, lng, tz, id: id));
     return _asMap(decoded);
   }
 
@@ -183,7 +190,7 @@ class KundliApi {
   }
 
   static Map<String, dynamic> _astroBody(DateTime date, String time,
-      double lat, double lng, double tz) {
+      double lat, double lng, double tz, {int? id}) {
     int hour = 0;
     int min = 0;
     try {
@@ -201,7 +208,7 @@ class KundliApi {
       }
     } catch (_) {}
 
-    return {
+    final body = <String, dynamic>{
       'day': date.day,
       'month': date.month,
       'year': date.year,
@@ -213,5 +220,10 @@ class KundliApi {
       'lang': LocaleManager.instance.currentLanguage.value.code,
       'language': LocaleManager.instance.currentLanguage.value.code,
     };
+    if (id != null && id > 0) {
+      body['id'] = id;
+      body['kundaliId'] = id;
+    }
+    return body;
   }
 }

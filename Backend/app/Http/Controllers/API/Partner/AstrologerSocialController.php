@@ -87,8 +87,22 @@ class AstrologerSocialController extends Controller
      */
     public function connectPlatform(Request $request)
     {
-        $astrologerId = $request->input('astrologer_id') ?? 1;
-        $platform = strtolower($request->input('platform', ''));
+        $platform = strtolower(trim((string)($request->input('platform') ?? $request->json('platform') ?? '')));
+        if (!$platform) {
+            $raw = json_decode($request->getContent(), true);
+            if (is_array($raw) && !empty($raw['platform'])) {
+                $platform = strtolower(trim((string)$raw['platform']));
+            }
+        }
+
+        $astrologerId = $request->input('astrologer_id') ?? $request->json('astrologer_id');
+        if (!$astrologerId) {
+            $raw = json_decode($request->getContent(), true);
+            if (is_array($raw) && !empty($raw['astrologer_id'])) {
+                $astrologerId = $raw['astrologer_id'];
+            }
+        }
+        $astrologerId = $astrologerId ?: 1;
 
         if (!in_array($platform, ['facebook', 'instagram', 'youtube'])) {
             return response()->json([
@@ -136,7 +150,7 @@ class AstrologerSocialController extends Controller
             'message' => ucfirst($platform) . ' account successfully connected with AI Growth Autopilot!',
             'platform' => $platform,
             'handle' => $handles[$platform],
-            'followers_count' => $followers[$platform],
+            'followers_count' => $followersCount,
         ]);
     }
 
@@ -146,8 +160,22 @@ class AstrologerSocialController extends Controller
      */
     public function disconnectPlatform(Request $request)
     {
-        $astrologerId = $request->input('astrologer_id') ?? 1;
-        $platform = strtolower($request->input('platform', ''));
+        $platform = strtolower(trim((string)($request->input('platform') ?? $request->json('platform') ?? '')));
+        if (!$platform) {
+            $raw = json_decode($request->getContent(), true);
+            if (is_array($raw) && !empty($raw['platform'])) {
+                $platform = strtolower(trim((string)$raw['platform']));
+            }
+        }
+
+        $astrologerId = $request->input('astrologer_id') ?? $request->json('astrologer_id');
+        if (!$astrologerId) {
+            $raw = json_decode($request->getContent(), true);
+            if (is_array($raw) && !empty($raw['astrologer_id'])) {
+                $astrologerId = $raw['astrologer_id'];
+            }
+        }
+        $astrologerId = $astrologerId ?: 1;
 
         DB::table('astrologer_social_accounts')
             ->where('astrologer_id', $astrologerId)
@@ -231,25 +259,66 @@ class AstrologerSocialController extends Controller
         $topic = $request->input('topic', 'दैनिक राशिफल एवं ग्रह गोचर');
 
         $astrologer = DB::table('astrologers')->where('id', $astrologerId)->first();
-        $name = $astrologer ? $astrologer->name : 'पंडित जी';
+        $name = $astrologer ? $astrologer->name : 'पूज्य पंडित जी';
         $slug = $astrologer ? ($astrologer->slug ?? 'panditji') : 'panditji';
         $consultUrl = "https://onlinepuja.live/astrologer/{$slug}";
 
-        $titles = [
-            'दैनिक राशिफल एवं ग्रह गोचर फल 🔱',
-            'मंगल दोष एवं विवाह बाधा निवारण अचूक उपाय 🚩',
-            'शनि की साढ़े साती एवं ढैय्या शांति महा उपाय 🪐',
-            'संतान सुख एवं व्यापार वृद्धि हेतु वैदिक मार्गदर्शन 🪔',
-        ];
+        // 1. Generate Intelligent Devanagari Title & Sacred Caption
+        $title = "{$topic} — {$name} 🔱";
+        $caption = "🕉️ *ॐ नमः शिवाय* 🙏\n\nआदरणीय भक्तजनों,\nआज का पावन वैदिक मार्गदर्शन एवं ज्योतिषीय विश्लेषण: *{$topic}*\n\nपूज्य {$name} जी द्वारा ग्रह गोचर, महादशा एवं जीवन की बाधाओं के निवारण हेतु विशेष वैदिक उपाय।\n\n🪔 व्यक्तिगत कुंडली विश्लेषण एवं संकल्प हेतु अभी ऑनलाइन संपर्क करें:\n👉 {$consultUrl}\n\nहर हर महादेव! 🔱🚩\n#VedicAstrology #OnlinePuja #{$slug} #DailyHoroscope #JyotishRemedies";
 
-        $title = $titles[array_rand($titles)];
-        $caption = "🕉️ *ॐ नमः शिवाय* 🙏\n\nआदरणीय भक्तजनों, आज का पावन वैदिक उपाय एवं मार्गदर्शन प्रस्तुत है। यदि आपके जीवन में कोई समस्या या ग्रह बाधा है, तो सीधे मुझसे ऑनलाइन परामर्श प्राप्त करें:\n👉 {$consultUrl}\n\nहर हर महादेव! 🔱🚩\n#VedicAstrology #OnlinePuja #{$slug} #DailyHoroscope";
+        // Try AI Engine for ultra-personalized text if available
+        try {
+            $aiEngine = app(\App\Services\AiEngineService::class);
+            if ($aiEngine) {
+                $prompt = "Write a compelling, pious Hindi caption for an Instagram Reel / YouTube Short by Vedic Astrologer {$name} on the topic: '{$topic}'. Include auspicious emojis, booking link: {$consultUrl}, and relevant hashtags.";
+                $aiCaption = $aiEngine->generateText($prompt, "You are a senior Vedic social media growth expert for OnlinePuja.live. Respond only in fluent, pious Hindi.");
+                if (!empty($aiCaption) && strlen($aiCaption) > 50) {
+                    $caption = $aiCaption;
+                }
+            }
+        } catch (\Throwable $te) {
+            \Log::info('AI copy generation note: ' . $te->getMessage());
+        }
 
-        $mediaUrl = ($type === 'poster')
-            ? 'https://onlinepuja.live/storage/astrologers/creatives/sample_poster.jpg'
-            : 'https://onlinepuja.live/storage/reels/daily_broadcast_master.mp4';
-
+        $mediaUrl = 'https://onlinepuja.live/storage/reels/daily_broadcast_master.mp4';
         $thumbUrl = 'https://onlinepuja.live/storage/reels/reel_preview.jpg';
+
+        // 2. Synthesize High-Definition 9:16 Reel/Short via Native FFmpeg Driver
+        if ($type === 'reel' || $type === 'short') {
+            try {
+                if (class_exists(\App\AI\Drivers\FfmpegReelVideoDriver::class)) {
+                    $reelDriver = app(\App\AI\Drivers\FfmpegReelVideoDriver::class);
+                    $res = $reelDriver->create($topic, [
+                        'seconds' => ($type === 'short') ? 12 : 7,
+                        'title' => "{$name} 🔱",
+                        'subtitle' => $topic,
+                        'cta' => "परामर्श हेतु: {$consultUrl}",
+                    ]);
+                    if (!empty($res['url'])) {
+                        $mediaUrl = $res['url'];
+                        $thumbUrl = str_replace('.mp4', '.jpg', $res['url']);
+                    }
+                }
+            } catch (\Throwable $ve) {
+                \Log::warning('FfmpegReelVideoDriver synthesis fallback: ' . $ve->getMessage());
+            }
+        } elseif ($type === 'poster') {
+            // Find existing high-res spiritual poster or fallback
+            $posterAsset = DB::table('media_assets')
+                ->where('kind', 'image')
+                ->where('path', 'like', '%.jpg%')
+                ->orderByDesc('bytes')
+                ->first();
+
+            if ($posterAsset && !empty($posterAsset->url)) {
+                $mediaUrl = $posterAsset->url;
+                $thumbUrl = $posterAsset->url;
+            } else {
+                $mediaUrl = 'https://onlinepuja.live/storage/astrologers/creatives/sample_poster.jpg';
+                $thumbUrl = 'https://onlinepuja.live/storage/astrologers/creatives/sample_poster.jpg';
+            }
+        }
 
         $creativeId = DB::table('astrologer_social_creatives')->insertGetId([
             'astrologer_id' => $astrologerId,
@@ -271,7 +340,7 @@ class AstrologerSocialController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Personalized AI {$type} created successfully with your branding and booking QR!",
+            'message' => "Personalized AI {$type} created successfully with {$name}'s branding, booking URL and HD media!",
             'creative' => $created,
         ]);
     }

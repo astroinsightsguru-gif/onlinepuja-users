@@ -694,6 +694,60 @@ class KundaliController extends Controller
         }
     }
 
+    protected function resolveKundali(Request $request)
+    {
+        $kundali = null;
+        if ($request->filled('id') || $request->filled('kundaliId')) {
+            $id = $request->id ?: $request->kundaliId;
+            $kundali = Kundali::where('id', $id)->first();
+        }
+
+        if (!$kundali && $request->filled('userId')) {
+            $intakeForm = DB::table('intakeform')->where('userId', $request->userId)->latest()->first();
+            if ($intakeForm && $intakeForm->latitude && $intakeForm->longitude && $intakeForm->timezone) {
+                $kundali = (object) [
+                    'name' => $intakeForm->name ?? 'Devotee',
+                    'gender' => $intakeForm->gender ?? 'male',
+                    'birthDate' => $intakeForm->birthDate,
+                    'birthTime' => $intakeForm->birthTime,
+                    'latitude' => $intakeForm->latitude,
+                    'longitude' => $intakeForm->longitude,
+                    'birthPlace' => $intakeForm->birthPlace ?? '',
+                    'timezone' => $intakeForm->timezone,
+                ];
+            }
+        }
+
+        if (!$kundali) {
+            $dob = $request->dob ?? $request->birthDate;
+            if (!$dob && $request->filled('day') && $request->filled('month') && $request->filled('year')) {
+                $dob = sprintf('%04d-%02d-%02d', $request->year, $request->month, $request->day);
+            }
+            $tob = $request->tob ?? $request->birthTime;
+            if (!$tob && isset($request->hour)) {
+                $tob = sprintf('%02d:%02d:00', $request->hour, $request->min ?? 0);
+            }
+            $lat = $request->lat ?? $request->latitude ?? 0;
+            $lon = $request->lon ?? $request->lng ?? $request->longitude ?? 0;
+            $tz = $request->tz ?? $request->tzone ?? $request->timezone ?? 5.5;
+
+            if ($dob) {
+                $kundali = (object) [
+                    'name' => $request->name ?? 'Devotee',
+                    'gender' => $request->gender ?? 'male',
+                    'birthDate' => $dob,
+                    'birthTime' => $tob ?? '12:00:00',
+                    'latitude' => $lat,
+                    'longitude' => $lon,
+                    'birthPlace' => $request->birthPlace ?? $request->place ?? '',
+                    'timezone' => $tz,
+                ];
+            }
+        }
+
+        return $kundali;
+    }
+
     public function getBasicKundali(Request $request)
     {
         // Initialize session
@@ -709,26 +763,7 @@ class KundaliController extends Controller
         }
 
         // Fetch kundali data
-        $kundali = Kundali::where('id', $request->id)->first();
-
-        if ($request->userId) {
-            $intakeForm = DB::table('intakeform')->where('userId', $request->userId)->latest()->first();
-            // dd($intakeForm);
-            if ($intakeForm && $intakeForm->latitude && $intakeForm->longitude && $intakeForm->timezone) {
-                $kundali = (object) [
-                    'name' => $intakeForm->name,
-                    'gender' => $intakeForm->gender,
-                    'birthDate' => $intakeForm->birthDate,
-                    'birthTime' => $intakeForm->birthTime,
-                    'latitude' => $intakeForm->latitude,
-                    'longitude' => $intakeForm->longitude,
-                    'birthPlace' => $intakeForm->birthPlace,
-                    'timezone' => $intakeForm->timezone,
-                ];
-            }
-        }
-
-        // dd($kundali);
+        $kundali = $this->resolveKundali($request);
 
         // Get API key
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
@@ -789,21 +824,7 @@ class KundaliController extends Controller
         }
 
         // Fetch kundali data
-        $kundali = Kundali::where('id', $request->id)->first();
-
-        if ($request->userId) {
-            $intakeForm = DB::table('intakeform')->where('userId', $request->userId)->latest()->first();
-
-            if ($intakeForm && $intakeForm->latitude && $intakeForm->longitude && $intakeForm->timezone) {
-                $kundali = (object) [
-                    'birthDate' => $intakeForm->birthDate,
-                    'birthTime' => $intakeForm->birthTime,
-                    'latitude' => $intakeForm->latitude,
-                    'longitude' => $intakeForm->longitude,
-                    'timezone' => $intakeForm->timezone,
-                ];
-            }
-        }
+        $kundali = $this->resolveKundali($request);
 
         // Get API key
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
@@ -871,21 +892,7 @@ class KundaliController extends Controller
         }
 
         // Fetch kundali data
-        $kundali = Kundali::where('id', $request->id)->first();
-
-        if ($request->userId) {
-            $intakeForm = DB::table('intakeform')->where('userId', $request->userId)->latest()->first();
-
-            if ($intakeForm && $intakeForm->latitude && $intakeForm->longitude && $intakeForm->timezone) {
-                $kundali = (object) [
-                    'birthDate' => $intakeForm->birthDate,
-                    'birthTime' => $intakeForm->birthTime,
-                    'latitude' => $intakeForm->latitude,
-                    'longitude' => $intakeForm->longitude,
-                    'timezone' => $intakeForm->timezone,
-                ];
-            }
-        }
+        $kundali = $this->resolveKundali($request);
 
         // Get API key
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
@@ -952,21 +959,7 @@ class KundaliController extends Controller
         }
 
         // Fetch kundali data
-        $kundali = Kundali::where('id', $request->id)->first();
-
-        if ($request->userId) {
-            $intakeForm = DB::table('intakeform')->where('userId', $request->userId)->latest()->first();
-
-            if ($intakeForm && $intakeForm->latitude && $intakeForm->longitude && $intakeForm->timezone) {
-                $kundali = (object) [
-                    'birthDate' => $intakeForm->birthDate,
-                    'birthTime' => $intakeForm->birthTime,
-                    'latitude' => $intakeForm->latitude,
-                    'longitude' => $intakeForm->longitude,
-                    'timezone' => $intakeForm->timezone,
-                ];
-            }
-        }
+        $kundali = $this->resolveKundali($request);
 
         // Get API key
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
@@ -1026,21 +1019,7 @@ class KundaliController extends Controller
         }
 
         // Fetch kundali data
-        $kundali = Kundali::where('id', $request->id)->first();
-
-        if ($request->userId) {
-            $intakeForm = DB::table('intakeform')->where('userId', $request->userId)->latest()->first();
-
-            if ($intakeForm && $intakeForm->latitude && $intakeForm->longitude && $intakeForm->timezone) {
-                $kundali = (object) [
-                    'birthDate' => $intakeForm->birthDate,
-                    'birthTime' => $intakeForm->birthTime,
-                    'latitude' => $intakeForm->latitude,
-                    'longitude' => $intakeForm->longitude,
-                    'timezone' => $intakeForm->timezone,
-                ];
-            }
-        }
+        $kundali = $this->resolveKundali($request);
 
         // Get API key
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
@@ -1099,20 +1078,14 @@ class KundaliController extends Controller
         }
 
         // Fetch kundali data
-        $kundali = Kundali::where('id', $request->id)->first();
+        $kundali = $this->resolveKundali($request);
 
-        if ($request->userId) {
-            $intakeForm = DB::table('intakeform')->where('userId', $request->userId)->latest()->first();
-
-            if ($intakeForm && $intakeForm->latitude && $intakeForm->longitude && $intakeForm->timezone) {
-                $kundali = (object) [
-                    'birthDate' => $intakeForm->birthDate,
-                    'birthTime' => $intakeForm->birthTime,
-                    'latitude' => $intakeForm->latitude,
-                    'longitude' => $intakeForm->longitude,
-                    'timezone' => $intakeForm->timezone,
-                ];
-            }
+        if (!$kundali || empty($kundali->birthDate)) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Kundali profile or birth details not found.',
+                'recordList' => null,
+            ], 404);
         }
 
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();
@@ -1171,20 +1144,14 @@ class KundaliController extends Controller
             return response()->json($session->get($sessionKey), 200);
         }
 
-        $kundali = Kundali::where('id', $request->id)->first();
+        $kundali = $this->resolveKundali($request);
 
-        if ($request->userId) {
-            $intakeForm = DB::table('intakeform')->where('userId', $request->userId)->latest()->first();
-
-            if ($intakeForm && $intakeForm->latitude && $intakeForm->longitude && $intakeForm->timezone) {
-                $kundali = (object) [
-                    'birthDate' => $intakeForm->birthDate,
-                    'birthTime' => $intakeForm->birthTime,
-                    'latitude' => $intakeForm->latitude,
-                    'longitude' => $intakeForm->longitude,
-                    'timezone' => $intakeForm->timezone,
-                ];
-            }
+        if (!$kundali || empty($kundali->birthDate)) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Kundali profile or birth details not found.',
+                'recordList' => null,
+            ], 404);
         }
 
         $api_key = DB::table('systemflag')->where('name', 'vedicAstroAPI')->first();

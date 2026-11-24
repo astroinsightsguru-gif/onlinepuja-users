@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../theme/partner_theme.dart';
 import '../../widgets/partner_widgets.dart';
+import '../chat/master_ai_chatbot_screen.dart';
 
 class VedicToolkitScreen extends StatefulWidget {
   static const String route = '/tools/vedic-toolkit';
@@ -82,7 +83,7 @@ class _VedicToolkitScreenState extends State<VedicToolkitScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _fetchTodayPanchang();
   }
 
@@ -284,10 +285,12 @@ class _VedicToolkitScreenState extends State<VedicToolkitScreen>
           labelColor: PartnerTheme.gold,
           unselectedLabelColor: dark ? Colors.white70 : Colors.black54,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          isScrollable: true,
           tabs: const [
             Tab(icon: Icon(Icons.auto_stories_rounded), text: 'कुंडली निर्माण'),
             Tab(icon: Icon(Icons.calendar_month_rounded), text: 'आज का पंचांग'),
             Tab(icon: Icon(Icons.temple_hindu_rounded), text: 'पूजा संस्तुति'),
+            Tab(icon: Icon(Icons.auto_awesome_rounded), text: 'मास्टर AI ज्योतिषी'),
           ],
         ),
       ),
@@ -297,6 +300,7 @@ class _VedicToolkitScreenState extends State<VedicToolkitScreen>
           _buildKundliTab(dark),
           _buildPanchangTab(dark),
           _buildPujaRecommendationTab(dark),
+          const MasterAiChatbotScreen(showAppBar: false),
         ],
       ),
     );

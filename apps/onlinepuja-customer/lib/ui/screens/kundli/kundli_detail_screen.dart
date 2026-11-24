@@ -47,24 +47,28 @@ class _KundliDetailScreenState extends State<KundliDetailScreen>
     try {
       final results = await Future.wait([
         api.basic(
+            id: k.id,
             date: k.birthDate,
             time: k.birthTime,
             lat: k.latitude ?? 0,
             lng: k.longitude ?? 0,
             tz: _tz),
         api.chart(
+            id: k.id,
             date: k.birthDate,
             time: k.birthTime,
             lat: k.latitude ?? 0,
             lng: k.longitude ?? 0,
             tz: _tz),
         api.dasha(
+            id: k.id,
             date: k.birthDate,
             time: k.birthTime,
             lat: k.latitude ?? 0,
             lng: k.longitude ?? 0,
             tz: _tz),
         api.dosha(
+            id: k.id,
             date: k.birthDate,
             time: k.birthTime,
             lat: k.latitude ?? 0,
@@ -93,19 +97,29 @@ class _KundliDetailScreenState extends State<KundliDetailScreen>
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final k = widget.kundli;
-    const tabs = ['Basic', 'Planets', 'Dasha', 'Dosha', 'Remedies (उपाय)'];
+    final isHi = LocaleManager.instance.currentLanguage.value != AppLanguage.en;
+    final rawName = k.name.trim();
+    final displayName = (rawName.isEmpty || rawName.toLowerCase() == 'nobody' || rawName.toLowerCase() == 'null')
+        ? (isHi ? 'आपकी जन्म पत्रिका' : 'Your Vedic Kundli')
+        : rawName;
+    final tabs = isHi
+        ? ['सामान्य विवरण', 'ग्रह स्थिति', 'दशा चक्र', 'दोष विचार', 'वेदिक उपाय']
+        : ['Basic', 'Planets', 'Dasha', 'Dosha', 'Remedies (उपाय)'];
     final subColor = Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.75) ??
         scheme.onSurfaceVariant;
+    final placeText = (k.birthPlace.trim().isNotEmpty && k.birthPlace.trim().toLowerCase() != 'unknown')
+        ? k.birthPlace
+        : (isHi ? 'पावन तीर्थ क्षेत्र' : 'Sacred Teerth');
     return Scaffold(
       appBar: AppBar(
-        title: Text(k.name),
+        title: Text(displayName),
         actions: [
           IconButton(
             tooltip: 'Sankalp Blessing Card',
             icon: const Icon(Icons.card_giftcard_rounded),
             onPressed: () => SankalpBlessingCardDialog.show(
               context,
-              defaultName: k.name,
+              defaultName: displayName,
               defaultGotra: 'Kashyap',
             ),
           ),
@@ -123,7 +137,7 @@ class _KundliDetailScreenState extends State<KundliDetailScreen>
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Text(
               '${k.birthDate.toIso8601String().substring(0, 10)} · '
-              '${k.birthTime} · ${k.birthPlace}',
+              '${k.birthTime} · $placeText',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall

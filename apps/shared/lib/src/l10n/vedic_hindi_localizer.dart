@@ -246,8 +246,45 @@ class VedicHindiLocalizer {
     if (lower.contains('mantra chanting') || lower.contains('vedic brahmins') || lower.contains('acharyas')) {
       return 'तीर्थ पुरोहितों द्वारा सस्वर वेदोक्त मंत्रोच्चार एवं वैदिक विधि-विधान।';
     }
-    if (lower.contains('live darshan') || lower.contains('photo proof') || lower.contains('darshan photos')) {
-      return 'संकल्प, अभिषेक एवं आरती के प्रत्यक्ष दर्शन फोटो व वीडियो।';
+    if (lower.contains('tele-consultation') ||
+        lower.contains('consultation before') ||
+        lower.contains('personal acharya tele') ||
+        lower.contains('acharya tele')) {
+      return 'अनुष्ठान से पूर्व मुख्य आचार्य जी द्वारा व्यक्तिगत टेलीफोनिक परामर्श।';
+    }
+    if (lower.contains('ancestral lineage') ||
+        lower.contains('multi-pundit ceremony') ||
+        lower.contains('gotras chanted') ||
+        lower.contains('ancestry (pitru')) {
+      return 'विद्वान तीर्थ पुरोहितों द्वारा कुल परंपरा, पूर्वज एवं गोत्रोच्चार सहित महाअनुष्ठान।';
+    }
+    if (lower.contains('5 vedic brahmins') ||
+        lower.contains('5 brahmins bhojan') ||
+        lower.contains('brahman bhojan') ||
+        lower.contains('bhojan served to 5')) {
+      return '५ विद्वान वैदिक ब्राह्मणों को विधिपूर्वक भोजन, दक्षिणा, वस्त्र दान एवं पावन दशांश हवन।';
+    }
+    if (lower.contains('silver coin') ||
+        lower.contains('raksha kavach') ||
+        lower.contains('wooden temple box') ||
+        lower.contains('priority courier') ||
+        lower.contains('silver pratima')) {
+      return 'विशिष्ट रजत सिक्का, काशी विश्वनाथ रक्षा कवच व गंगाजल युक्त प्रीमियम प्रसाद बॉक्स।';
+    }
+    if (lower.contains('silver nag-naagin') || lower.contains('bhaat puja') || lower.contains('nag-naagin')) {
+      return 'दोष शांति हेतु चांदी के नाग-नागिन प्रतिमा पूजन एवं शास्त्रोक्त विहित विसर्जन।';
+    }
+    if (lower.contains('11,000') || lower.contains('21,000') || lower.contains('gayatri mantra')) {
+      return 'वेदोक्त गायत्री एवं मूल मंत्रों का सस्वर महामंत्र जप एवं दशांश पावन हवन।';
+    }
+    if (lower.contains('gau seva') || lower.contains('temple cows') || lower.contains('fodder')) {
+      return 'यजमान के नाम व गोत्र से पावन गौशाला में गौ माता को हरा चारा एवं गौ सेवा अर्पण।';
+    }
+    if (lower.contains('kanya pujan') || lower.contains('anna daan') || lower.contains('vastra daan')) {
+      return 'काशी में कन्या पूजन, ब्राह्मण भोजन एवं वस्त्र-अन्न महादान का पावन संकल्प।';
+    }
+    if (lower.contains('live darshan') || lower.contains('photo proof') || lower.contains('darshan photos') || lower.contains('video proof')) {
+      return 'संकल्प, अभिषेक एवं आरती के प्रत्यक्ष दर्शन फोटो व संपूर्ण वीडियो साक्ष्य।';
     }
 
     return inc;
@@ -329,5 +366,126 @@ class VedicHindiLocalizer {
     }
 
     return text;
+  }
+
+  /// Localize Puja Long Description into Sacred Vedic Hindi
+  static String localizeDescription(String? raw, String? title, bool isHi) {
+    if (!isHi || raw == null || raw.trim().isEmpty) return raw ?? '';
+
+    // If already primarily Hindi, return as is
+    final hindiChars = RegExp(r'[\u0900-\u097F]').allMatches(raw).length;
+    if (hindiChars > 60) {
+      return raw;
+    }
+
+    final tLower = (title ?? '').toLowerCase();
+    final rLower = raw.toLowerCase();
+
+    // 1. Mahamrityunjay Jaap / Ayushya Havan (ID 31, 20, 3)
+    if (tLower.contains('mrityunjay') ||
+        tLower.contains('mahamrityunjaya') ||
+        rLower.contains('mrityunjay') ||
+        rLower.contains('sanjeevani')) {
+      return '''
+<h2>काशी में महामृत्युंजय महामंत्र जप एवं अनुष्ठान: अकाल मृत्यु व रोग निवारण</h2>
+<p>ऋग्वेद (७.५९.१२) का <strong>महामृत्युंजय महामंत्र</strong> संपूर्ण वैदिक वांग्मय में सर्वाधिक शक्तिशाली प्राण-रक्षक व आरोग्य प्रदाता मंत्र है। इसे त्र्यंबक मंत्र एवं मृत-संजीवनी मंत्र भी कहा जाता है। महर्षि मार्कंडेय को भगवान शिव द्वारा प्रदत्त यह महामंत्र अकाल मृत्यु, असाध्य व्याधियों एवं मृत्यु भय के निवारण हेतु सिद्ध है। काशी में इस अनुष्ठान से साधक सीधे देवाधिदेव महादेव की महाकाल ऊर्जा से जुड़ता है।</p>
+
+<h2>वाराणसी स्थित मृत्युंजय महादेव मंदिर का पावन महात्म्य:</h2>
+<p>काशी के दारानाग स्थित ऐतिहासिक <strong>मृत्युंजय महादेव मंदिर</strong> परिसर में पावन औषधीय कूप (धनवंतरि कूप) स्थित है, जिसे देवताओं के वैद्य भगवान धनवंतरि का आशीर्वाद प्राप्त है। मान्यता है कि यहाँ मृत्युंजय महादेव के दर्शन, अभिषेक व महामंत्र जाप से ग्रह दोष, कालसर्प, असाध्य रोग एवं अकाल मृत्यु के योग नष्ट हो जाते हैं।</p>
+
+<h2>किन ज्योतिषीय व स्वास्थ्य परिस्थितियों में यह अनुष्ठान आवश्यक है:</h2>
+<ul>
+<li>परिवार के सदस्य जो गंभीर रोग, आईसीयू (ICU) अथवा दीर्घकालिक असाध्य व्याधि से पीड़ित हों।</li>
+<li>कुंडली में मारक ग्रहों (द्वितीय व सप्तम भाव), अष्टमेश अथवा शनि-राहु की अशुभ महादशा का प्रभाव।</li>
+<li>अकाल मृत्यु, दुर्घटना अथवा आकस्मिक संकटों से सुरक्षा एवं दीर्घायु की कामना।</li>
+<li>मानसिक भय, तनाव, अवसाद एवं नकारात्मक ऊर्जा से पूर्ण मुक्ति।</li>
+</ul>
+''';
+    }
+
+    // 2. Kaal Sarp Dosh Nivaran (ID 25)
+    if (tLower.contains('kaal sarp') || tLower.contains('kalsarp') || rLower.contains('kaal sarp')) {
+      return '''
+<h2>उज्जैन व त्र्यंबकेश्वर में वेदोक्त कालसर्प दोष निवारण महापूजा</h2>
+<p>जन्मपत्रिका में जब समस्त ग्रह राहु और केतु के मध्य आ जाते हैं, तो कालसर्प योग का निर्माण होता है। इसके प्रभाव से जीवन में विवाह विलंब, व्यापार में निरंतर हानि, संतान कष्ट एवं मानसिक अशांति बनी रहती है। मोक्षदायिनी शिप्रा तट एवं त्र्यंबकेश्वर ज्योतिर्लिंग पर वेदोक्त विधि से नाग-नागिन प्रतिमा पूजन, महामृत्युंजय जाप एवं राहु-केतु शांति अनुष्ठान से समस्त दोषों का समूल शमन होता है।</p>
+
+<h2>कालसर्प दोष निवारण के मुख्य लाभ:</h2>
+<ul>
+<li>करियर व व्यापार में आ रहे अनावश्यक व्यवधानों की समाप्ति एवं धन लाभ।</li>
+<li>मानसिक तनाव, अनिद्रा एवं डरावने सपनों से स्थायी मुक्ति।</li>
+<li>दांपत्य जीवन में सुख, शांति एवं वंश वृद्धि का आशीर्वाद।</li>
+</ul>
+''';
+    }
+
+    // 3. Rudrabhishek (ID 30, 19, 18)
+    if (tLower.contains('rudra') || rLower.contains('rudrabhishek')) {
+      return '''
+<h2>द्वादश ज्योतिर्लिंग षोडशोपचार रुद्राभिषेक एवं महाआरती</h2>
+<p>भगवान सदाशिव के सबसे प्रिय पावन रुद्राभिषेक का विधान यजुर्वेद के रुद्राष्टाध्यायी से प्रमाणित है। पावन गंगाजल, गाय के कच्चे दूध, मधु, गन्ने के रस एवं बिल्वपत्र से सस्वर वेदोक्त मंत्रोच्चार सहित अभिषेक करने से समस्त जन्मों के पाप नष्ट होते हैं और सुख-शांति व ऐश्वर्य की प्राप्ति होती है।</p>
+
+<h2>रुद्राभिषेक का वेदोक्त महात्म्य:</h2>
+<ul>
+<li>ग्रह पीड़ा, शनि ढैय्या व साढ़े साती के अनिष्ट प्रभावों का शमन।</li>
+<li>समस्त मनोकामनाओं की पूर्ति एवं घर में सकारात्मक ऊर्जा का संचार।</li>
+<li>अकाल बाधाओं से परिवार की रक्षा एवं अखंड सौभाग्य की प्राप्ति।</li>
+</ul>
+''';
+    }
+
+    // 4. Pind Daan & Shradh (ID 27, 28, 29, 5)
+    if (tLower.contains('pind daan') || tLower.contains('shradh') || tLower.contains('pitru') || rLower.contains('pind daan')) {
+      return '''
+<h2>गयाजी व मणिकर्णिका महातीर्थ में वेदोक्त पिंडदान एवं त्रिपिंडी श्राद्ध</h2>
+<p>विष्णुपद मंदिर, फल्गु नदी तट एवं अक्षयवट के पावन परिसर में पूर्वजों के निमित्त पिंडदान करने से सात पीढ़ियों के पितरों को मोक्ष प्राप्त होता है। पितृदोष के कारण उत्पन्न होने वाली संतान बाधा, वंश वृद्धि में रुकावट एवं पारिवारिक कलह का समूल निवारण होता है।</p>
+
+<h2>पितृ शांति अनुष्ठान के प्रमुख फल:</h2>
+<ul>
+<li>पूर्वजों का आशीर्वाद प्राप्त होकर घर में सुख-समृद्धि एवं वंश वृद्धि।</li>
+<li>अतृप्त आत्माओं की सद्गति एवं पितृदोष से संपूर्ण मुक्ति।</li>
+<li>व्यापार व नौकरी में निरंतर प्रगति एवं गृह क्लेश का अंत।</li>
+</ul>
+''';
+    }
+
+    // 5. Dev Deepawali / Deepdaan (ID 33, 11)
+    if (tLower.contains('deepdaan') || tLower.contains('deepawali') || rLower.contains('deepdaan')) {
+      return '''
+<h2>काशी के पावन गंगा तट पर १०८ दीपदान एवं महाआरती</h2>
+<p>कार्तिक पूर्णिमा व देव दीपावली पर काशी के पावन चौरासी घाटों पर समस्त देवताओं का आगमन होता है। गंगा तट पर अपने नाम-गोत्र से १०८ दीप प्रज्ज्वलित कर दीपदान करने से समस्त पूर्वजों को मोक्ष प्राप्त होता है एवं परिवार में अखंड लक्ष्मी का वास होता है।</p>
+''';
+    }
+
+    // 6. Baglamukhi Puja
+    if (tLower.contains('baglamukhi') || rLower.contains('baglamukhi')) {
+      return '''
+<h2>मां बगलामुखी शत्रु विनाशक एवं विजय प्राप्ति अनुष्ठान</h2>
+<p>दसमहाविद्याओं में आठवीं महाविद्या मां पीताम्बरा बगलामुखी शत्रुओं के स्तम्भन, कोर्ट-कचहरी विजय, राजनीतिक उत्कर्ष एवं आकस्मिक संकट निवारण हेतु साक्षात जाग्रत शक्ति हैं। आचार्य जी द्वारा हल्दी की माला से पीताम्बरा मंत्र के सस्वर जप से साधक को सर्वत्र विजय प्राप्त होती है।</p>
+''';
+    }
+
+    // 7. Lakshmi Kuber Puja (ID 1, 26)
+    if (tLower.contains('lakshmi') || tLower.contains('kuber') || rLower.contains('lakshmi')) {
+      return '''
+<h2>महालक्ष्मी कुबेर अखंड धन एवं व्यापार वृद्धि महायज्ञ</h2>
+<p>ऋग्वैदिक श्रीसूक्त एवं कनकधारा स्तोत्र के सस्वर पाठ सहित संपन्न होने वाले इस महायज्ञ से व्यापारिक रुकावटें, ऋण बाधाएं एवं दरिद्रता दूर होकर अखंड धन-धान्य की प्राप्ति होती है।</p>
+''';
+    }
+
+    // Generic fallback for any other puja
+    return raw
+        .replaceAll(RegExp(r'\bAbout\b', caseSensitive: false), 'के बारे में')
+        .replaceAll(RegExp(r'\bSignificance of\b', caseSensitive: false), 'का पावन महात्म्य')
+        .replaceAll(RegExp(r'\bBenefits:\b', caseSensitive: false), 'पूजा के पावन लाभ:')
+        .replaceAll(RegExp(r'\bBenefits\b', caseSensitive: false), 'पावन लाभ')
+        .replaceAll(RegExp(r'\bVaranasi\b', caseSensitive: false), 'वाराणसी')
+        .replaceAll(RegExp(r'\bKashi\b', caseSensitive: false), 'काशी')
+        .replaceAll(RegExp(r'\bTemple\b', caseSensitive: false), 'मंदिर')
+        .replaceAll(RegExp(r'\bRitual\b', caseSensitive: false), 'वेदोक्त अनुष्ठान')
+        .replaceAll(RegExp(r'\bVedic Brahmins\b', caseSensitive: false), 'काशी के वैदिक विद्वान')
+        .replaceAll(RegExp(r'\bMantra\b', caseSensitive: false), 'महामंत्र')
+        .replaceAll(RegExp(r'\bHealth\b', caseSensitive: false), 'आरोग्य लाभ')
+        .replaceAll(RegExp(r'\bLongevity\b', caseSensitive: false), 'दीर्घायु')
+        .replaceAll(RegExp(r'\bProtection\b', caseSensitive: false), 'दैवीय रक्षा कवच');
   }
 }

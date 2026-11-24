@@ -11,6 +11,7 @@ import '../../widgets/partner_widgets.dart';
 import '../auth/login_screen.dart';
 import '../call/call_session_screen.dart';
 import '../chat/chat_session_screen.dart';
+import '../chat/master_ai_chatbot_screen.dart';
 import '../orders/orders_fulfillment_screen.dart';
 import '../profile/profile_screen.dart';
 import '../social/astrologer_social_growth_screen.dart';
@@ -995,6 +996,94 @@ class _HomeShellState extends State<HomeShell> {
           ),
           const SizedBox(height: 16),
 
+          // 🤖 Master AI Jyotish Assistant Card
+          PartnerCard(
+            padding: const EdgeInsets.all(16),
+            gradient: dark
+                ? const LinearGradient(
+                    colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : const LinearGradient(
+                    colors: [Color(0xFFECFDF5), Color(0xFFD1FAE5)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+            borderColor: const Color(0xFF10B981).withValues(alpha: 0.5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF059669),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
+                        ),
+                        const SizedBox(width: 10),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'मास्टर AI ज्योतिषी (Master Co-Pilot)',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                            ),
+                            Text(
+                              'पंडित जी का 24x7 वैदिक AI सहायक',
+                              style: TextStyle(fontSize: 10.5, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF059669).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'AI CO-PILOT',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'जटिल कुंडली दोष (कालसर्प, मांगलिक, साढ़े साती), शुभ मुहूर्त गणना एवं वेदोक्त पूजा संस्तुतियों पर तुरंत AI परामर्श प्राप्त करें और 1-क्लिक में यजमान को व्हाट्सएप भेजें।',
+                  style: TextStyle(fontSize: 11.5, color: dark ? Colors.white70 : Colors.black87, height: 1.35),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+                    label: const Text(
+                      'AI ज्योतिषी से पूछें (Ask Master AI)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                    ),
+                    onPressed: () => Navigator.pushNamed(context, MasterAiChatbotScreen.route),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Astrologer Performance Grid
           Text(
             AppStrings.practiceSummary,
@@ -1206,6 +1295,15 @@ class _HomeShellState extends State<HomeShell> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, VedicToolkitScreen.route);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF10B981)),
+              title: const Text('मास्टर AI ज्योतिषी (Master AI)'),
+              subtitle: const Text('पंडित जी का वैदिक AI सह-पायलट'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, MasterAiChatbotScreen.route);
               },
             ),
             ListTile(
