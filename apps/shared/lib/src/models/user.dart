@@ -102,7 +102,7 @@ class User {
                 : int.tryParse(json['userId'].toString())),
         astrologerId = json['astrologerId'] == null
             ? (json['astrologer_id'] == null
-                ? (json['userId'] != null || json['user_id'] != null
+                ? (json['allSkill'] != null || json['chat_sections'] != null
                     ? (json['id'] is num
                         ? (json['id'] as num).toInt()
                         : int.tryParse(json['id']?.toString() ?? ''))
@@ -155,7 +155,7 @@ class User {
   Map<String, dynamic> toJson() => {
         'id': id,
         'userId': userId ?? id,
-        'astrologerId': astrologerId ?? (userId != null ? id : null),
+        'astrologerId': astrologerId,
         'name': name,
         'contactNo': contactNo,
         'email': email,

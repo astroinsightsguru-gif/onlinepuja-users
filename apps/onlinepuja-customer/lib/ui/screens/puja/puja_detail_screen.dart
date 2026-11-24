@@ -1036,21 +1036,6 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
       ),
     );
   }
-                          color: textSecondary,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-              ],
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _stepRow({
     required String num,

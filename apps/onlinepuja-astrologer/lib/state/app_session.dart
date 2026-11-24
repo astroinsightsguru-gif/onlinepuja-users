@@ -217,15 +217,27 @@ class PartnerSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Refresh profile + wallet.
+  /// Refresh profile + wallet for astrologer.
   Future<void> refreshUser() async {
-    final id = user?.id;
-    if (id == null || id == 0) return;
+    final aid = astrologerId > 0 ? astrologerId : (user?.id ?? 0);
+    if (aid <= 0) return;
     try {
-      user = await AuthApi.instance.getUser(id);
-      notifyListeners();
-    } on ApiException catch (e) {
-      debugPrint('refreshUser failed: $e');
+      final res = await ApiClient.instance.post('/getAstrologerForCustomer', body: {
+        'astrologerId': aid,
+      });
+      if (res is Map<String, dynamic>) {
+        final rl = res['recordList'];
+        if (rl is List && rl.isNotEmpty && rl.first is Map<String, dynamic>) {
+          user = User.fromJson(rl.first as Map<String, dynamic>);
+          chatStatus = user?.chatStatus ?? chatStatus;
+          callStatus = user?.callStatus ?? callStatus;
+          videoCallStatus = user?.callStatus ?? videoCallStatus;
+          await SessionStore.instance.saveUser(user!);
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('[PartnerSession] refreshUser best-effort: $e');
     }
   }
 

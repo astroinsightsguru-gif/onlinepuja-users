@@ -29,18 +29,35 @@ class SessionStore {
   SystemFlags flags = SystemFlags.empty;
   ThemeMode themeMode = ThemeMode.system;
 
-  bool get isLoggedIn => token != null && (user?.id ?? 0) > 0;
+  bool get isLoggedIn =>
+      token != null &&
+      token!.trim().isNotEmpty &&
+      ((user?.id ?? 0) > 0 ||
+          (user?.userId ?? 0) > 0 ||
+          (user?.astrologerId ?? 0) > 0);
 
   Future<void> load() async {
     final sp = await _sp;
     token = sp.getString(_kToken);
+    if (token != null && token!.trim().isEmpty) {
+      token = null;
+    }
     tokenType = sp.getString(_kTokenType) ?? 'Bearer';
     final raw = sp.getString(_kUser);
-    if (raw != null) {
+    if (raw != null && raw.trim().isNotEmpty) {
       try {
-        user = User.fromJson(json.decode(raw) as Map<String, dynamic>);
-      } catch (_) {
-        user = null;
+        final decoded = json.decode(raw);
+        if (decoded is Map<String, dynamic>) {
+          user = User.fromJson(decoded);
+          if ((user?.id ?? 0) <= 0 &&
+              (user?.userId ?? 0) <= 0 &&
+              (user?.astrologerId ?? 0) <= 0) {
+            debugPrint('[SessionStore] Stored user has no valid ID, treating as null');
+            user = null;
+          }
+        }
+      } catch (e) {
+        debugPrint('[SessionStore] Error parsing cached user: $e');
       }
     }
     final rawFlags = sp.getString(_kFlags);
