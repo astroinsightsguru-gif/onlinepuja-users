@@ -497,9 +497,6 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         ),
       ),
     );
-        ),
-      ),
-    );
   }
 
   Widget _acharyaPrescribedRemediesSection(
@@ -1703,7 +1700,6 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         ],
       ),
     );
-  }
   }
 
   /// Unified Live Consultation section with ₹1 promo hook, online indicators, and direct Chat/Call buttons

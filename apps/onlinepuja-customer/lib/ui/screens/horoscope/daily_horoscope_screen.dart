@@ -85,7 +85,7 @@ class _DailyHoroscopeScreenState extends State<DailyHoroscopeScreen>
         else if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) signName = 'Aquarius';
         else if ((m == 2 && d >= 19) || (m == 3 && d <= 20)) signName = 'Pisces';
 
-        final matched = signs.where((s) => s.name.toLowerCase() == signName.toLowerCase());
+        final matched = signs.where((s) => (s.name?.toLowerCase() ?? '') == signName.toLowerCase());
         if (matched.isNotEmpty) {
           return matched.first;
         }
