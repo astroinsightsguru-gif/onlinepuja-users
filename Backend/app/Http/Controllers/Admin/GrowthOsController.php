@@ -1468,7 +1468,8 @@ class GrowthOsController extends Controller
                         } catch (\Throwable $e1) {
                             $token = decrypt($account->access_token_enc, false);
                         }
-                        $endpoint = "https://graph.facebook.com/v21.0/{$account->external_id}?fields=id,name,category,link&access_token=" . urlencode($token);
+                        $fields = ($platform === 'instagram') ? 'id,username,name' : 'id,name,category,link';
+                        $endpoint = "https://graph.facebook.com/v21.0/{$account->external_id}?fields={$fields}&access_token=" . urlencode($token);
                         $resp = \Illuminate\Support\Facades\Http::timeout(10)->get($endpoint);
                         if ($resp->successful()) {
                             $data = $resp->json();
