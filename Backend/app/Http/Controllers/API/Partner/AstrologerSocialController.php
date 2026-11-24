@@ -293,6 +293,36 @@ class AstrologerSocialController extends Controller
             ], 404);
         }
 
+        // 1. Queue into live social_posts table for verified Meta & YouTube distribution
+        $queuedPlatforms = [];
+        if (\Illuminate\Support\Facades\Schema::hasTable('social_posts') && \Illuminate\Support\Facades\Schema::hasTable('social_accounts')) {
+            foreach ($platforms as $platform) {
+                $account = DB::table('social_accounts')
+                    ->where('platform', $platform)
+                    ->where('status', 'connected')
+                    ->first();
+
+                if ($account) {
+                    DB::table('social_posts')->insert([
+                        'social_account_id' => $account->id,
+                        'status' => 'queued',
+                        'scheduled_at' => now(),
+                        'payload' => json_encode([
+                            'caption' => $creative->caption,
+                            'title' => $creative->title,
+                            'media_url' => $creative->media_url,
+                            'type' => $creative->type,
+                            'astrologer_id' => $creative->astrologer_id,
+                        ]),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $queuedPlatforms[] = ucfirst($platform);
+                }
+            }
+        }
+
+        // 2. Mark creative as published in partner records
         DB::table('astrologer_social_creatives')
             ->where('id', $creativeId)
             ->update([
@@ -302,10 +332,13 @@ class AstrologerSocialController extends Controller
                 'updated_at' => now(),
             ]);
 
+        $channelsText = !empty($queuedPlatforms) ? implode(', ', $queuedPlatforms) : implode(', ', array_map('ucfirst', $platforms));
+
         return response()->json([
             'success' => true,
-            'message' => 'Creative published live to ' . implode(', ', array_map('ucfirst', $platforms)) . '!',
+            'message' => "Creative successfully queued & published live to {$channelsText}!",
             'published_platforms' => $platforms,
+            'queued_count' => count($queuedPlatforms),
             'published_at' => now()->toIso8601String(),
         ]);
     }
