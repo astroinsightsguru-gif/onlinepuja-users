@@ -49,6 +49,12 @@ class WhatsAppDailyPanchangCommand extends Command
 
         // 3. Aggregate Eligible Devotee Contacts
         $optedOutPhones = DB::table('whatsapp_optouts')->pluck('phone')->toArray();
+        $blacklistedPhones = [
+            '919999041935', // RBI Official WhatsApp Channel
+            '9999041935',
+            '919305932724', // Internal test bot
+            '9305932724',
+        ];
 
         $candidates = collect();
 
@@ -90,6 +96,9 @@ class WhatsAppDailyPanchangCommand extends Command
                 continue;
             }
             if (in_array($cleaned, $optedOutPhones) || in_array(substr($cleaned, -10), $optedOutPhones)) {
+                continue;
+            }
+            if (in_array($cleaned, $blacklistedPhones) || in_array(substr($cleaned, -10), $blacklistedPhones)) {
                 continue;
             }
             $seenNumbers[] = $cleaned;

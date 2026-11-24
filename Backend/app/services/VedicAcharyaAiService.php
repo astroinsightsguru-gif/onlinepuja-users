@@ -23,16 +23,23 @@ class VedicAcharyaAiService
                 ->get()
                 ->reverse();
 
-            $messagesPayload = [];
+            $isOngoing = $history->isNotEmpty();
 
             // 2. Sacred Acharya Sales Closer System Prompt
+            $ongoingDirective = $isOngoing
+                ? "CRITICAL CONVERSATION RULE: This is an ONGOING, ACTIVE conversation with devotee {$devoteeName}. DO NOT re-introduce yourself. DO NOT say 'Main Acharya Vidyadhar Sharma...', 'OnlinePuja.live me swagat hai', or repeat generic welcomes. Directly answer and address the devotee's latest message with spiritual warmth and continue the sacred dialogue naturally."
+                : "This is the devotee's very first message. You may introduce yourself warmly as Acharya Vidyadhar Sharma, Chief Vedic Pandit of OnlinePuja.live at Kashi Vishwanath.";
+
             $systemPrompt = <<<PROMPT
 You are Acharya Vidyadhar Sharma, the revered Chief Vedic Pandit and Spiritual Guide of OnlinePuja.live at Kashi Vishwanath Sanctuary, Varanasi.
 Your mission is to provide authentic spiritual guidance, comfort devotees, understand their family's problems (Dosha, Health, Marriage delay, Business/Debt, Pitru Dosh), and guide them to perform the appropriate Vedic Puja with personal Name and Gotra Sankalp.
 
+CONVERSATION CONTEXT:
+{$ongoingDirective}
+
 CORE BEHAVIOR & RULES:
 1. Warm, authentic, and reverent tone: ALWAYS begin every response with "🕉️ *ॐ नमः शिवाय* 🙏". Never say "Pranam" or "हर हर महादेव भक्त जी*". Always end with "हर हर महादेव 🚩".
-2. Language: Fluent, warm Hindi or Hinglish (as preferred by devotee).
+2. Language: Fluent, warm Hindi or Hinglish (matching the devotee's preference).
 3. FREE 10-PAGE VEDIC KUNDLI: If devotee asks about Kundli, horoscope, future, marriage, or dosha, warmly invite them to receive their 10-Page Free Vedic Kundli. Ask them for:
    - पूरा नाम (Full Name)
    - जन्म तिथि (Date of Birth: DD-MM-YYYY)
@@ -40,41 +47,44 @@ CORE BEHAVIOR & RULES:
    - जन्म स्थान (Place of Birth: City, State)
    Assure them that upon sending these 4 details, their authentic 10-page Kundli PDF will be generated and delivered immediately on WhatsApp for free!
 4. Active Qualification: Ask respectfully for their Name & Gotra for sacred Vedic Puja Sankalp.
-4. Intelligent Puja Recommendation:
+5. Intelligent Puja Recommendation:
    - Shiva / Rahu / Kaal Sarp / Health: Rudrabhishek or Mahamrityunjaya Puja at Kashi Vishwanath.
    - Shani Sade Sati / Obstacles: Shani Shanti Puja / Hanuman Chalisa Mahapuja.
    - Marriage Delay / Manglik: Mangal Shanti Puja or Gauri Shankar Puja.
    - Business Growth / Lakshmi: Kanakdhara & Lakshmi Kuber Mahapuja.
-5. Clear Tiered Pricing & Offering:
+6. Clear Tiered Pricing & Offering:
    - 🌿 Primary Sankalp (Pandit Dakshina & Sacred Sankalp with Gotra): ₹1,100
    - 🪔 Maha Rudra / Sampoorna Puja (Includes Live HD Video Stream + Brahmin Bhojan): ₹3,100
    - 👑 Ati Rudra VIP Sankalp (5 Vedic Brahmins, Ganga Aarti Dakshina + Prasad Box couriered home): ₹7,100
-6. Closing & Action: Provide the official instant booking link: https://onlinepuja.live/puja/category/list
-7. Brevity & WhatsApp ergonomics: Keep responses under 4-5 short, readable paragraphs with sacred bullet points and emojis. Never sound like a generic robotic AI. Always speak as an authentic Kashi Pandit.
+7. Closing & Action: Provide the official instant booking link: https://onlinepuja.live/puja/category/list
+8. Brevity & WhatsApp ergonomics: Keep responses under 3-4 short, readable paragraphs with sacred bullet points and emojis. Never sound like a generic robotic AI. Always speak as an authentic Kashi Pandit.
 PROMPT;
 
-            $messagesPayload[] = ['role' => 'system', 'content' => $systemPrompt];
-
-            foreach ($history as $msg) {
-                $role = ($msg->direction === 'inbound') ? 'user' : 'assistant';
-                $messagesPayload[] = [
-                    'role' => $role,
-                    'content' => $msg->message,
-                ];
+            // 3. Format conversational memory into the prompt
+            $historyPrompt = "";
+            if ($isOngoing) {
+                $historyPrompt .= "--- RECENT CONVERSATION HISTORY ---\n";
+                foreach ($history as $msg) {
+                    $sender = ($msg->direction === 'inbound') ? "Devotee ({$devoteeName})" : "Acharya Vidyadhar";
+                    $historyPrompt .= "{$sender}: " . trim((string)$msg->message) . "\n";
+                }
+                $historyPrompt .= "--- END RECENT CONVERSATION HISTORY ---\n\n";
             }
-
-            // Append current message if not yet in payload
-            $messagesPayload[] = ['role' => 'user', 'content' => $incomingText];
+            $fullPrompt = $historyPrompt . "Devotee's New Message: " . $incomingText . "\n\nProvide your sacred Vedic reply:";
 
             $reply = null;
 
-            // 3. Generate response via AI Engine
+            // 4. Generate response via AI Engine (ProviderManager instance or AiEngineService fallback)
             if (class_exists(ProviderManager::class)) {
                 try {
-                    $reply = ProviderManager::chat($messagesPayload, [
+                    $manager = app(ProviderManager::class);
+                    $res = $manager->chat($systemPrompt, $fullPrompt, [
                         'temperature' => 0.45,
-                        'max_tokens' => 380,
+                        'max_tokens'  => 380,
                     ]);
+                    if (!empty($res['ok']) && !empty($res['text'])) {
+                        $reply = $res['text'];
+                    }
                 } catch (\Throwable $e) {
                     Log::warning("ProviderManager chat error: " . $e->getMessage());
                 }
@@ -84,8 +94,8 @@ PROMPT;
             if (empty($reply) || !is_string($reply)) {
                 try {
                     $engine = app(AiEngineService::class);
-                    $reply = $engine->generateText($incomingText, $systemPrompt, [
-                        'name' => $devoteeName,
+                    $reply = $engine->generateText($fullPrompt, $systemPrompt, [
+                        'name'  => $devoteeName,
                         'phone' => $phone,
                     ]);
                 } catch (\Throwable $e) {
@@ -95,10 +105,14 @@ PROMPT;
 
             // Reject empty or robotic/proxy error leaks
             if (empty($reply) || !is_string($reply) || str_contains($reply, 'Antigravity') || str_contains($reply, 'download and install') || str_contains($reply, 'no longer supported') || str_contains($reply, 'API key')) {
-                $reply = "🕉️ *ॐ नमः शिवाय* 🙏\n\n{$devoteeName} जी, OnlinePuja.live काशी विश्वनाथ सेवा केंद्र में आपका स्वागत है। हमारे सिद्ध वैदिक ब्राह्मणों द्वारा आपके नाम व गोत्र से प्रामाणिक पूजा संपन्न की जाती है।\n\nकृपया हमें बताएं कि आप किस विशेष कार्य अथवा ग्रह शांति हेतु पूजा संकल्प करवाना चाहते हैं? 🔱🚩";
+                if ($isOngoing) {
+                    $reply = "🕉️ *ॐ नमः शिवाय* 🙏\n\n{$devoteeName} जी, आपका संदेश प्राप्त हुआ। कृपया बताएं कि आपकी समस्या के समाधान या किस विशेष पूजा संकल्प हेतु हम आपकी सहायता करें? हर हर महादेव! 🔱🚩";
+                } else {
+                    $reply = "🕉️ *ॐ नमः शिवाय* 🙏\n\n{$devoteeName} जी, OnlinePuja.live काशी विश्वनाथ सेवा केंद्र में आपका स्वागत है। हमारे सिद्ध वैदिक ब्राह्मणों द्वारा आपके नाम व गोत्र से प्रामाणिक पूजा संपन्न की जाती है।\n\nकृपया हमें बताएं कि आप किस विशेष कार्य अथवा ग्रह शांति हेतु पूजा संकल्प करवाना चाहते हैं? 🔱🚩";
+                }
             }
 
-            // 4. Autonomous Lead Extraction & CRM sync
+            // 5. Autonomous Lead Extraction & CRM sync
             self::syncLeadToCrm($phone, $devoteeName, $incomingText, $reply);
 
             return trim($reply);
@@ -119,22 +133,25 @@ PROMPT;
 
             if (!$existing) {
                 DB::table('leads')->insert([
-                    'name' => !empty($name) ? $name : 'WhatsApp Devotee',
+                    'name' => ($name && $name !== 'Devotee') ? $name : 'WhatsApp Devotee',
                     'phone' => $phone,
-                    'source' => 'whatsapp_inbound',
-                    'stage' => 'inquiry',
-                    'notes' => "Auto-captured via WhatsApp: " . mb_substr($inquiry, 0, 250),
+                    'source' => 'whatsapp_chat',
+                    'stage' => 'qualified',
+                    'priority' => 'hot',
+                    'notes' => "Devotee Query: {$inquiry}\nAcharya Guidance: " . mb_substr($reply, 0, 150),
+                    'last_contacted_at' => $now,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]);
             } else {
                 DB::table('leads')->where('id', $existing->id)->update([
-                    'notes' => DB::raw("CONCAT(COALESCE(notes, ''), '\n[" . $now->format('d M H:i') . "] " . addslashes(mb_substr($inquiry, 0, 100)) . "')"),
+                    'last_contacted_at' => $now,
+                    'notes' => DB::raw("CONCAT(COALESCE(notes, ''), '\n[Follow-up] " . addslashes(mb_substr($inquiry, 0, 100)) . "')"),
                     'updated_at' => $now,
                 ]);
             }
         } catch (\Throwable $e) {
-            Log::warning("Failed to auto-sync lead to CRM: " . $e->getMessage());
+            Log::warning("syncLeadToCrm error: " . $e->getMessage());
         }
     }
 }
