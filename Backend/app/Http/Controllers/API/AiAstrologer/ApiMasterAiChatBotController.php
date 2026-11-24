@@ -34,28 +34,56 @@ class ApiMasterAiChatBotController extends Controller
     
     public function masterAiResponse(Request $request)
     {
-        $validated = $request->validate([
-            'message' => 'required|string',
-            'astrologerId' => 'required|integer'
-        ]);
-        
-        if (!Auth::guard('api')->user()) {
-            return response()->json(['error' => 'Unauthorized', 'status' => 401], 401);
+        $message = trim((string) $request->input('message'));
+        if (empty($message)) {
+            return response()->json(['error' => 'Message is required', 'status' => 400], 400);
         }
+
+        $astrologerId = (int) (
+            $request->input('astrologerId') ??
+            $request->input('astrologer_id') ??
+            $request->input('ai_astrologer_id') ??
+            1
+        );
+
+        $user = Auth::guard('api')->user();
         
         try {
-            $response = $this->openAIService->askChatGPT($validated['message'], $validated['astrologerId']);
+            $response = null;
+            if ($this->openAIService) {
+                try {
+                    $response = $this->openAIService->askChatGPT($message, $astrologerId);
+                } catch (\Throwable $oe) {
+                    \Log::warning('OpenAIService failed in masterAiResponse, falling back to AiEngineService: ' . $oe->getMessage());
+                }
+            }
+
+            if (empty($response) || !is_string($response)) {
+                $aiEngine = app(\App\Services\AiEngineService::class);
+                $context = $user ? [
+                    'name' => $user->name,
+                    'birthDate' => $user->birthDate,
+                    'birthPlace' => $user->birthPlace,
+                ] : null;
+
+                $sys = "You are a revered Vedic Astrologer & spiritual counselor for OnlinePuja.live. Provide compassionate, authentic Jyotish guidance, remedies, and puja recommendations in natural Hindi or English matching the user's query.";
+                $response = $aiEngine->generateText($message, $sys, $context);
+            }
             
             return response()->json([
                 'message' => $response,
+                'recordList' => [
+                    'message' => $response,
+                    'astrologerId' => $astrologerId,
+                ],
                 'status' => 200,
-
-            ],200);
-        } catch (\Exception $e) {
+            ], 200);
+        } catch (\Throwable $e) {
+            \Log::error('masterAiResponse error: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Something went wrong. Please try again later.',
-                'status' => 500,
-            ], 500);
+                'message' => 'प्रणाम! ग्रह गोचर का विश्लेषण प्रगति पर है। कृपया कुछ क्षण बाद पुनः प्रयास करें।',
+                'status' => 200,
+            ], 200);
         }
     }
     

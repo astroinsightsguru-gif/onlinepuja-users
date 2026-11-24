@@ -70,4 +70,18 @@ class Kernel extends HttpKernel
         // other middleware...
         'permission' => \App\Http\Middleware\CheckPermission::class,
     ];
+
+    protected function sendRequestThroughRouter($request)
+    {
+        $this->app->instance('request', $request);
+
+        \Illuminate\Support\Facades\Facade::clearResolvedInstance('request');
+
+        $this->bootstrap();
+
+        return (new \Illuminate\Routing\Pipeline($this->app))
+                    ->send($request)
+                    ->through($this->app->shouldSkipMiddleware() ? [] : $this->middleware)
+                    ->then($this->dispatchToRouter());
+    }
 }

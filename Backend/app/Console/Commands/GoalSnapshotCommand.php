@@ -12,7 +12,7 @@ class GoalSnapshotCommand extends Command
 
     protected $description = 'Persist yesterday’s real traffic into every active goal and report pace';
 
-    public function handle(\App\services\SearchConsoleService $gsc): int
+    public function handle(\App\Services\SearchConsoleService $gsc): int
     {
         $date = now()->subDay()->toDateString();
 

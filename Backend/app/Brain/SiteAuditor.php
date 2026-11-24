@@ -19,7 +19,7 @@ class SiteAuditor
 
         foreach ($urls as $url) {
             try {
-                $res = Http::timeout(20)->get($url);
+                $res = Http::withoutVerifying()->timeout(20)->get($url);
             } catch (\Throwable $e) {
                 continue;
             }

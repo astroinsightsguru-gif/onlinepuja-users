@@ -11,6 +11,27 @@ use Illuminate\Support\Facades\Crypt;
  */
 class Vault
 {
+    /** Runtime in-memory cache for all brain_settings keys */
+    protected static ?array $allSettings = null;
+    protected static array $decryptedCache = [];
+
+    public static function preload(): void
+    {
+        if (self::$allSettings === null) {
+            try {
+                self::$allSettings = \DB::table('brain_settings')->pluck('value_enc', 'key')->all();
+            } catch (\Throwable $e) {
+                self::$allSettings = [];
+            }
+        }
+    }
+
+    public static function flushMemoryCache(): void
+    {
+        self::$allSettings = null;
+        self::$decryptedCache = [];
+    }
+
     public static function get(string $key, ?string $default = ''): string
     {
         $env = 'BRAIN_'.strtoupper(preg_replace('/[^a-z0-9]/i', '_', $key));
@@ -19,28 +40,40 @@ class Vault
             return $v;                                  // constant always wins
         }
 
-        $row = \DB::table('brain_settings')->where('key', $key)->first();
+        if (array_key_exists($key, self::$decryptedCache)) {
+            return self::$decryptedCache[$key] ?? (string) $default;
+        }
 
-        if (! $row || $row->value_enc === null) {
+        if (self::$allSettings === null) {
+            self::preload();
+        }
+
+        if (!array_key_exists($key, self::$allSettings) || self::$allSettings[$key] === null) {
+            self::$decryptedCache[$key] = (string) $default;
             return (string) $default;
         }
 
-        $val = (string) $row->value_enc;
+        $val = (string) self::$allSettings[$key];
 
         if ($val === '') {
+            self::$decryptedCache[$key] = (string) $default;
             return (string) $default;
         }
 
         // Fast payload check: Laravel encrypted strings are base64-encoded JSON {"iv":...,"value":...,"mac":...}
         if (str_starts_with($val, 'eyJ') || str_starts_with($val, '{')) {
             try {
-                return Crypt::decryptString($val);
+                $dec = Crypt::decryptString($val);
+                self::$decryptedCache[$key] = $dec;
+                return $dec;
             } catch (\Throwable $e) {
                 // If encrypted ciphertext cannot be decrypted (e.g. key changed), return default fallback
+                self::$decryptedCache[$key] = (string) $default;
                 return (string) $default;
             }
         }
 
+        self::$decryptedCache[$key] = $val;
         return $val;
     }
 
@@ -55,6 +88,11 @@ class Vault
             ['key' => $key],
             ['value_enc' => $enc, 'is_secret' => $isSecret, 'updated_at' => now(), 'created_at' => now()]
         );
+
+        if (self::$allSettings !== null) {
+            self::$allSettings[$key] = $enc;
+        }
+        self::$decryptedCache[$key] = (string) $value;
     }
 
     /** Convenience: every credential the AI & messaging layer needs. */

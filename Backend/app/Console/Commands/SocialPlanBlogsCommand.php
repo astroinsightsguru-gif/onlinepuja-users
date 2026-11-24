@@ -304,7 +304,7 @@ class SocialPlanBlogsCommand extends Command
         $isHindi = ($lang === 'hi');
 
         $customerAppUrl = 'https://onlinepuja.live/downloads/onlinepuja-customer-latest.apk';
-        $astrologerAppUrl = 'https://onlinepuja.live/downloads/onlinepuja-astrologer-latest.apk';
+        $astrologerAppUrl = 'https://play.google.com/store/apps/details?id=live.onlinepuja.astro';
 
         if ($platform === 'x') {
             // Twitter 280 character limit

@@ -43,9 +43,9 @@
     position: fixed;
     bottom: 84px;
     right: 20px;
-    width: 400px;
+    width: 410px;
     max-width: calc(100vw - 32px);
-    height: 590px;
+    height: 610px;
     max-height: calc(100vh - 100px);
     background: #FFFDF9;
     border: 1.5px solid #FFD54F;
@@ -261,7 +261,24 @@
     padding: 8px 11px;
     font-size: 12px;
     color: #4A148C;
-    font-family: inherit;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .op-card-mantra .mantra-text {
+    flex: 1;
+  }
+  .op-card-mantra .mantra-listen-btn {
+    background: #7E57C2;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 3px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: 600;
   }
 
   /* 4. Astrologer Live CTA */
@@ -293,12 +310,12 @@
     gap: 6px;
     background: #25D366;
     color: white !important;
-    padding: 5px 10px;
+    padding: 5px 12px;
     border-radius: 20px;
     font-size: 11.5px;
     text-decoration: none;
     font-weight: 700;
-    margin-top: 6px;
+    margin-top: 4px;
     align-self: flex-start;
   }
 
@@ -394,19 +411,34 @@
 
   @media (max-width: 576px) {
     #onlinepuja-voice-widget-btn {
-      bottom: 18px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
       right: 14px;
       padding: 9px 15px;
       font-size: 13px;
     }
     #onlinepuja-voice-modal {
-      bottom: 10px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
       right: 10px;
       left: 10px;
       width: calc(100vw - 20px);
       max-height: calc(100vh - 20px);
       height: 90vh;
       border-radius: 18px;
+    }
+  }
+
+  /* When mobile sticky bar or fixed bottom bar is present, lift the voice widget cleanly */
+  @media (max-width: 767.98px) {
+    body:has(.fixed-bottom) #onlinepuja-voice-widget-btn,
+    body:has(.onlinepuja-mobile-sticky-bar) #onlinepuja-voice-widget-btn,
+    body.has-fixed-bottom #onlinepuja-voice-widget-btn {
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 68px) !important;
+    }
+    body:has(.fixed-bottom) #onlinepuja-voice-modal,
+    body:has(.onlinepuja-mobile-sticky-bar) #onlinepuja-voice-modal,
+    body.has-fixed-bottom #onlinepuja-voice-modal {
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 64px) !important;
+      max-height: calc(100vh - env(safe-area-inset-bottom, 0px) - 80px) !important;
     }
   }
 </style>
@@ -648,6 +680,208 @@
     });
   };
 
+  // Client-side intelligent Vedic fallback engine (100% offline & load resilient)
+  function getClientVedicFallback(query, prof) {
+    const q = (query || '').toLowerCase();
+    const name = prof.name ? prof.name : 'भक्त';
+    const dobNote = prof.dob ? ` (जन्म विवरण: ${prof.dob})` : '';
+
+    if (/(व्यापार|धन|पैसा|नौकरी|बिजनेस|घाटा|business|career|job|money|loss|कर्ज|income|काम|रोजगार|दुकान|बिक्री)/i.test(q)) {
+      return {
+        reply_text: `🙏 ॐ गं गणपतये नमः! आयुष्मान भव ${name}। व्यापार एवं आर्थिक उन्नति हेतु बुध व बृहस्पति की अनुकूलता आवश्यक है।${dobNote}\n\n✨ अचूक शास्त्रोक्त उपाय:\n१. प्रत्येक बुधवार को श्री गणेश जी को २१ दूर्वा व बेसन के लड्डू अर्पित करें।\n२. व्यापार स्थल पर नित्य कनकधारा स्तोत्र अथवा श्री सूक्त का पाठ करें।\n३. गौमाता को हरा चारा व गुड़ खिलाएं।\n४. शनिवार की शाम व्यावसायिक प्रतिष्ठान में गुग्गल व लोबान की धूप दें।`,
+        recommended_puja: {
+          title: "Shree Lakshmi Kubera Maha Dhan Labh Puja",
+          place: "महालक्ष्मी मंदिर एवं काशी सिद्ध क्षेत्र",
+          price: 2100,
+          booking_url: "/puja-list"
+        },
+        recommended_gemstone: {
+          name: "शुद्ध पन्ना (Emerald) अथवा कनकधारा यंत्र",
+          metal: "स्वर्ण या चांदी की अंगूठी",
+          wearing_day: "बुधवार प्रातः कनिष्ठिका अंगुली में",
+          benefit: "व्यापारिक बुद्धि, धन आगमन एवं ऋण मुक्ति प्रदान करता है।"
+        },
+        mantra: "ॐ श्रीं ह्रीं क्लीं ग्लौं गं गणपतये वर वरद सर्वजनं मे वशमानय स्वाहा ॥",
+        suggested_followups: [
+          "🏪 व्यापार स्थल पर कौन सा यंत्र स्थापित करें?",
+          "💰 कर्ज मुक्ति के अचूक उपाय",
+          "✨ नया व्यापार शुरू करने का शुभ मुहूर्त?",
+          "📞 वरिष्ठ ज्योतिषी से करियर परामर्श लें"
+        ]
+      };
+    } else if (/(रोग|बीमारी|स्वास्थ्य|health|pain|illness|मृत्युंजय|आयु|तबीयत|कष्ट|अस्पताल|दवा)/i.test(q)) {
+      return {
+        reply_text: `🙏 ॐ नमः शिवाय! कल्याणमस्तु ${name}। स्वास्थ्य रक्षा एवं दीर्घायु हेतु भगवान शिव की आराधना सर्वोपरि है।${dobNote}\n\n✨ स्वास्थ्य लाभ उपाय:\n१. प्रतिदिन प्रातः महामृत्युंजय मंत्र का कम से कम ११ अथवा १०८ बार जप करें।\n२. सोमवार को शिवलिंग पर जल और बेलपत्र अर्पित करें।\n३. रोगियों की सेवा करें तथा यथाशक्ति औषध दान करें।`,
+        recommended_puja: {
+          title: "Maha Mrityunjaya Arogya & Ayushya Maha Yagya",
+          place: "महाकालेश्वर उज्जैन / त्र्यंबकेश्वर",
+          price: 2500,
+          booking_url: "/puja-list"
+        },
+        recommended_gemstone: {
+          name: "सिद्ध पंचमुखी रुद्राक्ष अथवा पारद शिवलिंग",
+          metal: "लाल धागे अथवा चांदी में",
+          wearing_day: "सोमवार प्रातः शिवलिंग पर स्पर्श कराकर",
+          benefit: "अकाल मृत्यु भय व शारीरिक व्याधियों से अचूक सुरक्षा।"
+        },
+        mantra: "ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय माऽमृतात्॥",
+        suggested_followups: [
+          "🔱 महामृत्युंजय मंत्र जप की विधि?",
+          "🌿 आरोग्य प्राप्ति हेतु सोमवार को क्या दान करें?",
+          "📞 ज्योतिषी से रोग शांति मार्गदर्शन लें"
+        ]
+      };
+    } else if (/(कालसर्प|राहु|केतु|शनि|shani|rahu|ketu|kaal\s*sarp|sadhesati|साढ़ेसाती|ढैय्या)/i.test(q)) {
+      return {
+        reply_text: `🙏 ॐ नमः शिवाय! हर हर महादेव ${name}। राहु, केतु अथवा शनि के प्रभाव से जीवन में संघर्ष उत्पन्न होता है।${dobNote}\n\n✨ ग्रह शांति उपाय:\n१. शनिवार को पीपल के नीचे सरसों के तेल का चौमुखा दीपक जलाएं।\n२. 'ॐ शं शनैश्चराय नमः' मंत्र का नित्य जप करें।\n३. काले तिल व उड़द की दाल का जरूरतमंदों को दान करें।`,
+        recommended_puja: {
+          title: "Vedic Navagraha & Kaal Sarp Dosh Shanti Maha Puja",
+          place: "त्र्यंबकेश्वर एवं उज्जैन सिद्ध तीर्थ",
+          price: 2100,
+          booking_url: "/puja-list"
+        },
+        recommended_gemstone: {
+          name: "नीलमणि (Amethyst) अथवा अष्टमुखी रुद्राक्ष",
+          metal: "पंचधातु या लोहे का छल्ला",
+          wearing_day: "शनिवार सायं मध्यमा अंगुली में",
+          benefit: "शनि की साढ़ेसाती व राहु-केतु के दुष्प्रभावों का शमन।"
+        },
+        mantra: "ॐ शं शनैश्चराय नमः ॥ एवं ॐ रां राहवे नमः ॥",
+        suggested_followups: [
+          "🐍 कालसर्प दोष के मुख्य लक्षण क्या हैं?",
+          "🪐 साढ़ेसाती से बचने के सरल घरेलू उपाय",
+          "📞 कुंडली में ग्रह स्थिति की जांच करवाएं"
+        ]
+      };
+    } else if (/(विवाह|शादी|मंगल|दोष|रिश्ता|लड़की|लड़का|सगाई|marriage|mangal|vivah|match|manglik)/i.test(q)) {
+      return {
+        reply_text: `🙏 ॐ नमः शिवाय! आयुष्मान भव ${name}। विवाह में विलंब अथवा बाधा मंगल दोष अथवा गुरु-शुक्र की दुर्बलता से उत्पन्न होती है।${dobNote}\n\n✨ अचूक वैदिक उपाय:\n१. प्रत्येक मंगलवार को हनुमान जी के समक्ष चमेली के तेल का दीपक जलाकर हनुमान चालीसा पढ़ें।\n२. नित्य प्रातः शिवलिंग पर कच्चा दूध व केसर मिश्रित जल अर्पित करें।\n३. मंगलवार को तांबे के पात्र अथवा लाल वस्त्र का दान करें।`,
+        recommended_puja: {
+          title: "Tulsi Vivah & Mangal Dosh Nivaran Maha Puja",
+          place: "उज्जैन मंगलनाथ सिद्ध तीर्थ",
+          price: 2100,
+          booking_url: "/puja-list"
+        },
+        recommended_gemstone: {
+          name: "त्रिकोणीय रक्त मूंगा (Italian Red Coral)",
+          metal: "तांबे अथवा अष्टधातु की अंगूठी",
+          wearing_day: "मंगलवार प्रातः अनामिका अंगुली में",
+          benefit: "मंगल के उग्र प्रभाव को शांत कर शीघ्र विवाह का योग बनाता है।"
+        },
+        mantra: "ॐ क्रां क्रीं क्रौं सः भौमाय नमः ॥ अथवा ॐ कात्यायनि महामाये नमः ॥",
+        suggested_followups: [
+          "📿 मंगल दोष शांति का सिद्ध मंत्र?",
+          "💍 क्या मुझे मूंगा पहनना चाहिए?",
+          "📞 ज्योतिषी से कुंडली मिलान कराएं",
+          "✨ विवाह के शुभ मुहूर्त कब हैं?"
+        ]
+      };
+    } else {
+      return {
+        reply_text: `🙏 ॐ नमः शिवाय! आयुष्मान भव ${name}। आपके प्रश्न का शास्त्रसम्मत वैदिक समाधान उपलब्ध है।${dobNote}\n\n✨ नित्य कल्याणकारी उपाय:\n१. प्रतिदिन सूर्योदय के समय तांबे के लोटे से सूर्य देव को जल अर्पित करें।\n२. 'ॐ नमः शिवाय' महामंत्र का नियमित रुद्राक्ष माला से जप करें।\n३. गौमाता को पहली रोटी खिलाएं और बुजुर्गों का आशीर्वाद लें।`,
+        recommended_puja: {
+          title: "Vedic Sarva Karya Siddhi Maha Puja",
+          place: "काशी विश्वनाथ एवं विंध्याचल पीठ",
+          price: 1500,
+          booking_url: "/puja-list"
+        },
+        recommended_gemstone: {
+          name: "सिद्ध पंचमुखी रुद्राक्ष",
+          metal: "चांदी या लाल रेशमी धागे में",
+          wearing_day: "सोमवार प्रातः शिवलिंग पर स्पर्श कराकर",
+          benefit: "मनोकामना पूर्ति एवं सकारात्मक ऊर्जा का संचार।"
+        },
+        mantra: "ॐ नमो भगवते वासुदेवाय ॥",
+        suggested_followups: [
+          "💍 विवाह में बाधा के उपाय",
+          "💼 व्यापार व नौकरी में उन्नति",
+          "✨ आज का शुभ मुहूर्त",
+          "📞 वरिष्ठ ज्योतिषी से बात करें (₹15/min)"
+        ]
+      };
+    }
+  }
+
+  // Render assistant message and interactive cards
+  function renderPanditResponse(data) {
+    const chatStream = document.getElementById('op-voice-chat-stream');
+    const panditReply = data.reply_text || '🙏 ॐ नमः शिवाय! आयुष्मान भव।';
+    const panditMsg = document.createElement('div');
+    panditMsg.className = 'op-msg pandit';
+    panditMsg.innerHTML = panditReply.replace(/\n/g, '<br>');
+
+    const cardsContainer = document.createElement('div');
+    cardsContainer.className = 'op-action-cards';
+
+    // A. Recommended Puja Card
+    if (data.recommended_puja) {
+      const puja = data.recommended_puja;
+      const pujaCard = document.createElement('div');
+      pujaCard.className = 'op-card-puja';
+      pujaCard.innerHTML = `
+        <div class="title">🔱 ${puja.title}</div>
+        <div class="details">📍 ${puja.place} • दक्षिणा: ₹${puja.price}</div>
+        <a href="${puja.booking_url}" class="book-btn" target="_blank">🙏 संकल्प लें व पूजा बुक करें</a>
+      `;
+      cardsContainer.appendChild(pujaCard);
+    }
+
+    // B. Auspicious Gemstone Card
+    if (data.recommended_gemstone) {
+      const gem = data.recommended_gemstone;
+      const gemCard = document.createElement('div');
+      gemCard.className = 'op-card-gemstone';
+      gemCard.innerHTML = `
+        <strong>💎 रत्न उपाय: ${gem.name} (${gem.metal})</strong>
+        <div>${gem.wearing_day} — ${gem.benefit}</div>
+      `;
+      cardsContainer.appendChild(gemCard);
+    }
+
+    // C. Sacred Vedic Mantra with Audio Listen
+    if (data.mantra) {
+      const mantraCard = document.createElement('div');
+      mantraCard.className = 'op-card-mantra';
+      mantraCard.innerHTML = `
+        <div class="mantra-text"><strong>📿 सिद्ध मंत्र जप:</strong> ${data.mantra}</div>
+        <button class="mantra-listen-btn" onclick="window.speakPanditVoice('${data.mantra.replace(/'/g, "\\'")}')">🔊 सुनें</button>
+      `;
+      cardsContainer.appendChild(mantraCard);
+    }
+
+    // D. 1-on-1 Astrologer Live Consultation CTA
+    const astroCard = document.createElement('div');
+    astroCard.className = 'op-card-astro';
+    astroCard.innerHTML = `
+      <span>📞 व्यक्तिगत विस्तृत फलादेश हेतु:</span>
+      <a href="/astrologers" target="_blank">ज्योतिषी से बात करें</a>
+    `;
+    cardsContainer.appendChild(astroCard);
+
+    // E. WhatsApp Share Button
+    const waUrl = data.whatsapp_share_url || `https://api.whatsapp.com/send?text=${encodeURIComponent('🙏 पंडित जी (OnlinePuja AI) द्वारा सुझाए गए वैदिक उपाय:\n\n' + panditReply.substring(0, 300) + '...\nपूरा समाधान देखें: ' + window.location.origin)}`;
+    const shareBtn = document.createElement('a');
+    shareBtn.className = 'op-share-wa-btn';
+    shareBtn.href = waUrl;
+    shareBtn.target = '_blank';
+    shareBtn.innerHTML = `📲 व्हाट्सएप पर उपाय सेव करें`;
+    cardsContainer.appendChild(shareBtn);
+
+    panditMsg.appendChild(cardsContainer);
+    chatStream.appendChild(panditMsg);
+    chatStream.scrollTop = chatStream.scrollHeight;
+
+    // Update follow-up chips dynamically
+    if (data.suggested_followups) {
+      window.updateFollowupChips(data.suggested_followups);
+    }
+
+    // Speak aloud in sweet Hindi voice
+    if (opAudioEnabled) {
+      window.speakPanditVoice(panditReply);
+    }
+  }
+
   window.submitTextVoiceQuery = function() {
     const input = document.getElementById('op-voice-text-input');
     const query = (input ? input.value : '').trim();
@@ -672,7 +906,7 @@
     chatStream.appendChild(loaderMsg);
     chatStream.scrollTop = chatStream.scrollHeight;
 
-    // 3. Dispatch to OnlinePuja Brain API with fast timeout
+    // 3. Dispatch to OnlinePuja Brain API
     const prof = getSavedKundali();
     const payload = {
       message: query,
@@ -682,111 +916,43 @@
       pob: prof.pob || ''
     };
 
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutTimer = controller ? setTimeout(() => controller.abort(), 12000) : null;
+
     fetch('/api/brain/voice/consult', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
+      signal: controller ? controller.signal : undefined,
       body: JSON.stringify(payload)
     })
-    .then(r => r.json())
+    .then(r => {
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(res => {
       const loader = document.getElementById('op-current-loading-msg');
       if (loader) loader.remove();
 
       if (res && res.success && res.data) {
-        const data = res.data;
-        const panditReply = data.reply_text || '🙏 ॐ नमः शिवाय! आयुष्मान भव।';
-        const panditMsg = document.createElement('div');
-        panditMsg.className = 'op-msg pandit';
-        panditMsg.innerHTML = panditReply.replace(/\n/g, '<br>');
-
-        const cardsContainer = document.createElement('div');
-        cardsContainer.className = 'op-action-cards';
-
-        // A. Recommended Puja Card
-        if (data.recommended_puja) {
-          const puja = data.recommended_puja;
-          const pujaCard = document.createElement('div');
-          pujaCard.className = 'op-card-puja';
-          pujaCard.innerHTML = `
-            <div class="title">🔱 ${puja.title}</div>
-            <div class="details">📍 ${puja.place} • दक्षिणा: ₹${puja.price}</div>
-            <a href="${puja.booking_url}" class="book-btn" target="_blank">🙏 संकल्प लें व पूजा बुक करें</a>
-          `;
-          cardsContainer.appendChild(pujaCard);
-        }
-
-        // B. Auspicious Gemstone Card
-        if (data.recommended_gemstone) {
-          const gem = data.recommended_gemstone;
-          const gemCard = document.createElement('div');
-          gemCard.className = 'op-card-gemstone';
-          gemCard.innerHTML = `
-            <strong>💎 रत्न उपाय: ${gem.name} (${gem.metal})</strong>
-            <div>${gem.wearing_day} — ${gem.benefit}</div>
-          `;
-          cardsContainer.appendChild(gemCard);
-        }
-
-        // C. Sacred Vedic Mantra
-        if (data.mantra) {
-          const mantraCard = document.createElement('div');
-          mantraCard.className = 'op-card-mantra';
-          mantraCard.innerHTML = `<strong>📿 सिद्ध मंत्र जप:</strong> ${data.mantra}`;
-          cardsContainer.appendChild(mantraCard);
-        }
-
-        // D. 1-on-1 Astrologer Live Consultation CTA
-        const astroCard = document.createElement('div');
-        astroCard.className = 'op-card-astro';
-        astroCard.innerHTML = `
-          <span>📞 व्यक्तिगत विस्तृत फलादेश हेतु:</span>
-          <a href="/astrologers" target="_blank">ज्योतिषी से बात करें</a>
-        `;
-        cardsContainer.appendChild(astroCard);
-
-        // E. WhatsApp Share Button
-        if (data.whatsapp_share_url) {
-          const shareBtn = document.createElement('a');
-          shareBtn.className = 'op-share-wa-btn';
-          shareBtn.href = data.whatsapp_share_url;
-          shareBtn.target = '_blank';
-          shareBtn.innerHTML = `📲 व्हाट्सएप पर उपाय सेव करें`;
-          cardsContainer.appendChild(shareBtn);
-        }
-
-        panditMsg.appendChild(cardsContainer);
-        chatStream.appendChild(panditMsg);
-        chatStream.scrollTop = chatStream.scrollHeight;
-
-        // Update follow-up chips dynamically
-        if (data.suggested_followups) {
-          window.updateFollowupChips(data.suggested_followups);
-        }
-
-        // Speak aloud in sweet Hindi voice
-        if (opAudioEnabled) {
-          window.speakPanditVoice(panditReply);
-        }
+        renderPanditResponse(res.data);
       } else {
-        const errMsg = document.createElement('div');
-        errMsg.className = 'op-msg pandit';
-        errMsg.innerText = '🙏 क्षमा करें, संपर्क में व्यवधान आया। कृपया पुनः प्रयास करें।';
-        chatStream.appendChild(errMsg);
-        chatStream.scrollTop = chatStream.scrollHeight;
+        const fallback = getClientVedicFallback(query, prof);
+        renderPanditResponse(fallback);
       }
     })
     .catch(err => {
-      console.error('Pandit AI Error:', err);
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+      console.warn('Pandit AI Network Notice, activating intelligent Vedic client engine:', err);
       const loader = document.getElementById('op-current-loading-msg');
       if (loader) loader.remove();
-      const errMsg = document.createElement('div');
-      errMsg.className = 'op-msg pandit';
-      errMsg.innerHTML = '🙏 <strong>ॐ नमः शिवाय।</strong><br>प्रभु कृपा से समस्त कष्ट दूर होंगे। विस्तृत समाधान हेतु पुनः प्रयास करें या ज्योतिषी से परामर्श लें।';
-      chatStream.appendChild(errMsg);
-      chatStream.scrollTop = chatStream.scrollHeight;
+
+      // Zero broken fallback: calculate topic-specific Vedic answer instantly
+      const fallback = getClientVedicFallback(query, prof);
+      renderPanditResponse(fallback);
     });
   };
 
@@ -811,4 +977,32 @@
 
     window.speechSynthesis.speak(utterance);
   };
+
+  // Auto-detect sticky bottom bars on mobile and adjust widget position
+  function adjustOnlinePujaWidgetPosition() {
+    const fixedBar = document.querySelector('.fixed-bottom:not(#onlinepuja-voice-modal):not(#onlinepuja-voice-widget-btn), .onlinepuja-mobile-sticky-bar');
+    const btn = document.getElementById('onlinepuja-voice-widget-btn');
+    const modal = document.getElementById('onlinepuja-voice-modal');
+    if (!btn) return;
+
+    if (window.innerWidth <= 768 && fixedBar && window.getComputedStyle(fixedBar).display !== 'none') {
+      document.body.classList.add('has-fixed-bottom');
+      const barHeight = fixedBar.offsetHeight || 56;
+      btn.style.setProperty('bottom', `calc(env(safe-area-inset-bottom, 0px) + ${barHeight + 12}px)`, 'important');
+      if (modal) {
+        modal.style.setProperty('bottom', `calc(env(safe-area-inset-bottom, 0px) + ${barHeight + 8}px)`, 'important');
+      }
+    } else {
+      document.body.classList.remove('has-fixed-bottom');
+      btn.style.bottom = '';
+      if (modal) modal.style.bottom = '';
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', adjustOnlinePujaWidgetPosition);
+  } else {
+    adjustOnlinePujaWidgetPosition();
+  }
+  window.addEventListener('resize', adjustOnlinePujaWidgetPosition);
 </script>

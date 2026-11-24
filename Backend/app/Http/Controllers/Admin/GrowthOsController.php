@@ -16,13 +16,34 @@ use Illuminate\Support\Facades\DB;
 
 class GrowthOsController extends Controller
 {
-    public function __construct(
-        protected ProviderManager $ai,
-        protected KeywordResearch $research,
-        protected ContentPipeline $pipeline,
-        protected SiteAuditor $auditor
-    ) {
+    protected ?ProviderManager $ai = null;
+    protected ?KeywordResearch $research = null;
+    protected ?ContentPipeline $pipeline = null;
+    protected ?SiteAuditor $auditor = null;
+
+    public function __construct()
+    {
         $this->middleware('auth');
+    }
+
+    protected function ai(): ProviderManager
+    {
+        return $this->ai ??= app(ProviderManager::class);
+    }
+
+    protected function research(): KeywordResearch
+    {
+        return $this->research ??= app(KeywordResearch::class);
+    }
+
+    protected function pipeline(): ContentPipeline
+    {
+        return $this->pipeline ??= app(ContentPipeline::class);
+    }
+
+    protected function auditor(): SiteAuditor
+    {
+        return $this->auditor ??= app(SiteAuditor::class);
     }
 
     /** 1. Growth & Goals Dashboard */
@@ -51,18 +72,20 @@ class GrowthOsController extends Controller
             $pace = $expected > 0 ? min(999, round(($totalTraffic / $expected) * 100)) : 100;
         }
 
-        $stats = [
-            'total_keywords' => DB::table('keywords')->count(),
-            'easy_keywords' => DB::table('keywords')->where('difficulty', '<=', 45)->count(),
-            'drafted_content' => DB::table('content_plans')->where('status', 'drafted')->count(),
-            'approved_content' => DB::table('content_plans')->where('status', 'approved')->count(),
-            'published_content' => DB::table('content_plans')->where('status', 'published')->count(),
-            'open_seo_issues' => DB::table('seo_issues')->where('status', 'open')->count(),
-            'fixed_seo_issues' => DB::table('seo_issues')->where('status', 'fixed')->count(),
-            'festivals_seeded' => DB::table('hindu_festivals')->count(),
-            'festivals_scheduled' => DB::table('hindu_festivals')->where('scheduled', true)->count(),
-            'ai_models_count' => DB::table('ai_models')->count(),
-        ];
+        $stats = \Illuminate\Support\Facades\Cache::remember('growth_os_dashboard_stats', 300, function () {
+            return [
+                'total_keywords' => DB::table('keywords')->count(),
+                'easy_keywords' => DB::table('keywords')->where('difficulty', '<=', 45)->count(),
+                'drafted_content' => DB::table('content_plans')->where('status', 'drafted')->count(),
+                'approved_content' => DB::table('content_plans')->where('status', 'approved')->count(),
+                'published_content' => DB::table('content_plans')->where('status', 'published')->count(),
+                'open_seo_issues' => DB::table('seo_issues')->where('status', 'open')->count(),
+                'fixed_seo_issues' => DB::table('seo_issues')->where('status', 'fixed')->count(),
+                'festivals_seeded' => DB::table('hindu_festivals')->count(),
+                'festivals_scheduled' => DB::table('hindu_festivals')->where('scheduled', true)->count(),
+                'ai_models_count' => DB::table('ai_models')->count(),
+            ];
+        });
 
         $recentChats = DB::table('brain_chats')->orderByDesc('id')->limit(8)->get();
 
@@ -71,12 +94,14 @@ class GrowthOsController extends Controller
         // at a glance instead of guessing from published counts.
         $activityLog = DB::table('brain_run_log')->orderByDesc('id')->limit(15)->get();
 
-        $activity24h = DB::table('brain_run_log')
-            ->where('created_at', '>=', now()->subDay())
-            ->selectRaw("category, SUM(items_ok) ok, SUM(items_failed) failed, COUNT(*) runs")
-            ->groupBy('category')
-            ->get()
-            ->keyBy('category');
+        $activity24h = \Illuminate\Support\Facades\Cache::remember('growth_os_activity_24h', 180, function () {
+            return DB::table('brain_run_log')
+                ->where('created_at', '>=', now()->subDay())
+                ->selectRaw("category, SUM(items_ok) ok, SUM(items_failed) failed, COUNT(*) runs")
+                ->groupBy('category')
+                ->get()
+                ->keyBy('category');
+        });
 
         // Channel health — the last brain:doctor report.
         $health = $this->latestHealthReport();
@@ -92,31 +117,34 @@ class GrowthOsController extends Controller
      */
     protected function latestHealthReport(): array
     {
-        if (! \Illuminate\Support\Facades\Schema::hasTable('brain_run_log')) {
-            return ['ran_at' => null, 'stale' => true, 'results' => []];
-        }
+        return \Illuminate\Support\Facades\Cache::remember('growth_os_health_report', 180, function () {
+            if (! \Illuminate\Support\Facades\Schema::hasTable('brain_run_log')) {
+                return ['ran_at' => null, 'stale' => true, 'results' => []];
+            }
 
-        $row = DB::table('brain_run_log')
-            ->where('task', 'brain:doctor')
-            ->orderByDesc('id')
-            ->first();
+            $row = DB::table('brain_run_log')
+                ->where('task', 'brain:doctor')
+                ->orderByDesc('id')
+                ->first();
 
-        if (! $row) {
-            return ['ran_at' => null, 'stale' => true, 'results' => []];
-        }
+            if (! $row) {
+                return ['ran_at' => null, 'stale' => true, 'results' => []];
+            }
 
-        $detail = json_decode((string) $row->detail, true);
+            $detail = json_decode((string) $row->detail, true);
 
-        return [
-            'ran_at' => $row->created_at,
-            'stale' => \Carbon\Carbon::parse($row->created_at)->lt(now()->subDays(2)),
-            'results' => is_array($detail['results'] ?? null) ? $detail['results'] : [],
-        ];
+            return [
+                'ran_at' => $row->created_at,
+                'stale' => \Carbon\Carbon::parse($row->created_at)->lt(now()->subDays(2)),
+                'results' => is_array($detail['results'] ?? null) ? $detail['results'] : [],
+            ];
+        });
     }
 
     /** 2. SEO Keywords & Silo Matrix */
-    public function keywords(Request $request)
+    public function keywords(?Request $request = null)
     {
+        $request = $request ?? request();
         $query = DB::table('keywords');
 
         if ($request->filled('cluster')) {
@@ -131,7 +159,9 @@ class GrowthOsController extends Controller
         }
 
         $keywords = $query->orderByDesc('id')->paginate(25);
-        $clusters = DB::table('keywords')->select('cluster', DB::raw('count(*) as count'))->groupBy('cluster')->orderByDesc('count')->get();
+        $clusters = \Illuminate\Support\Facades\Cache::remember('growth_os_keyword_clusters', 300, function () {
+            return DB::table('keywords')->select('cluster', DB::raw('count(*) as count'))->groupBy('cluster')->orderByDesc('count')->get();
+        });
 
         return view('pages.growth-os.keywords', compact('keywords', 'clusters'));
     }
@@ -263,46 +293,83 @@ class GrowthOsController extends Controller
     /** 5. Social Media & Hindu Festival Scheduler */
     public function socialScheduler()
     {
-        $festivals = DB::table('hindu_festivals')->orderBy('date', 'ASC')->get();
+        $festivals = \Illuminate\Support\Facades\Cache::remember('growth_festivals_v1', 3600, function () {
+            return DB::table('hindu_festivals')->orderBy('date', 'ASC')->get();
+        });
+
         $socialPosts = DB::table('content_plans')
             ->where('channel', 'social')
             ->orderByDesc('id')
+            ->limit(50)
             ->get();
+
         $socialCreds = Vault::socialCredentials();
         $webhookUrl = Vault::get('social_webhook_url') ?: env('SOCIAL_DISPATCH_WEBHOOK', '');
-        $pujas = DB::table('pujas')->select('id', 'puja_title', 'puja_place', 'slug', 'puja_price')->where('puja_status', 1)->orderBy('id', 'DESC')->limit(100)->get();
-        $astrologers = DB::table('astrologers')->select('id', 'name', 'primarySkill')->where('isDelete', 0)->limit(30)->get();
-        $socialAccounts = DB::table('social_accounts')->get();
 
-        return view('pages.growth-os.social', compact('festivals', 'socialPosts', 'socialCreds', 'webhookUrl', 'pujas', 'astrologers', 'socialAccounts'));
+        $pujas = \Illuminate\Support\Facades\Cache::remember('growth_pujas_v1', 1800, function () {
+            return DB::table('pujas')->select('id', 'puja_title', 'puja_place', 'slug', 'puja_price')
+                ->where('puja_status', 1)->orderBy('id', 'DESC')->limit(100)->get();
+        });
+
+        $astrologers = \Illuminate\Support\Facades\Cache::remember('growth_astros_v1', 1800, function () {
+            return DB::table('astrologers')->select('id', 'name', 'primarySkill')
+                ->where('isDelete', 0)->limit(30)->get();
+        });
+
+        $socialAccounts = DB::table('social_accounts')->get();
+        $recentDispatches = DB::table('social_posts')->orderByDesc('id')->limit(15)->get();
+
+        return view('pages.growth-os.social', compact('festivals', 'socialPosts', 'socialCreds', 'webhookUrl', 'pujas', 'astrologers', 'socialAccounts', 'recentDispatches'));
     }
 
     /** 5c. Omnichannel Marketing & Devotee Broadcast Hub */
-    public function marketingHub(Request $request)
+    public function marketingHub(?Request $request = null)
     {
+        $request = $request ?? request();
         $wa = app(\App\Services\EvolutionWaService::class);
-        $waState = $wa->getConnectionState();
+        $waState = \Illuminate\Support\Facades\Cache::remember('growth_wa_state', 60, function () use ($wa) {
+            try {
+                return $wa->getConnectionState();
+            } catch (\Throwable $e) {
+                return ['ok' => false, 'state' => 'offline', 'error' => $e->getMessage()];
+            }
+        });
 
         $brevoKey = Vault::get('brevo_api_key') ?: env('BREVO_API_KEY');
         $brevoConfigured = !empty($brevoKey);
 
-        $totalDevotees = DB::table('users')->count();
-        $devoteesWithPhone = DB::table('users')->whereNotNull('contactNo')->where('contactNo', '!=', '')->count();
-        $devoteesWithEmail = DB::table('users')->whereNotNull('email')->where('email', '!=', '')->count();
-        $totalOrders = DB::table('puja_orders')->count();
+        $counts = \Illuminate\Support\Facades\Cache::remember('growth_marketing_counts', 300, function () {
+            return [
+                'totalDevotees'     => DB::table('users')->count(),
+                'devoteesWithPhone' => DB::table('users')->whereNotNull('contactNo')->where('contactNo', '!=', '')->count(),
+                'devoteesWithEmail' => DB::table('users')->whereNotNull('email')->where('email', '!=', '')->count(),
+                'totalOrders'       => DB::table('puja_orders')->count(),
+                'totalB2bPartners'  => \App\Models\B2bLead::count(),
+            ];
+        });
 
-        $pujas = DB::table('pujas')
-            ->select('id', 'puja_title', 'puja_price', 'puja_place', 'slug')
-            ->where('puja_status', 1)
-            ->orderBy('id', 'desc')
-            ->limit(50)
-            ->get();
+        $totalDevotees     = $counts['totalDevotees'];
+        $devoteesWithPhone = $counts['devoteesWithPhone'];
+        $devoteesWithEmail = $counts['devoteesWithEmail'];
+        $totalOrders       = $counts['totalOrders'];
+        $totalB2bPartners  = $counts['totalB2bPartners'];
 
-        $upcomingFestivals = DB::table('hindu_festivals')
-            ->where('date', '>=', now()->toDateString())
-            ->orderBy('date', 'asc')
-            ->limit(8)
-            ->get();
+        $pujas = \Illuminate\Support\Facades\Cache::remember('growth_pujas_marketing_v1', 1800, function () {
+            return DB::table('pujas')
+                ->select('id', 'puja_title', 'puja_price', 'puja_place', 'slug')
+                ->where('puja_status', 1)
+                ->orderBy('id', 'desc')
+                ->limit(50)
+                ->get();
+        });
+
+        $upcomingFestivals = \Illuminate\Support\Facades\Cache::remember('growth_festivals_upcoming_8', 1800, function () {
+            return DB::table('hindu_festivals')
+                ->where('date', '>=', now()->toDateString())
+                ->orderBy('date', 'asc')
+                ->limit(8)
+                ->get();
+        });
 
         $recentBroadcasts = DB::table('content_plans')
             ->where('channel', 'social')
@@ -314,13 +381,14 @@ class GrowthOsController extends Controller
         $festivalsRadar = $festivalEngine->getUpcomingFestivals(60);
 
         // B2B Partner Directory & Radar metrics
-        $totalB2bPartners = \App\Models\B2bLead::count();
         $b2bLeads = \App\Models\B2bLead::orderByDesc('id')->limit(50)->get();
-        $b2bCities = \App\Models\B2bLead::select('city', DB::raw('count(*) as total'))
-            ->whereNotNull('city')
-            ->groupBy('city')
-            ->orderByDesc('total')
-            ->get();
+        $b2bCities = \Illuminate\Support\Facades\Cache::remember('growth_b2b_cities', 600, function () {
+            return \App\Models\B2bLead::select('city', DB::raw('count(*) as total'))
+                ->whereNotNull('city')
+                ->groupBy('city')
+                ->orderByDesc('total')
+                ->get();
+        });
 
         return view('pages.growth-os.marketing', compact(
             'waState',
@@ -344,9 +412,18 @@ class GrowthOsController extends Controller
     {
         $mode = (string) (Vault::get('autopilot_mode') ?: 'supervised');
         $confidence_floor = (int) (Vault::get('autopilot_confidence_floor') ?: 85);
-        $sent_today = DB::table('autopilot_queue')->where('status', 'sent')->whereDate('sent_at', today())->count();
-        $pending_count = DB::table('autopilot_queue')->where('status', 'pending')->count();
-        $sent_count = DB::table('autopilot_queue')->where('status', 'sent')->count();
+
+        $counts = \Illuminate\Support\Facades\Cache::remember('growth_autopilot_counts', 120, function () {
+            return [
+                'sent_today'    => DB::table('autopilot_queue')->where('status', 'sent')->whereDate('sent_at', today())->count(),
+                'pending_count' => DB::table('autopilot_queue')->where('status', 'pending')->count(),
+                'sent_count'    => DB::table('autopilot_queue')->where('status', 'sent')->count(),
+            ];
+        });
+
+        $sent_today = $counts['sent_today'];
+        $pending_count = $counts['pending_count'];
+        $sent_count = $counts['sent_count'];
 
         $loops = [
             'gochar' => [
@@ -387,19 +464,13 @@ class GrowthOsController extends Controller
         ];
 
         $queue = DB::table('autopilot_queue')->orderByDesc('id')->limit(50)->get();
-        $logs = \Illuminate\Support\Facades\Schema::hasTable('brain_run_log')
-            ? DB::table('brain_run_log')->orderByDesc('id')->limit(20)->get()
-            : collect();
+        $logs = DB::table('brain_run_log')->orderByDesc('id')->limit(20)->get();
 
-        $agents = \Illuminate\Support\Facades\Schema::hasTable('ai_agents')
-            ? \App\Models\AiAgent::withCount(['outputs as pending_outputs_count' => function ($q) {
-                $q->where('status', 'pending_review');
-            }])->get()
-            : collect();
+        $agents = \App\Models\AiAgent::withCount(['outputs as pending_outputs_count' => function ($q) {
+            $q->where('status', 'pending_review');
+        }])->get();
 
-        $agentOutputs = \Illuminate\Support\Facades\Schema::hasTable('ai_agent_outputs')
-            ? \App\Models\AiAgentOutput::with('agent')->orderByDesc('id')->limit(20)->get()
-            : collect();
+        $agentOutputs = \App\Models\AiAgentOutput::with('agent')->orderByDesc('id')->limit(20)->get();
 
         return view('pages.growth-os.autopilot', compact(
             'mode',
@@ -463,19 +534,28 @@ class GrowthOsController extends Controller
             ],
         ];
 
-        // Synced Live OmniRoute Models from ai.vmstudio.digital (optimized column select)
-        $omniTextModels = DB::table('ai_models')->select('id', 'model_id', 'label')->where('provider', 'omniroute')->where('kind', 'text')->orderBy('label')->get();
-        $omniImageModels = DB::table('ai_models')->select('id', 'model_id', 'label')->where('provider', 'omniroute')->where('kind', 'image')->orderBy('label')->get();
-        $omniVideoModels = DB::table('ai_models')->select('id', 'model_id', 'label')->where('provider', 'omniroute')->where('kind', 'video')->orderBy('label')->get();
+        // Synced Live OmniRoute Models (Cached for 30 minutes)
+        $modelData = \Illuminate\Support\Facades\Cache::remember('growth_ai_models_data_v1', 1800, function () {
+            return [
+                'omniTextModels'   => DB::table('ai_models')->select('id', 'model_id', 'label')->where('provider', 'omniroute')->where('kind', 'text')->orderBy('label')->get(),
+                'omniImageModels'  => DB::table('ai_models')->select('id', 'model_id', 'label')->where('provider', 'omniroute')->where('kind', 'image')->orderBy('label')->get(),
+                'omniVideoModels'  => DB::table('ai_models')->select('id', 'model_id', 'label')->where('provider', 'omniroute')->where('kind', 'video')->orderBy('label')->get(),
+                'comfyImageModels' => DB::table('ai_models')->select('id', 'model_id', 'label')->where('model_id', 'like', '%comfyui%')->where('kind', 'image')->get(),
+                'comfyVideoModels' => DB::table('ai_models')->select('id', 'model_id', 'label')->where('model_id', 'like', '%comfyui%')->whereIn('kind', ['video', 'text'])->get(),
+                'omniTotal'        => DB::table('ai_models')->where('provider', 'omniroute')->count(),
+                'lastSyncedAt'     => optional(DB::table('ai_models')->where('provider', 'omniroute')->orderByDesc('last_synced_at')->first())->last_synced_at,
+                'totalModelsCount' => DB::table('ai_models')->count(),
+            ];
+        });
 
-        $comfyImageModels = DB::table('ai_models')->select('id', 'model_id', 'label')->where('model_id', 'like', '%comfyui%')->where('kind', 'image')->get();
-        $comfyVideoModels = DB::table('ai_models')->select('id', 'model_id', 'label')->where('model_id', 'like', '%comfyui%')->whereIn('kind', ['video', 'text'])->get();
-
-        $omniTotal = DB::table('ai_models')->where('provider', 'omniroute')->count();
-        $lastSyncedRow = DB::table('ai_models')->where('provider', 'omniroute')->orderByDesc('last_synced_at')->first();
-        $lastSyncedAt = $lastSyncedRow ? $lastSyncedRow->last_synced_at : null;
-
-        $totalModelsCount = DB::table('ai_models')->count();
+        $omniTextModels   = $modelData['omniTextModels'];
+        $omniImageModels  = $modelData['omniImageModels'];
+        $omniVideoModels  = $modelData['omniVideoModels'];
+        $comfyImageModels = $modelData['comfyImageModels'];
+        $comfyVideoModels = $modelData['comfyVideoModels'];
+        $omniTotal        = $modelData['omniTotal'];
+        $lastSyncedAt     = $modelData['lastSyncedAt'];
+        $totalModelsCount = $modelData['totalModelsCount'];
 
         return view('pages.growth-os.ai', compact(
             'creds', 
@@ -483,10 +563,10 @@ class GrowthOsController extends Controller
             'omniTextModels', 
             'omniImageModels', 
             'omniVideoModels', 
-            'comfyImageModels',
-            'comfyVideoModels',
-            'omniTotal',
-            'lastSyncedAt',
+            'comfyImageModels', 
+            'comfyVideoModels', 
+            'omniTotal', 
+            'lastSyncedAt', 
             'totalModelsCount'
         ));
     }
@@ -730,6 +810,9 @@ class GrowthOsController extends Controller
                 case 'schedule_festivals':
                     $router = app(\App\Brain\CommandRouter::class);
                     $res = $router->actScheduleFestivals(['days_ahead' => 75]);
+                    try {
+                        \Illuminate\Support\Facades\Artisan::call('social:plan', ['--limit' => 20]);
+                    } catch (\Throwable $e) {}
                     return response()->json([
                         'ok'      => true,
                         'message' => $res['message'] ?? "Queued {$res['queued']} upcoming devotional festival wishes!",
@@ -980,7 +1063,7 @@ class GrowthOsController extends Controller
                             ]);
                             $kw = DB::table('keywords')->where('id', $kwId)->first();
                         }
-                        $res = $this->pipeline->draftOne($kw);
+                        $res = $this->pipeline()->draftOne($kw);
                         if (!empty($res['ok'])) {
                             return response()->json([
                                 'ok' => true,
@@ -1105,6 +1188,10 @@ class GrowthOsController extends Controller
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
+
+                        try {
+                            \Illuminate\Support\Facades\Artisan::call('social:plan', ['--limit' => 5]);
+                        } catch (\Throwable $e) {}
 
                         return response()->json([
                             'ok'        => true,
@@ -1242,9 +1329,34 @@ class GrowthOsController extends Controller
                             'last_error' => null,
                             'updated_at' => now(),
                         ]);
+                        \App\Brain\Vault::set('instagram_token', $token);
                         return response()->json(['ok' => true, 'message' => ucfirst($platform) . ' Access Token updated successfully!']);
                     } else {
                         return response()->json(['ok' => false, 'error' => 'No ' . ucfirst($platform) . ' account registered to update.'], 404);
+                    }
+                case 'test_meta_post':
+                    $platform = $request->input('platform', 'facebook');
+                    $account = DB::table('social_accounts')->where('platform', $platform)->first();
+                    if (!$account) {
+                        return response()->json(['ok' => false, 'error' => "No {$platform} account connected."], 404);
+                    }
+                    try {
+                        $token = \Illuminate\Support\Facades\Crypt::decryptString($account->access_token_enc);
+                        $endpoint = "https://graph.facebook.com/v21.0/{$account->external_id}?fields=id,name,category,link&access_token=" . urlencode($token);
+                        $resp = \Illuminate\Support\Facades\Http::timeout(10)->get($endpoint);
+                        if ($resp->successful()) {
+                            $data = $resp->json();
+                            return response()->json([
+                                'ok' => true,
+                                'message' => "✓ Verified! Connected to: " . ($data['name'] ?? $account->label) . " (ID: {$account->external_id})",
+                                'data' => $data
+                            ]);
+                        } else {
+                            $err = $resp->json('error.message') ?? $resp->body();
+                            return response()->json(['ok' => false, 'error' => "Meta API Error: {$err}"], 400);
+                        }
+                    } catch (\Throwable $e) {
+                        return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
                     }
                 case 'publish_social_post':
                     $postId = $request->input('post_id');
@@ -1386,7 +1498,9 @@ class GrowthOsController extends Controller
 
                 case 'run_ai_agent':
                     $agentKey = $request->input('agent');
-                    $res = \App\Brain\Agents\AgentRunner::run($agentKey);
+                    $res = (empty($agentKey) || $agentKey === 'all')
+                        ? \App\Brain\Agents\AgentRunner::runAll()
+                        : \App\Brain\Agents\AgentRunner::run($agentKey);
                     return response()->json($res);
 
                 case 'toggle_ai_agent':

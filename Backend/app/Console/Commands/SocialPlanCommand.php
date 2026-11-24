@@ -67,17 +67,37 @@ class SocialPlanCommand extends Command
                 continue;
             }
 
-            // One shared image for every platform in this batch — cheaper
-            // than regenerating per platform, and prompt-hash reuse means a
-            // rerun of this command costs nothing extra either.
-            $imageResult = $images->generate($text, [
-                'preset' => 'instagram_square',
-                'content_plan_id' => $plan->id,
-            ]);
-            $mediaAssetId = $imageResult['ok'] ? $imageResult['asset_id'] : null;
+            $mediaAssetId = null;
+            if (!empty($payload['video_url']) || !empty($payload['image_url'])) {
+                $existingMediaUrl = $payload['video_url'] ?? $payload['image_url'];
+                $isVideo = !empty($payload['video_url']);
+                $asset = DB::table('media_assets')->where('content_plan_id', $plan->id)->first();
+                if (!$asset) {
+                    $mediaAssetId = DB::table('media_assets')->insertGetId([
+                        'content_plan_id' => $plan->id,
+                        'kind' => $isVideo ? 'video' : 'image',
+                        'path' => $existingMediaUrl,
+                        'mime' => $isVideo ? 'video/mp4' : 'image/jpeg',
+                        'preset' => $isVideo ? 'vertical_reel' : 'instagram_square',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } else {
+                    $mediaAssetId = $asset->id;
+                }
+            } else {
+                // One shared image for every platform in this batch — cheaper
+                // than regenerating per platform, and prompt-hash reuse means a
+                // rerun of this command costs nothing extra either.
+                $imageResult = $images->generate($text, [
+                    'preset' => 'instagram_square',
+                    'content_plan_id' => $plan->id,
+                ]);
+                $mediaAssetId = $imageResult['ok'] ? $imageResult['asset_id'] : null;
 
-            if (! $imageResult['ok']) {
-                $this->warn("Plan #{$plan->id}: image generation failed ({$imageResult['error']}) — posting text-only where the platform allows it.");
+                if (! $imageResult['ok']) {
+                    $this->warn("Plan #{$plan->id}: image generation failed ({$imageResult['error']}) — posting text-only where the platform allows it.");
+                }
             }
 
             $targetPlatforms = $payload['channels'] ?? null;
@@ -88,11 +108,8 @@ class SocialPlanCommand extends Command
             $variants = $copywriter->variants($text, (string) $plan->title);
 
             foreach ($accounts as $account) {
-                // Honour the plan's own channel list when it specified one
-                // (festival wishes do); otherwise fan out to every connected
-                // account. YouTube needs an actual video — skip it here, it
-                // only gets fed by the video content pipeline, not this one.
-                if ($account->platform === 'youtube') {
+                // Skip YouTube only when there is no video attached
+                if ($account->platform === 'youtube' && empty($payload['video_url'])) {
                     continue;
                 }
 

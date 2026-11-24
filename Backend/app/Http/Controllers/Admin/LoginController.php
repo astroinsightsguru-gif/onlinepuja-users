@@ -18,30 +18,56 @@ class LoginController extends Controller
 
     public function loginApi(Request $request)
     {
-
         try {
-            $validator = Validator::make($request->all(), [
+            $email = trim(strtolower($request->email ?? ''));
+            $password = $request->password ?? '';
+
+            $validator = Validator::make([
+                'email' => $email,
+                'password' => $password,
+            ], [
                 'email' => 'required|email',
                 'password' => 'required',
             ]);
-            $user = DB::table('users')->where('email', '=', $request->email)->where('isDelete', false)->get();
+
             if ($validator->fails()) {
                 return response()->json([
                     'error' => $validator->getMessageBag()->toArray(),
-                ]);
-
-            } elseif (($user && count($user) > 0) && !password_verify($request->password, $user[0]->password)) {
-                return response()->json([
-                    'error' => ['Invalid Credential'],
-                ]);
-            } elseif (count($user) == 0) {
-                return response()->json([
-                    'error' => ['Invalid Credentials'],
-                ]);
+                ], 422);
             }
-            if ($request->email && $request->password && Auth::attempt(['email' => $request->email, 'password' => $request->password, 'isDelete' => 0])) {
-                $userId = Auth::user()->id;
-                $teamMember = DB::table('teammember')->where('userId', $userId)->first();
+
+            $user = DB::table('users')
+                ->whereRaw('LOWER(email) = ?', [$email])
+                ->where('isDelete', 0)
+                ->first();
+
+            if (!$user) {
+                return response()->json([
+                    'error' => ['Account not found or inactive.'],
+                ], 422);
+            }
+
+            if (!password_verify($password, $user->password)) {
+                return response()->json([
+                    'error' => ['Invalid email or password.'],
+                ], 422);
+            }
+
+            $adminUser = \App\Models\AdminModel\User::where('id', $user->id)->first();
+            if (!$adminUser) {
+                return response()->json([
+                    'error' => ['Admin account model could not be resolved.'],
+                ], 422);
+            }
+
+            Auth::guard('web')->login($adminUser, false);
+            $request->session()->regenerate();
+            $request->session()->save();
+
+            $userId = $adminUser->id;
+            $teamMember = DB::table('teammember')->where('userId', $userId)->first();
+            $first = '/admin/dashboard';
+
                 if ($teamMember) {
                     $sideMenu = [];
                     $rolePages = DB::table('rolepages')
@@ -80,34 +106,34 @@ class LoginController extends Controller
                         ->whereNull('adminpages.pageGroup')
                         ->select('adminpages.*')
                         ->get();
-                    for ($i=0; $i < count($parentPages); $i++) {
-                        $parentPages[$i]->sub_menu  =[];
+                    for ($i = 0; $i < count($parentPages); $i++) {
+                        $parentPages[$i]->sub_menu = [];
                     }
                     $sideMenu = array_merge($sideMenu, json_decode($parentPages));
                     $sort = [];
                     foreach ($sideMenu as $key => $row) {
-                        $sort[$key] = $row->displayOrder;
+                        $sort[$key] = $row->displayOrder ?? 0;
                     }
 
-                    array_multisort($sort, SORT_ASC, $sideMenu);
-                    if ($sideMenu[0]->sub_menu && count($sideMenu[0]->sub_menu) > 0) {
-                        $first = '/admin/' . $sideMenu[0]->sub_menu[0]->route;
-                    } else {
-                        $first = '/admin/' . $sideMenu[0]->route;
+                    if (!empty($sideMenu)) {
+                        array_multisort($sort, SORT_ASC, $sideMenu);
+                        if (!empty($sideMenu[0]->sub_menu) && count($sideMenu[0]->sub_menu) > 0) {
+                            $first = '/admin/' . $sideMenu[0]->sub_menu[0]->route;
+                        } elseif (!empty($sideMenu[0]->route)) {
+                            $first = '/admin/' . $sideMenu[0]->route;
+                        }
                     }
-                } else {
-                    $first = '/admin/dashboard';
                 }
+
                 return response()->json([
                     'success' => "Login Success",
                     'first' => $first,
                 ]);
-            } else {
-                return redirect()->back()->with('error', 'Login Fail', 'Please try again.');
-            }
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error: ' . $e->getMessage());
+            return response()->json([
+                'error' => ['An unexpected error occurred: ' . $e->getMessage()],
+            ], 500);
         }
     }
 

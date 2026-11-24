@@ -102,8 +102,8 @@ TXT;
     {
         return match ($platform) {
             'x' => \Illuminate\Support\Str::limit($baseText, 140) . "\n\n📲 Devotee App: https://onlinepuja.live/downloads/onlinepuja-customer-latest.apk",
-            'instagram' => "🙏 {$baseText}\n\n📲 Book verified pandits on OnlinePuja Devotee App: https://onlinepuja.live/downloads/onlinepuja-customer-latest.apk\n⭐ Astrologers & Pandits Join: https://onlinepuja.live/downloads/onlinepuja-astrologer-latest.apk",
-            default => $baseText . "\n\n📲 Book verified pandits online: https://onlinepuja.live/downloads/onlinepuja-customer-latest.apk\n⭐ Pandit / Astrologer Partner App: https://onlinepuja.live/downloads/onlinepuja-astrologer-latest.apk 🙏",
+            'instagram' => "🙏 {$baseText}\n\n📲 Book verified pandits on OnlinePuja Devotee App: https://onlinepuja.live/downloads/onlinepuja-customer-latest.apk\n⭐ Astrologers & Pandits Join: https://play.google.com/store/apps/details?id=live.onlinepuja.astro",
+            default => $baseText . "\n\n📲 Book verified pandits online: https://onlinepuja.live/downloads/onlinepuja-customer-latest.apk\n⭐ Pandit / Astrologer Partner App: https://play.google.com/store/apps/details?id=live.onlinepuja.astro 🙏",
         };
     }
 

@@ -236,8 +236,8 @@ Route::get('commissions', [CommissionController::class, 'addCommission'])->name(
 Route::post('addCommissionApi', [CommissionController::class, 'addCommissionApi'])->name('addCommissionApi');
 Route::delete('deleteCommission', [CommissionController::class, 'deleteCommission'])->name('deleteCommission');
 
-// Route::group(['middleware'=>'web'],function(){
-Route::group(['middleware' => ['web']], function () use ($professionTitle) {
+// Outer web middleware is already applied in RouteServiceProvider
+Route::group([], function () use ($professionTitle) {
     // Route::get('dashboard', [DashboardController::class, 'getDashboard'])->name('dashboard');
     //
 

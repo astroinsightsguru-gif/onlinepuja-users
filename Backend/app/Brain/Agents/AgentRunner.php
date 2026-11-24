@@ -13,10 +13,41 @@ use Illuminate\Support\Facades\Artisan;
 class AgentRunner
 {
     /**
-     * Execute an agent by its key or ID
+     * Execute all active agents
      */
-    public static function run(string|int $agentIdentifier): array
+    public static function runAll(): array
     {
+        $activeAgents = AiAgent::where('is_active', true)->get();
+        if ($activeAgents->isEmpty()) {
+            return ['ok' => false, 'message' => 'No active agents found in the fleet.'];
+        }
+
+        $results = [];
+        $successCount = 0;
+        foreach ($activeAgents as $agent) {
+            $res = self::run($agent->agent_key);
+            $results[$agent->agent_key] = $res;
+            if (!empty($res['ok'])) {
+                $successCount++;
+            }
+        }
+
+        return [
+            'ok' => true,
+            'message' => "Orchestrated fleet: {$successCount}/{$activeAgents->count()} agents executed successfully.",
+            'results' => $results,
+        ];
+    }
+
+    /**
+     * Execute an agent by its key or ID, or all if null/all passed
+     */
+    public static function run(string|int|null $agentIdentifier = null): array
+    {
+        if (empty($agentIdentifier) || $agentIdentifier === 'all') {
+            return self::runAll();
+        }
+
         $agent = is_numeric($agentIdentifier)
             ? AiAgent::find($agentIdentifier)
             : AiAgent::where('agent_key', $agentIdentifier)->first();
@@ -49,6 +80,9 @@ class AgentRunner
                     break;
                 case 'retention':
                     $outputData = self::runRetentionAgent($agent);
+                    break;
+                case 'social_media':
+                    $outputData = self::runSocialMediaAgent($agent);
                     break;
                 default:
                     return ['ok' => false, 'message' => "Unknown agent handler: {$agent->agent_key}"];
@@ -301,6 +335,72 @@ class AgentRunner
             'status' => 'published',
             'published_at' => now(),
             'distribution_channels' => ['whatsapp'],
+        ]);
+
+        return $output;
+    }
+
+    /**
+     * 7. SOCIAL MEDIA PROMOTIONAL AGENT
+     */
+    protected static function runSocialMediaAgent(AiAgent $agent): AiAgentOutput
+    {
+        $bannerStudio = app(\App\Services\BannerStudioService::class);
+        $campaigns = [
+            [
+                'title' => 'Maha Deepdaan & Rudrabhishek',
+                'purohit' => 'Kashi Vedic Purohit Parishad',
+                'price' => '₹501 - ₹2,100',
+                'badge' => 'LIVE SANKALP STREAM',
+                'slug' => 'kashi-vishwanath-rudrabhishek',
+            ],
+            [
+                'title' => 'Kaal Sarp Dosh Nivaran Puja',
+                'purohit' => 'Trimbakeshwar & Kashi Purohits',
+                'price' => '₹1,100 - ₹3,500',
+                'badge' => 'SPECIAL DOSHA NIVARAN',
+                'slug' => 'kaal-sarp-dosh-puja',
+            ],
+            [
+                'title' => 'Mahakumbh & Dev Deepawali Snan',
+                'purohit' => 'Dashashwamedh Ghat Sanctum',
+                'price' => '₹251 - ₹1,501',
+                'badge' => 'HOLY GANGA PUJA',
+                'slug' => 'ganga-aarti-deepdaan',
+            ],
+        ];
+
+        $now = Carbon::now('Asia/Kolkata');
+        $pick = $campaigns[$now->dayOfYear % count($campaigns)];
+
+        $bannerRes = $bannerStudio->generateBanner($pick['title'], 'square', [
+            'badge' => $pick['badge'],
+            'price' => $pick['price'],
+            'date' => $now->translatedFormat('d F Y'),
+        ]);
+
+        $bannerUrl = (!empty($bannerRes['success']) && !empty($bannerRes['banner_url']))
+            ? $bannerRes['banner_url']
+            : 'https://onlinepuja.live/storage/banners/default.jpg';
+
+        $caption = "🪔 {$pick['badge']} • {$pick['title']}\n\n" .
+            "वाराणसी के दशाश्वमेध एवं मणिकर्णिका घाट पर अपने नाम एवं गोत्र से वैदिक पूजा संपन्न कराएं।\n\n" .
+            "✨ पूजा की विशेषताएं:\n" .
+            "• विद्वान वैदिक पुरोहितों द्वारा व्यक्तिगत संकल्प\n" .
+            "• संपूर्ण पूजा का लाइव/एचडी वीडियो प्रमाण आपके व्हाट्सएप पर\n" .
+            "• बाबा विश्वनाथ का अभिमंत्रित प्रसाद आपके घर स्पीड पोस्ट द्वारा\n\n" .
+            "👉 अभी संकल्प बुक करें: https://onlinepuja.live/pujas\n" .
+            "📞 सहायता हेल्पलाइन: +91 70071 58014";
+
+        $output = AiAgentOutput::create([
+            'agent_id' => $agent->id,
+            'title' => "Social Creative: {$pick['title']}",
+            'content_payload' => $caption,
+            'media_type' => 'image',
+            'media_url' => $bannerUrl,
+            'status' => ($agent->mode === 'autonomous') ? 'published' : 'pending_review',
+            'published_at' => ($agent->mode === 'autonomous') ? now() : null,
+            'distribution_channels' => ['facebook', 'instagram', 'whatsapp'],
         ]);
 
         return $output;

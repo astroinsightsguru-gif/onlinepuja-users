@@ -202,7 +202,7 @@ class BrainDoctorCommand extends Command
 
     protected function checkSearchConsole(): void
     {
-        $gsc = app(\App\services\SearchConsoleService::class);
+        $gsc = app(\App\Services\SearchConsoleService::class);
 
         if (! $gsc->isConfigured()) {
             $this->fail('Search Console', $gsc->configError(), 'Paste a service-account JSON (not an OAuth client key) into the AI Engine vault, then share the GSC property with its client_email.');

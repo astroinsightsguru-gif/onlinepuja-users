@@ -69,11 +69,20 @@ class CommandRouter
             $today = now()->toDateString();
 
             $system = <<<TXT
-You are the MASTER BRAIN of Online Puja (onlinepuja.live), an Indian online puja booking platform.
+You are the MASTER BRAIN of OnlinePuja.live — India's premier autonomous Vedic Puja booking, Temple sanctum live-streaming, and Jyotish consultation platform.
 Today is {$today}. {$goalCtx}
 
-Decide what ACTION to run for the operator's message. Reply STRICT JSON:
-{"action":"<name>","params":{},"reply":"<friendly 1-2 sentence confirmation>"}
+CORE PLATFORM CONTEXT & CAPABILITIES:
+- Services: Kashi Vishwanath Rudrabhishek, Mahalakshmi Pujan, Navagraha Shanti, Kaal Sarp Dosh, Chandi Path, Dev Deepawali, Mahakumbh 2026.
+- Deliverables: Live Sanctum Sankalp videos with devotee's Name & Gotra, consecrated Prasad shipped across India.
+- Astrology Network: Certified Vedic Pandits & Astrologers (Call, Chat, Kundli matchmaking, Daily Panchang).
+- Autonomous Growth OS: Technical SEO audits, automated keyword silos, festival wishes broadcast, and WhatsApp AI bot.
+
+LANGUAGE & CONVERSATIONAL RULES:
+1. Multilingual Fluency: You understand Hindi, English, and Hinglish perfectly.
+2. Hindi Font / Devanagari Requirement: If the user asks to speak in Hindi (e.g., "Hindi me baat kro", "Hindi font me baat kro", "हिंदी में बात करें", or greets in Hindi), you MUST reply in natural, respectful, professional Devanagari Hindi (हिन्दी लिपि). Do NOT output romanized Hinglish when Hindi font is requested, and NEVER blindly echo the user's sentence back to them.
+3. Conversational Answering: When the user asks a question, gives operational feedback, or seeks guidance, choose action "answer" and compose a thorough, insightful, and culturally respectful response in "reply".
+4. Action Classification: If the user gives a specific ops command, choose the corresponding action below.
 
 ACTIONS:
 - plan_cluster        {topic:string}
@@ -84,11 +93,14 @@ ACTIONS:
 - status_report       {}
 - answer              {}
 
+Reply STRICT JSON:
+{"action":"<name>","params":{},"reply":"<helpful, detailed, well-crafted response in user's preferred language/script>"}
+
 RECENT CONTEXT:
 {$history}
 TXT;
 
-            $res = $this->ai->chat($system, $cleanMsg, ['json' => true, 'temperature' => 0.3, 'max_tokens' => 400]);
+            $res = $this->ai->chat($system, $cleanMsg, ['json' => true, 'temperature' => 0.4, 'max_tokens' => 1200]);
             $providerUsed = $res['provider'] ?? 'ai';
             $dec = $this->decode($res['text'] ?? '');
 
@@ -97,8 +109,12 @@ TXT;
             $reply = trim((string) ($dec['reply'] ?? ''));
 
             if (! $reply) {
+                // If model returned empty reply or failed JSON, check language for fallback
+                $isHindi = preg_match('/[\x{0900}-\x{097F}]/u', $cleanMsg) || preg_match('/(hindi|हिंदी)/i', $cleanMsg);
                 if ($action === 'answer' || $action === 'unknown') {
-                    $reply = "Master Brain received your request. You can give direct ops commands like:\n• 'status report'\n• 'plan cluster for online puja'\n• 'schedule upcoming hindu festival wishes'\n• 'run seo audit'\n• 'sync models'";
+                    $reply = $isHindi
+                        ? "प्रणाम! मैं OnlinePuja.live का मास्टर ब्रेन (Master Brain) हूँ। मैं आपके प्लेटफ़ॉर्म के विकास, पूजा बुकिंग, ज्योतिषी परामर्श, एसईओ ऑडिट और दैनिक संचालन में पूरी सहायता कर सकता हूँ। आप मुझे 'status report', 'run seo audit', या 'plan cluster for online puja' जैसे आदेश दे सकते हैं।"
+                        : "Master Brain online. I am your autonomous Growth & Ops Engine for OnlinePuja.live. You can give direct ops commands like:\n• 'status report'\n• 'plan cluster for online puja'\n• 'schedule upcoming hindu festival wishes'\n• 'run seo audit'\n• 'sync models'";
                 } else {
                     $reply = 'Executing action '.$action.'…';
                 }

@@ -47,6 +47,17 @@ class Handler extends ExceptionHandler
     } 
 	public function render($request, Throwable $e)
     {
+        if ($e instanceof \Illuminate\Session\TokenMismatchException) {
+            if ($request->expectsJson() || $request->ajax() || $request->is('admin/loginApi') || $request->is('api/*')) {
+                return response()->json([
+                    'status' => 419,
+                    'error' => ['Your session has expired. Please refresh the page and try again.'],
+                    'message' => 'Your session has expired. Please refresh the page and try again.'
+                ], 419);
+            }
+            return redirect('/admin/login')->with('error', 'Your session has expired. Please log in again.');
+        }
+
         if ($e instanceof \Illuminate\Contracts\Encryption\DecryptException) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json(['status' => 401, 'message' => 'Session expired. Please log in again.'], 401);

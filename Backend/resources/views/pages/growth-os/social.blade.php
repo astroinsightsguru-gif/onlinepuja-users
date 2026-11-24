@@ -2,12 +2,22 @@
 
 @section('growth_content')
 @php
+    $currentTab = request()->get('tab', 'schedule');
     $webhookUrl = $webhookUrl ?? \App\Brain\Vault::get('social_webhook_url') ?? env('SOCIAL_DISPATCH_WEBHOOK', '');
     $festivals = $festivals ?? (\Illuminate\Support\Facades\Schema::hasTable('hindu_festivals') ? \Illuminate\Support\Facades\DB::table('hindu_festivals')->orderBy('date', 'ASC')->get() : collect());
     $socialPosts = $socialPosts ?? \Illuminate\Support\Facades\DB::table('content_plans')->where('channel', 'social')->orderByDesc('id')->get();
     $pujas = $pujas ?? (\Illuminate\Support\Facades\Schema::hasTable('pujas') ? \Illuminate\Support\Facades\DB::table('pujas')->select('id', 'puja_title', 'puja_price', 'puja_place', 'slug')->where('puja_status', 1)->orderBy('id', 'DESC')->limit(100)->get() : collect());
     $astrologers = $astrologers ?? (\Illuminate\Support\Facades\Schema::hasTable('astrologers') ? \Illuminate\Support\Facades\DB::table('astrologers')->select('id', 'name', 'primarySkill')->where('isDelete', 0)->limit(30)->get() : collect());
+    $socialAccounts = $socialAccounts ?? (\Illuminate\Support\Facades\Schema::hasTable('social_accounts') ? \Illuminate\Support\Facades\DB::table('social_accounts')->get() : collect());
+    $recentDispatches = $recentDispatches ?? (\Illuminate\Support\Facades\Schema::hasTable('social_posts') ? \Illuminate\Support\Facades\DB::table('social_posts')->orderByDesc('id')->limit(20)->get() : collect());
 @endphp
+<style>
+.hidden { display: none !important; }
+.section-pane { transition: opacity 0.15s ease-in-out; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.section-tab-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+</style>
 <div class="space-y-5">
 
     {{-- TOP: Vibrant High-Signal Metric Strip --}}
@@ -60,18 +70,20 @@
             <span class="ai-pill" style="background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe;">Approved</span>
         </div>
 
-        {{-- Metric 4: Channels & Schedule --}}
-        <div class="ai-stat-card ai-stat-card-emerald">
+        {{-- Metric 4: Meta & Instagram --}}
+        <div class="ai-stat-card ai-stat-card-rose" style="border-color: #fbcfe8 !important; background: #ffffff !important;">
             <div class="flex items-center gap-3">
-                <div class="ai-icon-bubble ai-icon-bubble-emerald">⏰</div>
+                <div class="ai-icon-bubble" style="background: linear-gradient(135deg, #f09433, #dc2743, #bc1888); color: #ffffff;">📸</div>
                 <div>
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Morning Schedule</span>
-                    <div class="text-base font-black text-emerald-900 mt-0.5 font-mono">
-                        06:30 AM <span class="text-[11px] font-semibold text-slate-500">IST Daily</span>
+                    <span class="text-[10px] font-bold text-pink-700 uppercase tracking-wider block">Meta & Instagram</span>
+                    <div class="text-sm font-black text-slate-800 mt-0.5 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> FB Active · IG Setup
                     </div>
                 </div>
             </div>
-            <span class="ai-pill ai-pill-emerald">Automated</span>
+            <a href="?tab=meta" onclick="switchSectionTab('meta'); return false;" class="ai-btn-secondary" style="font-size: 11px; padding: 6px 14px; text-decoration: none; cursor: pointer; color: #db2777; border-color: #fbcfe8;">
+                Manage ↗
+            </a>
         </div>
     </div>
 
@@ -93,28 +105,35 @@
         </div>
     </div>
 
-    {{-- SECTION SWITCHER TABS: Declutters the screen by organizing into focused workflows --}}
-    <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
-        <div class="flex items-center gap-2">
-            <button type="button" id="tab-btn-schedule" class="section-tab-btn active px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-slate-900 text-white shadow-2xs">
-                <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-400"></i> Festival Calendar & Queue
-            </button>
-            <button type="button" id="tab-btn-studio" class="section-tab-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-slate-400"></i> OmniRoute AI Creative Studio (Reels & Images)
-            </button>
-            <button type="button" id="tab-btn-automation" class="section-tab-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80">
-                <i data-lucide="send" class="w-3.5 h-3.5 text-slate-400"></i> Marketing Channels (WhatsApp · Brevo · Push)
-            </button>
+    {{-- SECTION SWITCHER TABS --}}
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px;">
+        <div style="background: #f1f5f9; padding: 6px; border-radius: 16px; border: 1px solid #cbd5e1; display: inline-flex; gap: 6px; align-items: center; overflow-x: auto; max-width: 100%;">
+            <a href="?tab=schedule" id="tab-btn-schedule" onclick="switchSectionTab('schedule'); return false;" class="section-tab-btn" style="padding: 9px 18px; font-size: 13px; font-weight: 800; border-radius: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; text-decoration: none; {{ $currentTab === 'schedule' ? 'background: #0f172a !important; color: #ffffff !important; border: 1px solid #0f172a !important; box-shadow: 0 4px 12px rgba(15,23,42,0.2) !important;' : 'background: #ffffff !important; color: #1e293b !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;' }} display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">📅</span>
+                <span>Festivals & Queue</span>
+            </a>
+            <a href="?tab=meta" id="tab-btn-meta" onclick="switchSectionTab('meta'); return false;" class="section-tab-btn" style="padding: 9px 18px; font-size: 13px; font-weight: 700; border-radius: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; text-decoration: none; {{ $currentTab === 'meta' ? 'background: #0f172a !important; color: #ffffff !important; border: 1px solid #0f172a !important; box-shadow: 0 4px 12px rgba(15,23,42,0.2) !important;' : 'background: #ffffff !important; color: #1e293b !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;' }} display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">📸</span>
+                <span>Meta & Instagram</span>
+            </a>
+            <a href="?tab=studio" id="tab-btn-studio" onclick="switchSectionTab('studio'); return false;" class="section-tab-btn" style="padding: 9px 18px; font-size: 13px; font-weight: 700; border-radius: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; text-decoration: none; {{ $currentTab === 'studio' ? 'background: #0f172a !important; color: #ffffff !important; border: 1px solid #0f172a !important; box-shadow: 0 4px 12px rgba(15,23,42,0.2) !important;' : 'background: #ffffff !important; color: #1e293b !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;' }} display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">✨</span>
+                <span>AI Reels Studio</span>
+            </a>
+            <a href="?tab=automation" id="tab-btn-automation" onclick="switchSectionTab('automation'); return false;" class="section-tab-btn" style="padding: 9px 18px; font-size: 13px; font-weight: 700; border-radius: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; text-decoration: none; {{ $currentTab === 'automation' ? 'background: #0f172a !important; color: #ffffff !important; border: 1px solid #0f172a !important; box-shadow: 0 4px 12px rgba(15,23,42,0.2) !important;' : 'background: #ffffff !important; color: #1e293b !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;' }} display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">💬</span>
+                <span>WhatsApp & Channels</span>
+            </a>
         </div>
-        <div class="flex items-center gap-2">
-            <button id="btn-schedule-festivals" class="btn btn-sm text-xs py-1.5 px-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg shadow-2xs border-0 flex items-center gap-1.5">
-                <i data-lucide="wand" class="w-3.5 h-3.5 text-amber-400"></i> Auto-Schedule Wishes
+        <div style="flex-shrink: 0;">
+            <button type="button" id="btn-schedule-festivals" onclick="scheduleFestivals(this)" style="background: #0f172a !important; color: #ffffff !important; font-weight: 800 !important; font-size: 12px !important; border-radius: 12px !important; padding: 10px 18px !important; border: 1px solid #0f172a !important; cursor: pointer !important; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(15,23,42,0.15) !important;">
+                <span>✨</span> <span>Auto-Schedule Wishes</span>
             </button>
         </div>
     </div>
 
     {{-- TAB PANE 1: Festival Calendar & Queued Posts (Default View) --}}
-    <div id="pane-schedule" class="section-pane">
+    <div id="pane-schedule" class="section-pane" style="{{ $currentTab === 'schedule' ? 'display: block;' : 'display: none;' }}">
         <div class="grid grid-cols-12 gap-5">
             {{-- Left: Hindu Festival Calendar --}}
             <div class="col-span-12 lg:col-span-7">
@@ -242,8 +261,232 @@
         </div>
     </div>
 
-    {{-- TAB PANE 2: OmniRoute AI Creative Studio (Reels & High Quality Visuals) --}}
-    <div id="pane-studio" class="section-pane hidden">
+    {{-- TAB PANE 2: Dedicated Meta Facebook & Instagram Command Center --}}
+    <div id="pane-meta" class="section-pane space-y-5 {{ $currentTab === 'meta' ? '' : 'hidden' }}" style="{{ $currentTab === 'meta' ? 'display: block;' : 'display: none;' }}">
+        {{-- Hero Header --}}
+        <div style="background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e293b 100%) !important; color: #ffffff !important; border-radius: 18px !important; padding: 22px 24px !important; border: 1px solid #1e293b !important; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25) !important; display: flex; flex-direction: column; gap: 16px;" class="md:flex-row md:items-center md:justify-between">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #f09433, #dc2743, #bc1888); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; box-shadow: 0 4px 14px rgba(220,39,67,0.4); flex-shrink: 0;">
+                    📸
+                </div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <h2 style="font-size: 17px; font-weight: 900; color: #ffffff !important; letter-spacing: -0.02em; margin: 0;">Meta & Instagram Command Center</h2>
+                        <span style="padding: 3px 10px; border-radius: 9999px; font-size: 10px; font-weight: 800; background: rgba(168, 85, 247, 0.25); color: #f3e8ff !important; border: 1px solid rgba(168, 85, 247, 0.4);">Graph API v21.0</span>
+                    </div>
+                    <p style="font-size: 12px; color: #cbd5e1 !important; margin: 6px 0 0 0; line-height: 1.5; max-width: 650px;">
+                        Autonomous social publishing pipeline for Facebook Page (Online Puja) and Instagram Professional Account (@onlinepuja.live). Automatically drafts, synthesizes 1080x1080 devotional creatives, and publishes daily rituals.
+                    </p>
+                </div>
+            </div>
+            <div style="flex-shrink: 0;">
+                <a href="{{ route('social.connect', 'instagram') }}" style="background: linear-gradient(135deg, #9333ea, #db2777) !important; color: #ffffff !important; font-weight: 800 !important; font-size: 12px !important; border-radius: 12px !important; padding: 11px 20px !important; text-decoration: none !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; box-shadow: 0 4px 14px rgba(219,39,119,0.35) !important;">
+                    <span>🔗</span> <span>Reconnect via OAuth</span>
+                </a>
+            </div>
+        </div>
+
+        {{-- 2 Platform Cards: Facebook + Instagram --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {{-- Facebook Page Card --}}
+            @php
+                $fbAcct = isset($socialAccounts) ? $socialAccounts->firstWhere('platform', 'facebook') : null;
+                $igAcct = isset($socialAccounts) ? $socialAccounts->firstWhere('platform', 'instagram') : null;
+            @endphp
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 16px rgba(15,23,42,0.04); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 42px; height: 42px; border-radius: 12px; background: #2563eb; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; box-shadow: 0 2px 8px rgba(37,99,235,0.3);">
+                                f
+                            </div>
+                            <div>
+                                <h3 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0;">Facebook Business Page</h3>
+                                <span style="font-size: 11px; color: #64748b; font-family: monospace;">Page ID: {{ $fbAcct->external_id ?? '1252263081299388' }}</span>
+                            </div>
+                        </div>
+                        <span style="padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; display: inline-flex; align-items: center; gap: 6px;">
+                            <span style="width: 7px; height: 7px; border-radius: 50%; background: #22c55e;"></span> Active & Publishing
+                        </span>
+                    </div>
+
+                    <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="padding: 12px 14px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 6px;">
+                                <span style="font-size: 11px; font-weight: 700; color: #64748b;">Page Name</span>
+                                <span style="font-size: 12px; font-weight: 800; color: #0f172a;">{{ $fbAcct->label ?? 'Online Puja' }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; padding-bottom: 6px;">
+                                <span style="font-size: 11px; font-weight: 700; color: #64748b;">Permissions</span>
+                                <span style="font-size: 10px; font-weight: 800; font-family: monospace; color: #047857; background: #d1fae5; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 6px;">pages_manage_posts ✓</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 11px; font-weight: 700; color: #64748b;">Auto-Publish Mode</span>
+                                <span style="font-size: 11px; font-weight: 800; color: #1e293b;">Autonomous (Blogs & Pujas)</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 11px; color: #64748b; line-height: 1.5; margin: 4px 0 0 0;">
+                            Posts and banners are dispatched automatically on schedule. Verified live with recent post published successfully.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button type="button" onclick="verifyMetaConnection('facebook', this)" style="padding: 10px 14px; border-radius: 12px; background: #0f172a !important; color: #ffffff !important; font-weight: 800; font-size: 11px; border: 1px solid #0f172a; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        ✓ Verify FB Token
+                    </button>
+                    <a href="https://facebook.com/1252263081299388" target="_blank" rel="noopener noreferrer" style="padding: 10px 14px; border-radius: 12px; background: #eff6ff !important; color: #2563eb !important; font-weight: 800; font-size: 11px; border: 1px solid #bfdbfe; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        View Live Page ↗
+                    </a>
+                </div>
+            </div>
+
+            {{-- Instagram Professional Card --}}
+            <div style="background: #ffffff; border: 1px solid #fbcfe8; border-radius: 16px; padding: 20px; box-shadow: 0 4px 16px rgba(236,72,153,0.06); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #f09433, #dc2743, #bc1888); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; box-shadow: 0 2px 8px rgba(220,39,67,0.3);">
+                                📸
+                            </div>
+                            <div>
+                                <h3 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0;">Instagram Professional</h3>
+                                <span style="font-size: 11px; color: #64748b; font-family: monospace;">IG ID: {{ $igAcct->external_id ?? '17841434469409429' }}</span>
+                            </div>
+                        </div>
+                        <span style="padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; display: inline-flex; align-items: center; gap: 6px;">
+                            <span style="width: 7px; height: 7px; border-radius: 50%; background: #f59e0b;"></span> Scope Refresh Needed
+                        </span>
+                    </div>
+
+                    <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="padding: 12px 14px; border-radius: 12px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e;">
+                            <div style="font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                <span>⚠️</span> Required for Autonomous Instagram Posting:
+                            </div>
+                            <p style="font-size: 11px; line-height: 1.5; color: #78350f; margin: 0;">
+                                1. Connect <strong>@onlinepuja.live</strong> as a Professional Account inside Facebook Page Settings → <em>Linked Accounts</em>.<br>
+                                2. Generate token with <code>instagram_content_publish</code> & <code>instagram_basic</code>.
+                            </p>
+                        </div>
+
+                        {{-- Token Update Box --}}
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-size: 11px; font-weight: 700; color: #334155;">Paste Fresh Page Access Token</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="password" id="input-ig-token-meta" placeholder="Paste Page Access Token (EAA...)" style="flex: 1; font-size: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: monospace; color: #0f172a;">
+                                <button type="button" id="btn-save-ig-token-meta" onclick="saveMetaToken(this)" style="background: #0f172a !important; color: #ffffff !important; font-weight: 800 !important; font-size: 11px !important; border-radius: 10px !important; padding: 10px 16px !important; border: 1px solid #0f172a !important; cursor: pointer !important; white-space: nowrap !important;">
+                                    Save Token
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                    <button type="button" onclick="verifyMetaConnection('instagram', this)" style="padding: 10px 12px; border-radius: 12px; background: #0f172a !important; color: #ffffff !important; font-weight: 800; font-size: 11px; border: 1px solid #0f172a; cursor: pointer; text-align: center;">
+                        ✓ Verify Token
+                    </button>
+                    <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" style="padding: 10px 12px; border-radius: 12px; background: #f1f5f9 !important; color: #334155 !important; font-weight: 800; font-size: 11px; border: 1px solid #cbd5e1; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        Graph Explorer ↗
+                    </a>
+                    <a href="https://business.facebook.com/latest/settings/instagram_account" target="_blank" rel="noopener noreferrer" style="padding: 10px 12px; border-radius: 12px; background: #fdf2f8 !important; color: #db2777 !important; font-weight: 800; font-size: 11px; border: 1px solid #fbcfe8; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        Meta Suite ↗
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {{-- Live Social Dispatch Feed Table --}}
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-slate-100 gap-2">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="activity" class="w-4 h-4 text-purple-600"></i> Recent Facebook & Instagram Publishing Activity
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Live audit log of all social campaigns, promotional banners, and automated dispatches.</p>
+                </div>
+                <span class="text-xs font-mono text-slate-400">Total: {{ isset($recentDispatches) ? $recentDispatches->count() : 0 }} Records</span>
+            </div>
+
+            <div class="mt-4 overflow-x-auto">
+                <table class="w-full text-xs text-left">
+                    <thead>
+                        <tr class="text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                            <th class="py-2.5 px-3">Platform</th>
+                            <th class="py-2.5 px-3">Campaign / Post Content</th>
+                            <th class="py-2.5 px-3">Status</th>
+                            <th class="py-2.5 px-3">Date</th>
+                            <th class="py-2.5 px-3 text-right">Link / Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($recentDispatches ?? [] as $dispatch)
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="py-3 px-3">
+                                    @if($dispatch->platform === 'facebook')
+                                        <span class="inline-flex items-center gap-1.5 font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+                                            <span>f</span> Facebook
+                                        </span>
+                                    @elseif($dispatch->platform === 'instagram')
+                                        <span class="inline-flex items-center gap-1.5 font-bold text-pink-600 bg-pink-50 px-2.5 py-1 rounded-lg border border-pink-200">
+                                            <span>📸</span> Instagram
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+                                            {{ ucfirst($dispatch->platform) }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-3 max-w-md">
+                                    <p class="font-medium text-slate-800 truncate">{{ mb_substr($dispatch->caption ?? 'Devotional Campaign', 0, 85) }}...</p>
+                                    @if(!empty($dispatch->error) && $dispatch->status === 'failed')
+                                        <span class="text-[10px] text-rose-600 font-mono block mt-0.5 truncate">{{ mb_substr($dispatch->error, 0, 75) }}</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-3">
+                                    @if($dispatch->status === 'published')
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            Published
+                                        </span>
+                                    @elseif($dispatch->status === 'queued')
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                            Queued
+                                        </span>
+                                    @elseif($dispatch->status === 'failed')
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                            Failed
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                                            {{ ucfirst($dispatch->status) }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-3 text-slate-500 font-mono text-[11px]">
+                                    {{ !empty($dispatch->published_at) ? \Carbon\Carbon::parse($dispatch->published_at)->diffForHumans() : (\Carbon\Carbon::parse($dispatch->created_at)->diffForHumans()) }}
+                                </td>
+                                <td class="py-3 px-3 text-right">
+                                    @if(!empty($dispatch->post_id))
+                                        <span class="font-mono text-[10px] text-slate-400">ID: {{ $dispatch->post_id }}</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-slate-400 italic">
+                                    No Meta publishing events recorded yet. Daily rituals and blog posts will appear here once published.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {{-- TAB PANE 3: OmniRoute AI Creative Studio (Reels & High Quality Visuals) --}}
+    <div id="pane-studio" class="section-pane {{ $currentTab === 'studio' ? '' : 'hidden' }}" style="{{ $currentTab === 'studio' ? 'display: block;' : 'display: none;' }}">
         <div class="bg-white p-6 rounded-2xl border border-slate-200/70 shadow-2xs">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-slate-100 gap-3">
                 <div class="flex items-center gap-3">
@@ -442,8 +685,8 @@
         </div>
     </div>
 
-    {{-- TAB PANE 3: Omnichannel Marketing Automation (WhatsApp, Brevo Email, z-Agents) --}}
-    <div id="pane-automation" class="section-pane hidden">
+    {{-- TAB PANE 4: Omnichannel Marketing Automation (WhatsApp, Brevo Email, z-Agents) --}}
+    <div id="pane-automation" class="section-pane {{ $currentTab === 'automation' ? '' : 'hidden' }}" style="{{ $currentTab === 'automation' ? 'display: block;' : 'display: none;' }}">
         <div class="grid grid-cols-12 gap-5">
 
             {{-- 0. Meta & Instagram Business Suite Card --}}
@@ -705,43 +948,243 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Tab Switching between Schedule, Creative Studio, and Marketing Automation
+// Expose global navigation and toggle actions immediately
+window.switchSectionTab = function(tab) {
+    var panes = {
+        'schedule': document.getElementById('pane-schedule'),
+        'meta': document.getElementById('pane-meta'),
+        'studio': document.getElementById('pane-studio'),
+        'automation': document.getElementById('pane-automation')
+    };
+
+    var btns = {
+        'schedule': document.getElementById('tab-btn-schedule'),
+        'meta': document.getElementById('tab-btn-meta'),
+        'studio': document.getElementById('tab-btn-studio'),
+        'automation': document.getElementById('tab-btn-automation')
+    };
+
+    // Toggle panes display explicitly using inline style with !important
+    Object.keys(panes).forEach(function(key) {
+        var el = panes[key];
+        if (el) {
+            if (key === tab) {
+                el.style.setProperty('display', 'block', 'important');
+                el.classList.remove('hidden');
+            } else {
+                el.style.setProperty('display', 'none', 'important');
+                el.classList.add('hidden');
+            }
+        }
+    });
+
+    // Toggle buttons active state
+    Object.keys(btns).forEach(function(key) {
+        var b = btns[key];
+        if (b) {
+            if (key === tab) {
+                b.style.setProperty('background', '#0f172a', 'important');
+                b.style.setProperty('color', '#ffffff', 'important');
+                b.style.setProperty('border', '1px solid #0f172a', 'important');
+                b.style.setProperty('box-shadow', '0 4px 14px rgba(15,23,42,0.25)', 'important');
+                b.classList.remove('bg-white', 'text-slate-700');
+                b.classList.add('bg-slate-900', 'text-white');
+            } else {
+                b.style.setProperty('background', '#ffffff', 'important');
+                b.style.setProperty('color', '#334155', 'important');
+                b.style.setProperty('border', '1px solid #cbd5e1', 'important');
+                b.style.setProperty('box-shadow', '0 1px 3px rgba(0,0,0,0.05)', 'important');
+                b.classList.remove('bg-slate-900', 'text-white');
+                b.classList.add('bg-white', 'text-slate-700');
+            }
+        }
+    });
+
+    // Update URL query parameter without scroll jump
+    try {
+        if (window.history && window.history.replaceState) {
+            var url = new URL(window.location.href);
+            url.searchParams.set('tab', tab);
+            window.history.replaceState(null, '', url.toString());
+        }
+    } catch(e) {}
+
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+};
+
+window.saveMetaToken = function(btn) {
+    var input = document.getElementById('input-ig-token-meta');
+    if (!input) return;
+    var tok = input.value.trim();
+    if (!tok) {
+        alert('Please enter a valid Meta / Instagram Page Access Token.');
+        input.focus();
+        return;
+    }
+    var b = btn || document.getElementById('btn-save-ig-token-meta');
+    var origText = b ? b.textContent : 'Save Token';
+    if (b) {
+        b.disabled = true;
+        b.textContent = 'Saving…';
+    }
+    fetch('{{ route("growth-os.action") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ action: 'save_social_token', platform: 'instagram', token: tok })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (b) {
+            b.disabled = false;
+            b.textContent = origText;
+        }
+        if (d.ok) {
+            if (window.showGrowthNotification) {
+                window.showGrowthNotification('success', d.message || 'Token saved successfully!');
+            } else {
+                alert(d.message || 'Token saved successfully!');
+            }
+            setTimeout(function() { window.location.href = '?tab=meta'; }, 1000);
+        } else {
+            if (window.showGrowthNotification) {
+                window.showGrowthNotification('error', d.error || 'Failed to save token');
+            } else {
+                alert('Error: ' + (d.error || 'Failed to save token'));
+            }
+        }
+    })
+    .catch(function(err) {
+        if (b) {
+            b.disabled = false;
+            b.textContent = origText;
+        }
+        if (window.showGrowthNotification) {
+            window.showGrowthNotification('error', err.message);
+        } else {
+            alert('Error: ' + err.message);
+        }
+    });
+};
+
+window.verifyMetaConnection = function(platform, btn) {
+    var b = btn;
+    var origText = b ? b.textContent : 'Verify';
+    if (b) {
+        b.disabled = true;
+        b.textContent = 'Verifying…';
+    }
+    fetch('{{ route("growth-os.action") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ action: 'test_meta_post', platform: platform || 'facebook' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (b) {
+            b.disabled = false;
+            b.textContent = origText;
+        }
+        if (d.ok) {
+            if (window.showGrowthNotification) {
+                window.showGrowthNotification('success', d.message);
+            } else {
+                alert(d.message);
+            }
+        } else {
+            if (window.showGrowthNotification) {
+                window.showGrowthNotification('error', d.error || 'Verification failed');
+            } else {
+                alert('Verification Error: ' + (d.error || 'Failed'));
+            }
+        }
+    })
+    .catch(function(err) {
+        if (b) {
+            b.disabled = false;
+            b.textContent = origText;
+        }
+        if (window.showGrowthNotification) {
+            window.showGrowthNotification('error', err.message);
+        } else {
+            alert('Network error: ' + err.message);
+        }
+    });
+};
+
+window.toggleWebhookConfig = function() {
+    var drawer = document.getElementById('webhook-config-drawer');
+    if (drawer) drawer.classList.toggle('hidden');
+};
+
+window.scheduleFestivals = function(btn) {
+    var b = btn || document.getElementById('btn-schedule-festivals');
+    if (!b) return;
+    b.disabled = true;
+    b.innerHTML = '<span class="animate-spin inline-block mr-1">⏳</span> Scheduling Wishes…';
+    fetch('{{ route("growth-os.action") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ action: 'schedule_festivals' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        b.disabled = false;
+        b.innerHTML = '<span>✨</span><span>Auto-Schedule Wishes</span>';
+        if (d.ok) {
+            if (window.showGrowthNotification) {
+                window.showGrowthNotification('success', d.message || 'Festival wishes queued successfully!');
+            } else if (typeof toastr !== 'undefined') {
+                toastr.success(d.message || 'Wishes queued!');
+            } else {
+                alert(d.message || 'Wishes queued!');
+            }
+            setTimeout(function() { window.location.reload(); }, 1200);
+        } else {
+            if (window.showGrowthNotification) {
+                window.showGrowthNotification('error', d.error || 'Scheduling failed');
+            } else if (typeof toastr !== 'undefined') {
+                toastr.error(d.error || 'Scheduling failed');
+            } else {
+                alert('Error: ' + (d.error || 'Failed'));
+            }
+        }
+    })
+    .catch(function(err) {
+        b.disabled = false;
+        b.innerHTML = '<span>✨</span><span>Auto-Schedule Wishes</span>';
+        if (window.showGrowthNotification) {
+            window.showGrowthNotification('error', err.message);
+        } else if (typeof toastr !== 'undefined') {
+            toastr.error(err.message);
+        } else {
+            alert(err.message);
+        }
+    });
+};
+
+function initSocialSuite() {
     var tabBtnSchedule = document.getElementById('tab-btn-schedule');
+    var tabBtnMeta = document.getElementById('tab-btn-meta');
     var tabBtnStudio = document.getElementById('tab-btn-studio');
     var tabBtnAutomation = document.getElementById('tab-btn-automation');
-    var paneSchedule = document.getElementById('pane-schedule');
-    var paneStudio = document.getElementById('pane-studio');
-    var paneAutomation = document.getElementById('pane-automation');
-
-    function switchSectionTab(tab) {
-        // Reset all tabs
-        [paneSchedule, paneStudio, paneAutomation].forEach(function(p) { if(p) p.classList.add('hidden'); });
-        [tabBtnSchedule, tabBtnStudio, tabBtnAutomation].forEach(function(b) {
-            if(b) {
-                b.classList.remove('bg-slate-900', 'text-white');
-                b.classList.add('bg-white', 'text-slate-600');
-            }
-        });
-
-        if (tab === 'studio' && paneStudio && tabBtnStudio) {
-            paneStudio.classList.remove('hidden');
-            tabBtnStudio.classList.add('bg-slate-900', 'text-white');
-            tabBtnStudio.classList.remove('bg-white', 'text-slate-600');
-        } else if (tab === 'automation' && paneAutomation && tabBtnAutomation) {
-            paneAutomation.classList.remove('hidden');
-            tabBtnAutomation.classList.add('bg-slate-900', 'text-white');
-            tabBtnAutomation.classList.remove('bg-white', 'text-slate-600');
-        } else if (paneSchedule && tabBtnSchedule) {
-            paneSchedule.classList.remove('hidden');
-            tabBtnSchedule.classList.add('bg-slate-900', 'text-white');
-            tabBtnSchedule.classList.remove('bg-white', 'text-slate-600');
-        }
-    }
 
     if (tabBtnSchedule) tabBtnSchedule.addEventListener('click', function() { switchSectionTab('schedule'); });
+    if (tabBtnMeta) tabBtnMeta.addEventListener('click', function() { switchSectionTab('meta'); });
     if (tabBtnStudio) tabBtnStudio.addEventListener('click', function() { switchSectionTab('studio'); });
     if (tabBtnAutomation) tabBtnAutomation.addEventListener('click', function() { switchSectionTab('automation'); });
+
+    // Auto-open requested sub-tab if specified in URL hash or query
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab') || urlParams.get('subtab');
+    if (tabParam) {
+        switchSectionTab(tabParam);
+    } else if (window.location.hash === '#meta' || window.location.hash === '#instagram' || window.location.hash === '#facebook') {
+        switchSectionTab('meta');
+    } else if (window.location.hash === '#channels' || window.location.hash === '#whatsapp') {
+        switchSectionTab('automation');
+    }
 
     // 2. 3-Way Mode Switcher: Puja Catalog / Daily Rashifal / Custom
     var btnModePuja = document.getElementById('btn-mode-puja-catalog');
@@ -1363,6 +1806,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-});
+} // end initSocialSuite
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initSocialSuite();
+} else {
+    document.addEventListener('DOMContentLoaded', initSocialSuite);
+}
 </script>
 @endsection

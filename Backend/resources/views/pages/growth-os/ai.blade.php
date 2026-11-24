@@ -2,13 +2,15 @@
 
 @section('growth_content')
 @php
-    $creds = $creds ?? \App\Brain\Vault::aiCredentials();
-    $omniTextModels = $omniTextModels ?? (\Illuminate\Support\Facades\Schema::hasTable('ai_models') ? \Illuminate\Support\Facades\DB::table('ai_models')->where('provider', 'omniroute')->where('kind', 'text')->orderBy('label')->get() : collect());
-    $omniImageModels = $omniImageModels ?? (\Illuminate\Support\Facades\Schema::hasTable('ai_models') ? \Illuminate\Support\Facades\DB::table('ai_models')->where('provider', 'omniroute')->where('kind', 'image')->orderBy('label')->get() : collect());
-    $omniVideoModels = $omniVideoModels ?? (\Illuminate\Support\Facades\Schema::hasTable('ai_models') ? \Illuminate\Support\Facades\DB::table('ai_models')->where('provider', 'omniroute')->where('kind', 'video')->orderBy('label')->get() : collect());
-    $omniTotal = $omniTotal ?? (\Illuminate\Support\Facades\Schema::hasTable('ai_models') ? \Illuminate\Support\Facades\DB::table('ai_models')->where('provider', 'omniroute')->count() : 0);
+    $creds = $creds ?? [];
+    $omniTextModels = $omniTextModels ?? collect();
+    $omniImageModels = $omniImageModels ?? collect();
+    $omniVideoModels = $omniVideoModels ?? collect();
+    $comfyImageModels = $comfyImageModels ?? collect();
+    $comfyVideoModels = $comfyVideoModels ?? collect();
+    $omniTotal = $omniTotal ?? 0;
     $lastSyncedAt = $lastSyncedAt ?? null;
-    $totalModelsCount = $totalModelsCount ?? (\Illuminate\Support\Facades\Schema::hasTable('ai_models') ? \Illuminate\Support\Facades\DB::table('ai_models')->count() : 0);
+    $totalModelsCount = $totalModelsCount ?? 0;
 @endphp
 
 <style>

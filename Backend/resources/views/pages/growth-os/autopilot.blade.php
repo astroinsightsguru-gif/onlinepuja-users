@@ -539,7 +539,7 @@
             if (!confirm('Run all active AI agents (Panchang, Rashifal, Blog, Festival, B2B, Retention) now?')) return;
             this.disabled = true;
             this.innerHTML = '⏳ Orchestrating Fleet…';
-            runAjaxAction({ action: 'run_ai_agent', agent: null }, function(data) {
+            runAjaxAction({ action: 'run_ai_agent', agent: 'all' }, function(data) {
                 alert(data.message || 'All agents completed cycle.');
                 setTimeout(function() { window.location.reload(); }, 1000);
             });

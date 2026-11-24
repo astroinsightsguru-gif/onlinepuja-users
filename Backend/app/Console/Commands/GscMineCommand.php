@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Brain\RunLog;
-use App\services\SearchConsoleService;
+use App\Services\SearchConsoleService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
