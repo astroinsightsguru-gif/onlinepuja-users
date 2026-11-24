@@ -25,23 +25,35 @@ class SendPujaReminderJob implements ShouldQueue
 
     public function handle()
     {
-        // Notification for user
-         $users=DB::table('users')->where('id',$this->puja->user_id)->first();
-          // Notification for astrologer
-        $astrologers=DB::table('astrologers')->where('id',$this->puja->astrologer_id)->first();
-        $this->sendNotification(
-            $this->puja->user_id,
-            "Your puja is starting soon!",
-            "Your puja is scheduled to begin with " . (!empty($astrologers->name) ? $astrologers->name : 'paertner') . " at " . $this->puja->puja_start_datetime
-        );
-        
+        // Notification for devotee
+        $user = !empty($this->puja->user_id)
+            ? DB::table('users')->where('id', $this->puja->user_id)->first()
+            : null;
 
-       
-        $this->sendNotification(
-            $astrologers->userId,
-            "Puja reminder for your upcoming session",
-            "You have a puja scheduled with  ".(!empty($users->name) ? $users->name : 'paertner')." at " . $this->puja->puja_start_datetime
-        );
+        // Notification for astrologer
+        $astrologer = !empty($this->puja->astrologer_id)
+            ? DB::table('astrologers')->where('id', $this->puja->astrologer_id)->first()
+            : null;
+
+        $astrologerName = !empty($astrologer->name) ? $astrologer->name : 'Vedic Pandit / Acharya';
+        $devoteeName = !empty($user->name) ? $user->name : 'Devotee';
+        $startTime = !empty($this->puja->puja_start_datetime) ? $this->puja->puja_start_datetime : 'soon';
+
+        if (!empty($this->puja->user_id)) {
+            $this->sendNotification(
+                $this->puja->user_id,
+                "Your sacred Puja is starting soon! 🕉️",
+                "Your scheduled puja is preparing to begin with {$astrologerName} at {$startTime}. Please be prepared with your family."
+            );
+        }
+
+        if ($astrologer && !empty($astrologer->userId)) {
+            $this->sendNotification(
+                $astrologer->userId,
+                "Puja reminder for your upcoming session",
+                "You have a puja scheduled with {$devoteeName} at {$startTime}."
+            );
+        }
     }
 
     protected function sendNotification($userId, $title, $message)

@@ -510,13 +510,17 @@ class AutopilotEngine
             if ($user && !empty($user->contactNo)) {
                 try {
                     $wa = app(\App\Services\EvolutionWaService::class);
-                    $waMsg = "🕉️ *{$title}*
+                    $cleanPhone = $wa->cleanNumber($user->contactNo);
+                    $blacklisted = ['919999041935', '9999041935', '919305932724', '9305932724'];
 
-{$message}
+                    $isOptedOut = in_array($cleanPhone, $blacklisted) 
+                        || in_array(substr($cleanPhone, -10), $blacklisted)
+                        || DB::table('whatsapp_optouts')->where('phone', $cleanPhone)->orWhere('phone', substr($cleanPhone, -10))->exists();
 
-👉 *OnlinePuja.live:* " . url('/') . "
-_Varanasi Devotional Seva_";
-                    $wa->sendText($user->contactNo, $waMsg);
+                    if (!$isOptedOut && strlen($cleanPhone) >= 10) {
+                        $waMsg = "🕉️ *{$title}*\n\n{$message}\n\n👉 *OnlinePuja.live:* " . url('/') . "\n_Varanasi Devotional Seva_";
+                        $wa->sendText($cleanPhone, $waMsg);
+                    }
                 } catch (\Throwable $e) {
                     Log::info("Autopilot WA delivery error: " . $e->getMessage());
                 }
@@ -572,18 +576,38 @@ _Varanasi Devotional Seva_";
                 ]);
             }
 
-            // Channel B: Devotee WhatsApp Broadcast (capped at 25 per cycle for safety)
-            $users = DB::table('users')->whereNotNull('contactNo')->where('contactNo', '!=', '')->limit(25)->get();
+            // Channel B: Devotee WhatsApp Broadcast (capped at 25 per cycle with opt-out & blacklist protection)
+            $optedOutPhones = DB::table('whatsapp_optouts')->pluck('phone')->toArray();
+            $blacklisted = ['919999041935', '9999041935', '919305932724', '9305932724'];
+
+            $users = DB::table('users')
+                ->whereNotNull('contactNo')
+                ->where('contactNo', '!=', '')
+                ->inRandomOrder()
+                ->limit(50)
+                ->get();
+
             $wa = app(\App\Services\EvolutionWaService::class);
+            $sentCount = 0;
+
             foreach ($users as $u) {
+                if ($sentCount >= 25) break;
+
                 try {
-                    $waMsg = "🕉️ *{$title}*
+                    $cleanPhone = $wa->cleanNumber($u->contactNo);
+                    if (strlen($cleanPhone) < 10) continue;
 
-{$message}
+                    if (in_array($cleanPhone, $blacklisted) || in_array(substr($cleanPhone, -10), $blacklisted)) {
+                        continue;
+                    }
 
-👉 *OnlinePuja.live:* " . url('/') . "
-_Har Har Mahadev_";
-                    $wa->sendText($u->contactNo, $waMsg);
+                    if (in_array($cleanPhone, $optedOutPhones) || in_array(substr($cleanPhone, -10), $optedOutPhones)) {
+                        continue;
+                    }
+
+                    $waMsg = "🕉️ *{$title}*\n\n{$message}\n\n👉 *OnlinePuja.live:* " . url('/') . "\n_Har Har Mahadev_";
+                    $wa->sendText($cleanPhone, $waMsg);
+                    $sentCount++;
                 } catch (\Throwable $e) {}
             }
         } catch (\Throwable $e) {

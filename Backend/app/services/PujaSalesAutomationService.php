@@ -34,8 +34,8 @@ class PujaSalesAutomationService
                 ->leftJoin('users as u', 'po.user_id', '=', 'u.id')
                 ->where('po.puja_order_status', 'pending')
                 ->where(function ($q) {
-                    $q->whereNull('po.reminder_sent')
-                      ->orWhere('po.reminder_sent', 0);
+                    $q->whereNull('po.abandoned_reminder_sent')
+                      ->orWhere('po.abandoned_reminder_sent', 0);
                 })
                 ->whereBetween('po.created_at', [$startTime, $endTime])
                 ->select([
@@ -63,6 +63,19 @@ class PujaSalesAutomationService
                     continue;
                 }
 
+                $blacklisted = ['919999041935', '9999041935', '919305932724', '9305932724'];
+                if (in_array($phone, $blacklisted) || in_array(substr($phone, -10), $blacklisted)) {
+                    continue;
+                }
+
+                $isOptedOut = DB::table('whatsapp_optouts')
+                    ->where('phone', $phone)
+                    ->orWhere('phone', substr($phone, -10))
+                    ->exists();
+                if ($isOptedOut) {
+                    continue;
+                }
+
                 $name = !empty($order->address_name) ? $order->address_name : (!empty($order->user_name) ? $order->user_name : 'भक्त');
                 $pujaName = !empty($order->puja_name) ? $order->puja_name : 'वैदिक महापूजा';
                 $amount = number_format((float)($order->order_total_price ?? 0));
@@ -80,9 +93,9 @@ class PujaSalesAutomationService
                 if (!empty($dispatch['ok']) || !empty($dispatch['key']) || !empty($dispatch['messageTimestamp'])) {
                     $recovered++;
 
-                    // Mark reminder sent
+                    // Mark abandoned reminder sent
                     DB::table('puja_orders')->where('id', $order->id)->update([
-                        'reminder_sent' => 1,
+                        'abandoned_reminder_sent' => 1,
                     ]);
 
                     // Persist to whatsapp inbox so managers see it
