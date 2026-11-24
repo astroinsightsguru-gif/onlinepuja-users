@@ -158,14 +158,24 @@ class _OnlinePujaAiScreenState extends State<OnlinePujaAiScreen> {
   }
 
   void _addInitialGreetingTurn() {
+    final session = context.read<AppSession>();
+    final user = session.user;
     final isHi = _isHindi;
+    final userName = (user?.name != null && user!.name!.trim().isNotEmpty && user.name != 'User')
+        ? user.name!.trim()
+        : null;
+
     if (widget.initialAstrologerId != null) {
       final twinName = widget.initialAstrologerName ?? (isHi ? 'आचार्य' : 'Acharya');
       final twinSkill = widget.initialAstrologerSkill ??
           (isHi ? 'वैदिक ज्योतिष एवं उपाय' : 'Vedic Astrology & Remedies');
-      final msg = isHi
-          ? '🕉️ हरि ॐ तत्सत्! प्रणाम, मैं $twinName का पर्सनल AI अवतार हूँ ($twinSkill)। आप अपनी जन्म तिथि या प्रश्न बताएं, मैं आपकी कुंडली के अनुसार सटीक मार्गदर्शन और वैदिक उपाय बताऊंगा।'
-          : '🕉️ Hari Om Tatsat! Namaste, I am the Personal AI Twin of $twinName ($twinSkill). Share your birth details or question and I will guide you with accurate Vedic Jyotish and sacred remedies.';
+      final msg = userName != null
+          ? (isHi
+              ? '🕉️ हरि ॐ तत्सत् $userName जी! सादर प्रणाम, मैं $twinName का पर्सनल AI अवतार हूँ ($twinSkill)। आपकी जन्म कुंडली हमारे पास लोड है। आज आप अपने जीवन, करियर या पूजा उपाय के बारे में क्या जानना चाहते हैं?'
+              : '🕉️ Hari Om Tatsat, $userName ji! Pranam, I am the Personal AI Twin of $twinName ($twinSkill). Your birth chart is active. How may I guide your career, relationships, or planetary remedies today?')
+          : (isHi
+              ? '🕉️ हरि ॐ तत्सत्! प्रणाम, मैं $twinName का पर्सनल AI अवतार हूँ ($twinSkill)। आप अपना प्रश्न पूछें, मैं वैदिक गणना अनुसार सटीक मार्गदर्शन और उपाय बताऊंगा।'
+              : '🕉️ Hari Om Tatsat! Namaste, I am the Personal AI Twin of $twinName ($twinSkill). Please ask your inquiry and I will guide you with accurate Vedic Jyotish.');
       _turns.add(_AiTurn(
         msg,
         mine: false,
@@ -191,9 +201,13 @@ class _OnlinePujaAiScreenState extends State<OnlinePujaAiScreen> {
               : matchedInitial.first['specialty'].toString())
           : (isHi ? 'प्रधान वैदिक ज्योतिषाचार्य' : 'Master Vedic Astrologer & Rishi');
 
-      final greeting = isHi
-          ? '🕉️ हरि ॐ तत्सत्! सादर प्रणाम, मैं $initName ($initSpecialty) हूँ। कृपया अपनी जन्म तिथि या प्रश्न बताएं, मैं ग्रहों की गणना करके आपको सटीक वैदिक मार्गदर्शन और पूजा उपाय बताऊंगा।'
-          : '🕉️ Hari Om Tatsat! Pranam, I am $initName ($initSpecialty). Tell me your birth details or question, and I will guide you with Vedic Jyotish and sacred remedies.';
+      final greeting = userName != null
+          ? (isHi
+              ? '🕉️ हरि ॐ तत्सत् $userName जी! सादर प्रणाम, मैं $initName ($initSpecialty) हूँ। आपकी जन्म कुंडली हमारे पास उपलब्ध है। आज आप अपने जीवन, करियर, विवाह या ग्रह शांति के बारे में क्या मार्गदर्शन चाहते हैं?'
+              : '🕉️ Hari Om Tatsat, $userName ji! Pranam, I am $initName ($initSpecialty). Your birth chart is loaded and active. How may the planetary energies guide your life today?')
+          : (isHi
+              ? '🕉️ हरि ॐ तत्सत्! सादर प्रणाम, मैं $initName ($initSpecialty) हूँ। कृपया अपना प्रश्न पूछें, मैं ग्रहों की गणना करके आपको सटीक वैदिक मार्गदर्शन और पूजा उपाय बताऊंगा।'
+              : '🕉️ Hari Om Tatsat! Pranam, I am $initName ($initSpecialty). Ask your inquiry, and I will guide you with sacred Vedic Jyotish and divine remedies.');
 
       _turns.add(_AiTurn(
         greeting,

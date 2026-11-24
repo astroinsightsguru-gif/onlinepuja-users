@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:op_shared/op_shared.dart';
+import 'package:provider/provider.dart';
+import '../../../state/app_session.dart';
 
 /// Full Daily Horoscope experience matching Vedic legacy specs:
 /// - Horizontal Zodiac sign selector
@@ -63,24 +65,55 @@ class _DailyHoroscopeScreenState extends State<DailyHoroscopeScreen>
     'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
   ].asMap().entries.map((e) => HoroscopeSign(id: e.key + 1, name: e.value)).toList();
 
+  HoroscopeSign _resolveUserSign(List<HoroscopeSign> signs) {
+    try {
+      final user = context.read<AppSession>().user;
+      if (user?.birthDate != null) {
+        final m = user!.birthDate!.month;
+        final d = user.birthDate!.day;
+        String signName = 'Aries';
+        if ((m == 3 && d >= 21) || (m == 4 && d <= 19)) signName = 'Aries';
+        else if ((m == 4 && d >= 20) || (m == 5 && d <= 20)) signName = 'Taurus';
+        else if ((m == 5 && d >= 21) || (m == 6 && d <= 20)) signName = 'Gemini';
+        else if ((m == 6 && d >= 21) || (m == 7 && d <= 22)) signName = 'Cancer';
+        else if ((m == 7 && d >= 23) || (m == 8 && d <= 22)) signName = 'Leo';
+        else if ((m == 8 && d >= 23) || (m == 9 && d <= 22)) signName = 'Virgo';
+        else if ((m == 9 && d >= 23) || (m == 10 && d <= 22)) signName = 'Libra';
+        else if ((m == 10 && d >= 23) || (m == 11 && d <= 21)) signName = 'Scorpio';
+        else if ((m == 11 && d >= 22) || (m == 12 && d <= 21)) signName = 'Sagittarius';
+        else if ((m == 12 && d >= 22) || (m == 1 && d <= 19)) signName = 'Capricorn';
+        else if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) signName = 'Aquarius';
+        else if ((m == 2 && d >= 19) || (m == 3 && d <= 20)) signName = 'Pisces';
+
+        final matched = signs.where((s) => s.name.toLowerCase() == signName.toLowerCase());
+        if (matched.isNotEmpty) {
+          return matched.first;
+        }
+      }
+    } catch (_) {}
+    return signs.first;
+  }
+
   Future<void> _loadSigns() async {
     setState(() => _error = null);
     try {
       final signs = await HoroscopeApi.instance.signs();
       final effectiveSigns = signs.isNotEmpty ? signs : _defaultVedicSigns;
+      final userSign = _resolveUserSign(effectiveSigns);
       if (mounted) {
         setState(() {
           _signs = effectiveSigns;
-          _activeSign = effectiveSigns.first;
-          _loadDetail(effectiveSigns.first);
+          _activeSign = userSign;
+          _loadDetail(userSign);
         });
       }
     } catch (_) {
       if (mounted) {
+        final userSign = _resolveUserSign(_defaultVedicSigns);
         setState(() {
           _signs = _defaultVedicSigns;
-          _activeSign = _defaultVedicSigns.first;
-          _loadDetail(_defaultVedicSigns.first);
+          _activeSign = userSign;
+          _loadDetail(userSign);
         });
       }
     }

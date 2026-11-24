@@ -137,41 +137,50 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(5),
+                  width: 28,
+                  height: 28,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: CustomerTheme.goldGradient,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x3DF59E0B),
+                        blurRadius: 6,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
                   ),
-                  child: const Text('ॐ',
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF78350F))),
+                  child: const Center(
+                    child: Text('ॐ',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF78350F))),
+                  ),
                 ),
                 const SizedBox(width: 6),
-                Flexible(
-                  child: RichText(
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'OnlinePuja',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.3,
-                              ),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'OnlinePuja',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16.5,
+                          letterSpacing: -0.4,
+                          color: isDark ? Colors.white : const Color(0xFF1E1A16),
                         ),
-                        const TextSpan(
-                          text: '.live',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                            color: Color(0xFFD97706),
-                            letterSpacing: -0.3,
-                          ),
+                      ),
+                      const TextSpan(
+                        text: '.live',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16.5,
+                          color: Color(0xFFEA580C),
+                          letterSpacing: -0.4,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -184,13 +193,13 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                 ),
                 onLongPress: () => _showLanguageSelector(context),
                 child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  margin: const EdgeInsets.symmetric(vertical: 13, horizontal: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
                   decoration: BoxDecoration(
                     color: isHi
                         ? const Color(0xFFD97706).withValues(alpha: 0.15)
                         : (isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isHi ? const Color(0xFFD97706) : Colors.transparent,
                     ),
@@ -198,12 +207,12 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.translate_rounded, size: 12, color: Color(0xFFD97706)),
+                      const Icon(Icons.translate_rounded, size: 11, color: Color(0xFFD97706)),
                       const SizedBox(width: 3),
                       Text(
-                        isHi ? 'हिंदी' : 'EN',
+                        isHi ? 'हिं' : 'EN',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w900,
                           color: isHi
                               ? const Color(0xFFD97706)
@@ -216,9 +225,12 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
               ),
               // Smart AI Copilot Button
               IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 tooltip: isHi ? 'AI ज्योतिषी' : 'OnlinePuja AI',
                 icon: Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
@@ -226,7 +238,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                     shape: BoxShape.circle,
                     border: Border.all(color: const Color(0xFFF59E0B)),
                   ),
-                  child: const Icon(Icons.auto_awesome_rounded, size: 16, color: Color(0xFFD97706)),
+                  child: const Icon(Icons.auto_awesome_rounded, size: 14, color: Color(0xFFD97706)),
                 ),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const OnlinePujaAiScreen()),
@@ -238,11 +250,11 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                     .pushNamed(WalletScreen.route)
                     .then((_) => session.refreshUser()),
                 child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  margin: const EdgeInsets.symmetric(vertical: 13, horizontal: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1B8A5A),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF1B8A5A).withValues(alpha: 0.25),
@@ -254,14 +266,14 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('🪙', style: TextStyle(fontSize: 11)),
-                      const SizedBox(width: 4),
+                      const Text('🪙', style: TextStyle(fontSize: 10)),
+                      const SizedBox(width: 3),
                       Text(
                         '$currency${wallet.toStringAsFixed(0)}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
-                          fontSize: 12,
+                          fontSize: 11.5,
                         ),
                       ),
                     ],
@@ -270,15 +282,18 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
               ),
               // Notifications Bell
               IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 tooltip: isHi ? 'सूचनाएं' : 'Notifications',
                 icon: Icon(
                   Icons.notifications_none_rounded,
-                  size: 22,
+                  size: 21,
                   color: isDark ? Colors.white70 : const Color(0xFF475569),
                 ),
                 onPressed: () => Navigator.of(context).pushNamed(NotificationsScreen.route),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
             ],
           ),
           body: RefreshIndicator(
@@ -345,24 +360,24 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: isDark
-                ? [const Color(0xFF3B1E08), const Color(0xFF200F05)]
+                ? [const Color(0xFF381806), const Color(0xFF1E0D03)]
                 : [const Color(0xFFFFFBEB), const Color(0xFFFEF3C7)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0xFFD97706).withValues(alpha: 0.45),
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
             width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFFD97706).withValues(alpha: isDark ? 0.2 : 0.08),
-              blurRadius: 6,
+              blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
@@ -372,31 +387,47 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
           children: [
             Row(
               children: [
-                const Text('🪔', style: TextStyle(fontSize: 16)),
-                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFFD97706),
+                  ),
+                  child: const Text('🪔', style: TextStyle(fontSize: 12)),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     isHi ? 'काशी दीपोत्सव एवं पर्व महाकुंभ 2026' : 'Kashi Festive Mahotsav 2026',
                     style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.2,
                       color: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
                     ),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD97706),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFEA580C), Color(0xFFD97706)],
+                    ),
                     borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x3DEA580C),
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
                   ),
                   child: Text(
-                    isHi ? 'सीमित तिथियां' : 'BOOK EARLY',
+                    isHi ? '🔥 सीमित तिथियां' : '🔥 BOOK EARLY',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 9.5,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
@@ -417,13 +448,13 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                         color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: pill.color.withValues(alpha: 0.35),
+                          color: pill.color.withValues(alpha: 0.3),
                           width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 3,
+                            blurRadius: 4,
                             offset: const Offset(0, 1),
                           ),
                         ],
@@ -441,7 +472,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: pill.bg,
                               borderRadius: BorderRadius.circular(6),
@@ -463,6 +494,9 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
         ),
       ),
     );
@@ -663,8 +697,9 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
   }
 
   Widget _searchBar(BuildContext context, ColorScheme scheme, bool isDark) {
+    final isHi = LocaleManager.instance.currentLanguage.value != AppLanguage.en;
     final searchBg = isDark ? CustomerTheme.cosmicCardElevated : Colors.white;
-    final searchBorder = isDark ? CustomerTheme.cosmicBorderDark : const Color(0xFFE2E8F0);
+    final searchBorder = isDark ? const Color(0x3DF59E0B) : const Color(0xFFFDE68A);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
@@ -678,26 +713,30 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
               decoration: BoxDecoration(
                 color: searchBg,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: searchBorder),
+                border: Border.all(color: searchBorder, width: 1.2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: const Color(0xFFD97706).withValues(alpha: isDark ? 0.2 : 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search_rounded, color: Color(0xFFD97706), size: 22),
+                  const Icon(Icons.search_rounded, color: Color(0xFFEA580C), size: 22),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      AppStrings.searchPlaceholder,
+                      isHi
+                          ? 'सर्च करें: पूजा, कुंडली, पंचांग, ज्योतिषी...'
+                          : 'Search Pujas, Kundli, Astrologers...',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-                        fontSize: 13.5,
-                        height: 1.25,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -706,44 +745,120 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                       MaterialPageRoute(builder: (_) => const OnlinePujaAiScreen()),
                     ),
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD97706).withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
+                        gradient: CustomerTheme.saffronGradient,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x3DEA580C),
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.mic_none_rounded, color: Color(0xFFD97706), size: 18),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.auto_awesome, color: Colors.white, size: 12),
+                          const SizedBox(width: 3),
+                          Text(
+                            isHi ? 'AI गुरु' : 'AI',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 6),
-          // Auspicious Muhurat status pill
-          Align(
-            alignment: Alignment.centerLeft,
+          const SizedBox(height: 7),
+          // Interactive Auspicious Shubh Muhurat Ribbon
+          InkWell(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PanchangScreen()),
+            ),
+            borderRadius: BorderRadius.circular(12),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [const Color(0xFF381806), const Color(0xFF1E0D03)]
+                      : [const Color(0xFFFFFBEB), const Color(0xFFFEF3C7)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFDE68A)),
+                border: Border.all(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFD97706).withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("🕉️ ", style: TextStyle(fontSize: 10.5)),
-                  Flexible(
-                    child: Text(
-                      AppStrings.shubhMuhuratActive,
+                  Container(
+                    width: 18,
+                    height: 18,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: CustomerTheme.goldGradient,
+                    ),
+                    child: const Center(
+                      child: Text('ॐ',
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF78350F))),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: RichText(
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF92400E),
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: isHi ? 'आज का शुभ मुहूर्त: ' : "Today's Shubh Muhurat: ",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                            ),
+                          ),
+                          TextSpan(
+                            text: isHi
+                                ? 'अमृत काल सक्रिय • राहु काल समाप्त'
+                                : 'Amrit Kaal Active • Rahu Kaal Ended',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white70 : const Color(0xFFB45309),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 10,
+                    color: isDark ? const Color(0xFFFCD34D) : const Color(0xFFB45309),
                   ),
                 ],
               ),
@@ -764,9 +879,10 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
             ? 'गंगा घाट पर 108 दीपदान, महालक्ष्मी पूजन एवं विशेष गो-सेवा'
             : '108 Deepdaan on Ganga Ghats & Maha Lakshmi Havan',
         cta: isHi ? 'पर्व संकल्प बुक करें ✨' : 'Book Festive Sankalp ✨',
+        tag: isHi ? 'विशेष महापर्व' : 'SPECIAL FESTIVAL',
         icon: Icons.brightness_high_rounded,
         image: 'https://onlinepuja.live/public/storage/puja_images/puja_1764232697222466223.webp',
-        gradient: const [Color(0xFF78350F), Color(0xFFD97706)],
+        gradient: const [Color(0xFF9A3412), Color(0xFFC2410C), Color(0xFFEA580C)],
         onTap: () => _goToTab(2), // Puja tab (index 2)
       ),
       (
@@ -775,9 +891,10 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
             ? 'काशी व उज्जैन से लाइव संकल्प, वीडियो प्रमाण और प्रसाद'
             : 'Live Sankalp & Consecrated Prasad from Holy Dhams',
         cta: isHi ? 'पूजा बुक करें 🙏' : 'Book Puja 🙏',
+        tag: isHi ? 'लाइव संकल्प' : 'LIVE SANKALP',
         icon: Icons.local_fire_department_rounded,
         image: 'https://onlinepuja.live/public/storage/puja_images/puja_17642331041781434446.png',
-        gradient: const [Color(0xFF8B0000), Color(0xFFE53935)],
+        gradient: const [Color(0xFF7F1D1D), Color(0xFF991B1B), Color(0xFFDC2626)],
         onTap: () => _goToTab(2), // Puja tab (index 2)
       ),
       (
@@ -785,10 +902,11 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         subtitle: isHi
             ? 'प्रथम सत्र ₹1/मिनट · कुंडली, विवाह, करियर व दोष निवारण'
             : 'First session ₹1/min · Kundli, Marriage & Career Guidance',
-        cta: isHi ? 'ज्योतिषी से बात करें' : 'Consult Astrologer',
+        cta: isHi ? 'ज्योतिषी से बात करें 📞' : 'Consult Astrologer 📞',
+        tag: isHi ? '₹1/मिनट ऑफर' : 'SPECIAL OFFER',
         icon: Icons.self_improvement_rounded,
         image: 'https://onlinepuja.live/public/storage/puja_images/puja_17642330451605364386.jpg',
-        gradient: const [Color(0xFF8E2B12), Color(0xFFD97706)],
+        gradient: const [Color(0xFF3B0764), Color(0xFF581C87), Color(0xFF7E22CE)],
         onTap: () => _goToTab(1), // Consult tab (index 1)
       ),
       (
@@ -797,9 +915,10 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
             ? 'काशी विश्वनाथ, महाकालेश्वर एवं गंगा आरती लाइव'
             : 'Kashi Vishwanath, Mahakaleshwar & Ganga Aarti Feeds',
         cta: isHi ? 'लाइव दर्शन 🪔' : 'Watch Live 🪔',
+        tag: isHi ? '🔴 लाइव प्रसारण' : '🔴 LIVE STREAM',
         icon: Icons.temple_hindu_rounded,
         image: 'https://onlinepuja.live/public/storage/brain_media/brain_NBw7PwNZxf2gqejbRd_940x627.jpg',
-        gradient: const [Color(0xFF4A148C), Color(0xFF7B1FA2)],
+        gradient: const [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F766E)],
         onTap: () => Navigator.of(context).pushNamed(LiveDarshanScreen.route),
       ),
       (
@@ -808,9 +927,10 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
             ? '100% प्रमाणित प्राण-प्रतिष्ठित रुद्राक्ष, रत्न एवं माला'
             : '100% Consecrated Rudraksha, Gemstones & Sphatik Malas',
         cta: isHi ? 'भण्डार देखें 📿' : 'Explore Store 📿',
+        tag: isHi ? '100% प्रमाणित' : '100% CONSECRATED',
         icon: Icons.storefront_rounded,
         image: 'https://onlinepuja.live/public/storage/puja_images/puja_1764232697222466223.webp',
-        gradient: const [Color(0xFF1B5E20), Color(0xFF2E7D32)],
+        gradient: const [Color(0xFF14532D), Color(0xFF166534), Color(0xFF15803D)],
         onTap: () => _goToTab(3), // Vedic Store tab (index 3)
       ),
     ];
@@ -820,7 +940,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
     return Column(
       children: [
         SizedBox(
-          height: 162,
+          height: 174,
           child: PageView.builder(
             itemCount: totalCount,
             onPageChanged: (i) => setState(() => _bannerIndex = i),
@@ -834,7 +954,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.18),
@@ -844,7 +964,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                         ],
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(20),
                         child: Image.network(
                           imageUrl,
                           fit: BoxFit.cover,
@@ -863,7 +983,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
             },
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -871,11 +991,12 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: _bannerIndex == i ? 18 : 6,
+                width: _bannerIndex == i ? 22 : 6,
                 height: 6,
                 decoration: BoxDecoration(
+                  gradient: _bannerIndex == i ? CustomerTheme.goldGradient : null,
                   color: _bannerIndex == i
-                      ? CustomerTheme.brandSaffron
+                      ? null
                       : scheme.outline.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(3),
                 ),
@@ -890,22 +1011,26 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
           colors: b.gradient,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.22),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: (b.gradient.first as Color).withValues(alpha: 0.3),
-            blurRadius: 10,
+            color: (b.gradient.first as Color).withValues(alpha: 0.35),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(16, 12, 14, 12),
         child: Row(
           children: [
             Expanded(
@@ -913,6 +1038,23 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      b.tag,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
                   Text(
                     b.title,
                     maxLines: 2,
@@ -920,33 +1062,34 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
+                      fontWeight: FontWeight.w900,
+                      height: 1.22,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     b.subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white70,
-                      fontSize: 11,
+                      fontSize: 10.5,
                       height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 9),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: b.gradient.first,
-                      elevation: 2,
+                      elevation: 3,
+                      shadowColor: Colors.black26,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
+                        horizontal: 14,
+                        vertical: 5,
                       ),
                       visualDensity: VisualDensity.compact,
                     ),
@@ -954,7 +1097,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                     child: Text(
                       b.cta,
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                         fontSize: 11.5,
                       ),
                     ),
@@ -962,18 +1105,18 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Container(
-              width: 76,
-              height: 76,
+              width: 82,
+              height: 82,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
-                boxShadow: [
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFFDE68A), width: 1.8),
+                boxShadow: const [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    color: Colors.black38,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
@@ -995,7 +1138,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.35)],
+                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.25)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -1135,7 +1278,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
           ),
           const SizedBox(height: 6),
           SizedBox(
-            height: 168,
+            height: 184,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
@@ -1152,22 +1295,22 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                     );
                   },
                   child: Container(
-                    width: 125,
+                    width: 128,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(18),
                       color: const Color(0xFF0F172A),
                       border: Border.all(
                         color: isLive
                             ? const Color(0xFFEF4444)
-                            : (i == 0 ? CustomerTheme.brandGold : Colors.white24),
-                        width: isLive || i == 0 ? 1.5 : 0.8,
+                            : (i == 0 ? CustomerTheme.brandGold : const Color(0x33F59E0B)),
+                        width: isLive || i == 0 ? 1.5 : 1,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: (isLive ? const Color(0xFFEF4444) : CustomerTheme.brandGold)
-                              .withValues(alpha: 0.15),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                              .withValues(alpha: 0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
@@ -1191,10 +1334,10 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                             gradient: LinearGradient(
                               colors: [
                                 Colors.transparent,
-                                Colors.black.withValues(alpha: 0.3),
-                                Colors.black.withValues(alpha: 0.92),
+                                Colors.black.withValues(alpha: 0.15),
+                                Colors.black.withValues(alpha: 0.88),
                               ],
-                              stops: const [0.0, 0.45, 1.0],
+                              stops: const [0.0, 0.52, 1.0],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                             ),
@@ -1206,12 +1349,19 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                             decoration: BoxDecoration(
-                              color: isLive ? const Color(0xFFDC2626) : Colors.black87,
+                              color: isLive ? const Color(0xFFDC2626) : Colors.black.withValues(alpha: 0.65),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: isLive ? Colors.white70 : CustomerTheme.brandGold.withValues(alpha: 0.5),
                                 width: 0.8,
                               ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 3,
+                                  offset: Offset(0, 1),
+                                ),
+                              ],
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -1246,10 +1396,11 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.45),
+                              color: Colors.black.withValues(alpha: 0.35),
                               shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white30, width: 0.8),
                             ),
-                            child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 18),
+                            child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 16),
                           ),
                         ),
                         Positioned(
@@ -1264,8 +1415,8 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                                 s['title'] as String,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w900,
                                   height: 1.25,
                                 ),
                                 maxLines: 2,
@@ -1274,7 +1425,11 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 s['subtitle'] as String,
-                                style: const TextStyle(color: Colors.white70, fontSize: 9.5),
+                                style: const TextStyle(
+                                  color: Color(0xFFFDE68A),
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -1293,22 +1448,107 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
     );
   }
 
-  /// Clean, 4x3 Curated Vedic Sanctum Grid reconnecting authentic spiritual tools
+  /// World-Class 4x3 Curated Vedic Sanctum Grid with sacred glow, badges, and dual-tone gradients
   Widget _curatedVedicGrid(BuildContext context, ColorScheme scheme, bool isDark) {
     final isHi = LocaleManager.instance.currentLanguage.value != AppLanguage.en;
+
     final tools = [
-      (AppStrings.freeKundli, Icons.auto_graph_rounded, const Color(0xFFFFEBEE), const Color(0xFFC62828), const KundliListScreen()),
-      (AppStrings.kundliMatching, Icons.favorite_rounded, const Color(0xFFFCE4EC), const Color(0xFFAD1457), const KundliMatchingScreen()),
-      (AppStrings.panchang, Icons.wb_twilight_rounded, const Color(0xFFFFF8E1), const Color(0xFFF57F17), const PanchangScreen()),
-      (AppStrings.horoscope, Icons.nightlight_round, const Color(0xFFEDE7F6), const Color(0xFF512DA8), const DailyHoroscopeScreen()),
-      (AppStrings.kpCalendar, Icons.shield_moon_rounded, const Color(0xFFE8EAF6), const Color(0xFF283593), const KpCalendarScreen()),
-      (AppStrings.cosmicAi, Icons.auto_awesome_rounded, const Color(0xFFFEF3C7), const Color(0xFFD97706), const CosmicAiScreen()),
-      (AppStrings.japaMala, Icons.circle_outlined, const Color(0xFFF3E5F5), const Color(0xFF6A1B9A), const JapaMalaScreen()),
-      (AppStrings.mySankalp, Icons.savings_rounded, const Color(0xFFE0F2F1), const Color(0xFF00695C), const SankalpVaultScreen()),
-      (AppStrings.annadaan, Icons.volunteer_activism_rounded, const Color(0xFFFBE9E7), const Color(0xFFD84315), const AnnadaanScreen()),
-      (AppStrings.prashnaKundli, Icons.help_outline_rounded, const Color(0xFFE0F7FA), const Color(0xFF00838F), const PrashnaOracleScreen()),
-      (isHi ? 'स्वप्न विचार' : 'Swapna Shastra', Icons.bedtime_rounded, const Color(0xFFEDE7F6), const Color(0xFF4527A0), const SwapnaShastraScreen()),
-      (isHi ? 'वैदिक लेख' : 'Vedic Blogs', Icons.menu_book_rounded, const Color(0xFFF1F8E9), const Color(0xFF558B2F), const BlogScreen()),
+      (
+        title: AppStrings.freeKundli,
+        tag: isHi ? 'निःशुल्क' : 'FREE',
+        tagBg: const Color(0xFF10B981),
+        icon: Icons.auto_graph_rounded,
+        gradient: const [Color(0xFFFF6B00), Color(0xFFDC2626)],
+        destination: const KundliListScreen(),
+      ),
+      (
+        title: AppStrings.kundliMatching,
+        tag: isHi ? '३६ गुण' : '36 Gunas',
+        tagBg: const Color(0xFFBE185D),
+        icon: Icons.favorite_rounded,
+        gradient: const [Color(0xFFE11D48), Color(0xFF9F1239)],
+        destination: const KundliMatchingScreen(),
+      ),
+      (
+        title: AppStrings.panchang,
+        tag: isHi ? 'आज का' : 'Daily',
+        tagBg: const Color(0xFFD97706),
+        icon: Icons.wb_sunny_rounded,
+        gradient: const [Color(0xFFF59E0B), Color(0xFFB45309)],
+        destination: const PanchangScreen(),
+      ),
+      (
+        title: AppStrings.horoscope,
+        tag: isHi ? 'राशिफल' : 'Today',
+        tagBg: const Color(0xFF7C3AED),
+        icon: Icons.nightlight_round,
+        gradient: const [Color(0xFF8B5CF6), Color(0xFF5B21B6)],
+        destination: const DailyHoroscopeScreen(),
+      ),
+      (
+        title: AppStrings.kpCalendar,
+        tag: isHi ? 'सटीक' : 'KP System',
+        tagBg: const Color(0xFF2563EB),
+        icon: Icons.calendar_month_rounded,
+        gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+        destination: const KpCalendarScreen(),
+      ),
+      (
+        title: AppStrings.cosmicAi,
+        tag: 'AI 24/7',
+        tagBg: const Color(0xFF9333EA),
+        icon: Icons.auto_awesome_rounded,
+        gradient: const [Color(0xFFA855F7), Color(0xFF6B21A8)],
+        destination: const CosmicAiScreen(),
+      ),
+      (
+        title: AppStrings.japaMala,
+        tag: isHi ? '१०८ जाप' : '108 Jaap',
+        tagBg: const Color(0xFFB45309),
+        icon: Icons.circle_outlined,
+        gradient: const [Color(0xFFD97706), Color(0xFF78350F)],
+        destination: const JapaMalaScreen(),
+      ),
+      (
+        title: AppStrings.mySankalp,
+        tag: isHi ? 'संकल्प' : 'Vault',
+        tagBg: const Color(0xFF059669),
+        icon: Icons.savings_rounded,
+        gradient: const [Color(0xFF10B981), Color(0xFF047857)],
+        destination: const SankalpVaultScreen(),
+      ),
+      (
+        title: AppStrings.annadaan,
+        tag: isHi ? 'पुण्य लाभ' : 'Seva',
+        tagBg: const Color(0xFFEA580C),
+        icon: Icons.volunteer_activism_rounded,
+        gradient: const [Color(0xFFF97316), Color(0xFFC2410C)],
+        destination: const AnnadaanScreen(),
+      ),
+      (
+        title: AppStrings.prashnaKundli,
+        tag: isHi ? 'तत्काल' : 'Instant',
+        tagBg: const Color(0xFF0891B2),
+        icon: Icons.help_outline_rounded,
+        gradient: const [Color(0xFF06B6D4), Color(0xFF0E7490)],
+        destination: const PrashnaOracleScreen(),
+      ),
+      (
+        title: isHi ? 'स्वप्न विचार' : 'Swapna Shastra',
+        tag: isHi ? 'फल विचार' : 'Shastra',
+        tagBg: const Color(0xFF4F46E5),
+        icon: Icons.bedtime_rounded,
+        gradient: const [Color(0xFF6366F1), Color(0xFF3730A3)],
+        destination: const SwapnaShastraScreen(),
+      ),
+      (
+        title: isHi ? 'वैदिक ज्ञान' : 'Vedic Blogs',
+        tag: isHi ? 'ज्ञान' : 'Articles',
+        tagBg: const Color(0xFF65A30D),
+        icon: Icons.menu_book_rounded,
+        gradient: const [Color(0xFF84CC16), Color(0xFF4D7C0F)],
+        destination: const BlogScreen(),
+      ),
     ];
 
     return Padding(
@@ -1320,74 +1560,137 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
             children: [
               Container(
                 width: 3.5,
-                height: 15,
+                height: 16,
                 decoration: BoxDecoration(
-                  color: CustomerTheme.brandSaffron,
+                  gradient: CustomerTheme.saffronGradient,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   AppStrings.vedicSanctumTitle,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w900,
                         letterSpacing: -0.2,
                       ),
                 ),
               ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1B4B) : const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Text(
+                  isHi ? '१२+ नित्य सेवाएं' : '12+ Sacred Utilities',
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: tools.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
-              childAspectRatio: 0.86,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 10,
+              childAspectRatio: 0.76,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 12,
             ),
             itemBuilder: (context, i) {
               final t = tools[i];
               return InkWell(
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => t.$5),
+                  MaterialPageRoute(builder: (_) => t.destination),
                 ),
                 borderRadius: BorderRadius.circular(16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: isDark ? t.$4.withValues(alpha: 0.18) : t.$3,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark ? t.$4.withValues(alpha: 0.4) : t.$4.withValues(alpha: 0.28),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: t.$4.withValues(alpha: 0.12),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: t.gradient,
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              width: 1.2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: t.gradient.first.withValues(alpha: 0.28),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Icon(t.$2, color: t.$4, size: 26),
+                          child: Center(
+                            child: Icon(
+                              t.icon,
+                              color: Colors.white,
+                              size: 27,
+                            ),
+                          ),
+                        ),
+                        if (t.tag.isNotEmpty)
+                          Positioned(
+                            top: -4,
+                            right: -6,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: t.tagBg,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.white, width: 1),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 3,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                t.tag,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 7),
                     Text(
-                      t.$1,
+                      t.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF1E293B),
                         letterSpacing: -0.2,
                       ),
@@ -1400,6 +1703,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         ],
       ),
     );
+  }
   }
 
   /// Unified Live Consultation section with ₹1 promo hook, online indicators, and direct Chat/Call buttons

@@ -53,11 +53,44 @@ class _KundliMatchingScreenState extends State<KundliMatchingScreen> {
   }
 
   Future<void> _loadSaved() async {
-    final userId = context.read<AppSession>().user?.id ?? 0;
+    final session = context.read<AppSession>();
+    final user = session.user;
+    final userId = user?.id ?? 0;
+
+    // 1. First, check if the signed-in user profile has birth details
+    if (user != null && user.name != null && user.name!.trim().isNotEmpty && user.name != 'User') {
+      final isFemale = user.gender?.toLowerCase() == 'female';
+      final which = isFemale ? 1 : 0;
+      final birthDateStr = user.birthDate != null ? _fmtDate(user.birthDate) : '';
+      if (birthDateStr.isNotEmpty) {
+        setState(() {
+          if (which == 0) {
+            _boyName.text = user.name!.trim();
+            _boyDate.text = birthDateStr;
+            _boyTime.text = user.birthTime ?? '08:00';
+            _boyPlace.text = user.birthPlace ?? 'New Delhi';
+          } else {
+            _girlName.text = user.name!.trim();
+            _girlDate.text = birthDateStr;
+            _girlTime.text = user.birthTime ?? '08:00';
+            _girlPlace.text = user.birthPlace ?? 'New Delhi';
+          }
+        });
+      }
+    }
+
     if (userId == 0) return;
     try {
       final list = await KundliApi.instance.list(userId: userId);
-      if (mounted) setState(() => _saved = list);
+      if (mounted) {
+        setState(() => _saved = list);
+        // If user fields were empty, prefill from their primary saved kundli!
+        if (list.isNotEmpty && _boyName.text.isEmpty && _girlName.text.isEmpty) {
+          final first = list.first;
+          final isFemale = first.gender.toLowerCase() == 'female';
+          _prefill(isFemale ? 1 : 0, first);
+        }
+      }
     } catch (_) {
       // optional prefill source; ignore failures
     }

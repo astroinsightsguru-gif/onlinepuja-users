@@ -132,37 +132,80 @@ class _KundliListScreenState extends State<KundliListScreen> {
                                 const SizedBox(height: 10),
                             itemBuilder: (context, i) {
                               final k = _items![i];
+                              final isPrimary = i == 0;
                               return Card(
                                 margin: EdgeInsets.zero,
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: scheme.primaryContainer,
-                                    child: Text(
-                                      k.name.isNotEmpty
-                                          ? k.name[0].toUpperCase()
-                                          : '?',
-                                      style: TextStyle(
-                                          color: scheme.primary,
-                                          fontWeight: FontWeight.w800),
+                                elevation: isPrimary ? 3 : 1,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: isPrimary ? const Color(0xFFF59E0B) : Colors.transparent,
+                                    width: isPrimary ? 1.5 : 0,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    if (isPrimary)
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                        decoration: const BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+                                          ),
+                                          borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+                                        ),
+                                        child: const Row(
+                                          children: [
+                                            Text('👑', style: TextStyle(fontSize: 12)),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              'आपकी मुख्य जन्म पत्रिका (Primary Janam Patrika)',
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFF92400E),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor: isPrimary ? const Color(0xFFEA580C) : scheme.primaryContainer,
+                                        child: Text(
+                                          k.name.isNotEmpty
+                                              ? k.name[0].toUpperCase()
+                                              : '?',
+                                          style: TextStyle(
+                                              color: isPrimary ? Colors.white : scheme.primary,
+                                              fontWeight: FontWeight.w800),
+                                        ),
+                                      ),
+                                      title: Text(
+                                        k.name,
+                                        style: TextStyle(
+                                          fontWeight: isPrimary ? FontWeight.w900 : FontWeight.w600,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        '${k.birthDate.toIso8601String().substring(0, 10)} · '
+                                        '${k.birthTime} · ${k.birthPlace}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      trailing: IconButton(
+                                        icon: const Icon(Icons.delete_outline),
+                                        onPressed: () => _delete(k),
+                                      ),
+                                      onTap: () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              KundliDetailScreen(kundli: k),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  title: Text(k.name),
-                                  subtitle: Text(
-                                    '${k.birthDate.toIso8601String().substring(0, 10)} · '
-                                    '${k.birthTime} · ${k.birthPlace}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  trailing: IconButton(
-                                    icon: const Icon(Icons.delete_outline),
-                                    onPressed: () => _delete(k),
-                                  ),
-                                  onTap: () => Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          KundliDetailScreen(kundli: k),
-                                    ),
-                                  ),
+                                  ],
                                 ),
                               );
                             },
@@ -190,6 +233,73 @@ class _AddKundliSheetState extends State<_AddKundliSheet> {
   DateTime _date = DateTime.now();
   TimeOfDay _time = const TimeOfDay(hour: 8, minute: 0);
   bool _saving = false;
+  bool _isAutoFilled = false;
+
+  static const _cityPresets = [
+    ('Varanasi', '25.3176', '82.9739'),
+    ('New Delhi', '28.6139', '77.2090'),
+    ('Mumbai', '19.0760', '72.8777'),
+    ('Ayodhya', '26.7922', '82.1998'),
+    ('Ujjain', '23.1765', '75.7885'),
+    ('Haridwar', '29.9457', '78.1642'),
+    ('Bengaluru', '12.9716', '77.5946'),
+    ('Kolkata', '22.5726', '88.3639'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _prefillFromUserProfile());
+  }
+
+  void _prefillFromUserProfile() {
+    final user = context.read<AppSession>().user;
+    if (user == null) return;
+
+    bool filled = false;
+    if (user.name != null && user.name!.trim().isNotEmpty && user.name != 'User') {
+      _name.text = user.name!.trim();
+      filled = true;
+    }
+    if (user.gender != null && user.gender!.trim().isNotEmpty) {
+      final g = user.gender!.trim();
+      if (['Male', 'Female', 'Other'].contains(g)) {
+        _gender = g;
+        filled = true;
+      }
+    }
+    if (user.birthPlace != null && user.birthPlace!.trim().isNotEmpty) {
+      _place.text = user.birthPlace!.trim();
+      filled = true;
+      // Auto-match city coordinates if in presets
+      for (final c in _cityPresets) {
+        if (c.$1.toLowerCase() == _place.text.toLowerCase()) {
+          _lat.text = c.$2;
+          _lng.text = c.$3;
+          break;
+        }
+      }
+    }
+    if (user.birthDate != null) {
+      _date = user.birthDate!;
+      filled = true;
+    }
+    if (user.birthTime != null && user.birthTime!.trim().isNotEmpty) {
+      try {
+        final parts = user.birthTime!.trim().split(':');
+        if (parts.length >= 2) {
+          final h = int.parse(parts[0]);
+          final m = int.parse(parts[1]);
+          _time = TimeOfDay(hour: h, minute: m);
+          filled = true;
+        }
+      } catch (_) {}
+    }
+
+    if (filled && mounted) {
+      setState(() => _isAutoFilled = true);
+    }
+  }
 
   @override
   void dispose() {
@@ -264,7 +374,33 @@ class _AddKundliSheetState extends State<_AddKundliSheet> {
                       .textTheme
                       .titleLarge
                       ?.copyWith(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
+              if (_isAutoFilled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFF59E0B)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.auto_awesome, size: 14, color: Color(0xFFD97706)),
+                      SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'आपकी प्रोफाइल से विवरण स्वतः भर दिए गए हैं (Auto-filled from your profile)',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF92400E),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               TextFormField(
                 controller: _name,
                 decoration: const InputDecoration(
@@ -294,6 +430,29 @@ class _AddKundliSheetState extends State<_AddKundliSheet> {
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? 'Enter birth place'
                     : null,
+              ),
+              const SizedBox(height: 8),
+              // Smart City Quick Selector
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _cityPresets.map((city) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ActionChip(
+                        label: Text(city.$1, style: const TextStyle(fontSize: 10.5)),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () {
+                          setState(() {
+                            _place.text = city.$1;
+                            _lat.text = city.$2;
+                            _lng.text = city.$3;
+                          });
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
               const SizedBox(height: 12),
               Row(
