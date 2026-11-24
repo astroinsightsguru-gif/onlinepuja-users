@@ -336,6 +336,34 @@
             </div>
         </div>
 
+        {{-- Meta Business Manager & Suite Bar --}}
+        @php
+            $metaBusinessId = \App\Brain\Vault::get('meta_business_id', '1025907302815569');
+        @endphp
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 22px;">🏢</span>
+                <div>
+                    <div style="font-size: 13px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span>Meta Business Account: <strong>OnlinePuja Live</strong></span>
+                        <span style="font-size: 11px; font-weight: 800; font-family: monospace; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 6px;">ID: {{ $metaBusinessId }}</span>
+                    </div>
+                    <span style="font-size: 11.5px; color: #64748b;">Primary Business Manager for Facebook Page (Online Puja) & Instagram Professional (@onlinepuja.live)</span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="https://business.facebook.com/settings/?business_id={{ $metaBusinessId }}" target="_blank" rel="noopener noreferrer" style="font-size: 11px; font-weight: 800; color: #1e40af; background: #eff6ff; border: 1px solid #bfdbfe; padding: 8px 14px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                    Business Settings ↗
+                </a>
+                <a href="https://business.facebook.com/latest/settings/instagram_account?business_id={{ $metaBusinessId }}" target="_blank" rel="noopener noreferrer" style="font-size: 11px; font-weight: 800; color: #9d174d; background: #fdf2f8; border: 1px solid #fbcfe8; padding: 8px 14px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                    Linked Instagram ↗
+                </a>
+                <a href="https://business.facebook.com/settings/pages?business_id={{ $metaBusinessId }}" target="_blank" rel="noopener noreferrer" style="font-size: 11px; font-weight: 800; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 8px 14px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                    Pages & Roles ↗
+                </a>
+            </div>
+        </div>
+
         {{-- 2 Platform Cards: Facebook + Instagram --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             {{-- Facebook Page Card --}}
@@ -440,7 +468,7 @@
                     <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" style="padding: 10px 12px; border-radius: 12px; background: #f1f5f9 !important; color: #334155 !important; font-weight: 800; font-size: 11px; border: 1px solid #cbd5e1; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
                         Graph Explorer ↗
                     </a>
-                    <a href="https://business.facebook.com/latest/settings/instagram_account" target="_blank" rel="noopener noreferrer" style="padding: 10px 12px; border-radius: 12px; background: #fdf2f8 !important; color: #db2777 !important; font-weight: 800; font-size: 11px; border: 1px solid #fbcfe8; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                    <a href="https://business.facebook.com/latest/settings/instagram_account?business_id={{ $metaBusinessId }}" target="_blank" rel="noopener noreferrer" style="padding: 10px 12px; border-radius: 12px; background: #fdf2f8 !important; color: #db2777 !important; font-weight: 800; font-size: 11px; border: 1px solid #fbcfe8; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
                         Meta Suite ↗
                     </a>
                 </div>

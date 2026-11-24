@@ -151,6 +151,7 @@ class Vault
 
         return [
             'social_webhook_url' => self::get('social_webhook_url', env('SOCIAL_DISPATCH_WEBHOOK', '')),
+            'meta_business_id'   => self::get('meta_business_id', '1025907302815569'),
             'meta_app_id'        => $metaId,
             'meta_app_secret'    => $metaSecret,
             'fb_app_id'          => $metaId,
