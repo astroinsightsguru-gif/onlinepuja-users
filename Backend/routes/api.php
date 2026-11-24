@@ -808,6 +808,9 @@ Route::match(['get', 'post'], 'social/webhook', function (\Illuminate\Http\Reque
 // 🕉️ WhatsApp 2-Way Interactive Bot Webhook (Evolution API)
 Route::match(['get', 'post'], 'whatsapp/webhook', [\App\Http\Controllers\API\WhatsAppWebhookController::class, 'handle'])->name('api.whatsapp.webhook');
 
+// 📸 Meta Messenger & Instagram Direct 2-Way Conversational AI Bot Webhook
+Route::match(['get', 'post'], 'meta/webhook', [\App\Http\Controllers\API\MetaMessengerWebhookController::class, 'handle'])->name('api.meta.webhook');
+
 // 🚀 Astrologer Personal Social Media Growth OS & AI Co-pilot
 Route::prefix('partner/social')->group(function () {
     Route::get('status', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'getStatus']);

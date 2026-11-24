@@ -475,6 +475,100 @@
             </div>
         </div>
 
+        {{-- Meta Ads (CAPI) & Messenger/Instagram AI Auto-Reply Fleet --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {{-- Meta Ads & Conversions API (CAPI) Card --}}
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 16px rgba(15,23,42,0.04); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 42px; height: 42px; border-radius: 12px; background: #0284c7; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; box-shadow: 0 2px 8px rgba(2,132,199,0.3);">
+                                🎯
+                            </div>
+                            <div>
+                                <h3 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0;">Meta Ads & CAPI Tracking</h3>
+                                <span style="font-size: 11px; color: #64748b; font-family: monospace;">Dataset / Pixel ID: {{ \App\Brain\Vault::get('meta_pixel_id', '1738490804042986') }}</span>
+                            </div>
+                        </div>
+                        <span style="padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; display: inline-flex; align-items: center; gap: 6px;">
+                            <span style="width: 7px; height: 7px; border-radius: 50%; background: #22c55e;"></span> Server CAPI Ready
+                        </span>
+                    </div>
+
+                    <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+                        <p style="font-size: 11.5px; color: #64748b; line-height: 1.5; margin: 0;">
+                            Dispatches high-precision server-to-server conversion events (<code>Lead</code>, <code>InitiateCheckout</code>, <code>Purchase</code>) directly to Meta Graph CAPI v19.0 to bypass ad-blockers and iOS privacy drops.
+                        </p>
+
+                        <div style="padding: 10px 14px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 11px; color: #334155; display: flex; flex-direction: column; gap: 4px;">
+                            <div>📊 <strong>Conversion Attribution:</strong> Online Puja Bookings, Pandit Dakshina, Kundli Reports</div>
+                            <div>🔒 <strong>SHA-256 Hashing:</strong> Automated client email & phone number sanitization</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button type="button" onclick="testMetaCapi(this)" style="padding: 10px 14px; border-radius: 12px; background: #0284c7 !important; color: #ffffff !important; font-weight: 800; font-size: 11px; border: 1px solid #0284c7; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        ⚡ Test CAPI Event
+                    </button>
+                    <a href="https://business.facebook.com/events_manager2/overview?business_id={{ $metaBusinessId }}" target="_blank" rel="noopener noreferrer" style="padding: 10px 14px; border-radius: 12px; background: #f0f9ff !important; color: #0369a1 !important; font-weight: 800; font-size: 11px; border: 1px solid #bae6fd; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        Events Manager ↗
+                    </a>
+                </div>
+            </div>
+
+            {{-- Conversational AI Bot (Messenger & Instagram Direct) Card --}}
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 16px rgba(15,23,42,0.04); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #6366f1, #a855f7); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; box-shadow: 0 2px 8px rgba(99,102,241,0.3);">
+                                💬
+                            </div>
+                            <div>
+                                <h3 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0;">Messenger & IG Direct AI Bot</h3>
+                                <span style="font-size: 11px; color: #64748b;">Autonomous 2-Way Devotee Chat</span>
+                            </div>
+                        </div>
+                        <span style="padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; display: inline-flex; align-items: center; gap: 6px;">
+                            <span style="width: 7px; height: 7px; border-radius: 50%; background: #8b5cf6;"></span> AI Active
+                        </span>
+                    </div>
+
+                    <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+                        <p style="font-size: 11.5px; color: #64748b; line-height: 1.5; margin: 0;">
+                            Devotees messaging on Facebook Page or Instagram <code>@onlinepuja.live</code> receive instant, culturally respectful replies in Devanagari Hindi or English powered by Online Puja Vedic AI.
+                        </p>
+
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <label style="font-size: 10.5px; font-weight: 700; color: #475569;">Webhook Callback URL</label>
+                                <button type="button" onclick="copyMetaText('https://onlinepuja.live/api/meta/webhook', this)" style="background: none; border: none; font-size: 10.5px; color: #6366f1; font-weight: 800; cursor: pointer;">Copy URL</button>
+                            </div>
+                            <input type="text" readonly value="https://onlinepuja.live/api/meta/webhook" style="font-size: 11px; font-family: monospace; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; color: #0f172a;">
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <label style="font-size: 10.5px; font-weight: 700; color: #475569;">Verify Token</label>
+                                <button type="button" onclick="copyMetaText('{{ \App\Brain\Vault::get('meta_verify_token', 'onlinepuja_meta_secret') }}', this)" style="background: none; border: none; font-size: 10.5px; color: #6366f1; font-weight: 800; cursor: pointer;">Copy Token</button>
+                            </div>
+                            <input type="text" readonly value="{{ \App\Brain\Vault::get('meta_verify_token', 'onlinepuja_meta_secret') }}" style="font-size: 11px; font-family: monospace; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; color: #0f172a;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <a href="https://developers.facebook.com/apps/{{ \App\Brain\Vault::get('meta_app_id', '1738490804042986') }}/webhooks/" target="_blank" rel="noopener noreferrer" style="padding: 10px 14px; border-radius: 12px; background: #0f172a !important; color: #ffffff !important; font-weight: 800; font-size: 11px; border: 1px solid #0f172a; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        Configure Webhook ↗
+                    </a>
+                    <a href="https://business.facebook.com/latest/inbox/all?business_id={{ $metaBusinessId }}" target="_blank" rel="noopener noreferrer" style="padding: 10px 14px; border-radius: 12px; background: #faf5ff !important; color: #7e22ce !important; font-weight: 800; font-size: 11px; border: 1px solid #e9d5ff; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        Unified Inbox ↗
+                    </a>
+                </div>
+            </div>
+        </div>
+
         {{-- Live Social Dispatch Feed Table --}}
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-slate-100 gap-2">
@@ -1189,6 +1283,59 @@ window.verifyMetaConnection = function(platform, btn) {
             alert('Network error: ' + err.message);
         }
     });
+};
+
+window.testMetaCapi = function(btn) {
+    var b = btn;
+    var origText = b ? b.textContent : '⚡ Test CAPI Event';
+    if (b) {
+        b.disabled = true;
+        b.textContent = 'Sending Event…';
+    }
+    fetch('{{ route("growth-os.action") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ action: 'test_meta_capi' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (b) {
+            b.disabled = false;
+            b.textContent = origText;
+        }
+        if (d.ok) {
+            if (window.showGrowthNotification) {
+                window.showGrowthNotification('success', d.message || 'CAPI event delivered!');
+            } else {
+                alert(d.message || 'CAPI event delivered!');
+            }
+        } else {
+            alert('CAPI Response: ' + (d.error || d.message || 'Check credentials'));
+        }
+    })
+    .catch(function(err) {
+        if (b) {
+            b.disabled = false;
+            b.textContent = origText;
+        }
+        alert('CAPI Error: ' + err.message);
+    });
+};
+
+window.copyMetaText = function(text, btn) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+    } else {
+        var t = document.createElement('textarea');
+        t.value = text;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand('copy');
+        document.body.removeChild(t);
+    }
+    var orig = btn.innerText;
+    btn.innerText = 'Copied! ✓';
+    setTimeout(function() { btn.innerText = orig; }, 2000);
 };
 
 window.toggleWebhookConfig = function() {
