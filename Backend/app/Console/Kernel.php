@@ -247,6 +247,12 @@ class Kernel extends ConsoleKernel
             ->name('agent_run_rashifal')
             ->withoutOverlapping();
 
+        // 🎬 DAILY YOUTUBE SHORTS & INSTAGRAM REELS: Auto-compile 9:16 vertical short and queue (Daily 05:00 AM)
+        $schedule->command('video:generate-rashi-shorts --queue')
+            ->dailyAt('05:00')
+            ->name('video_generate_rashi_shorts_daily')
+            ->withoutOverlapping();
+
         $schedule->command('agent:run seo_blog')
             ->dailyAt('06:00')
             ->name('agent_run_seo_blog')
