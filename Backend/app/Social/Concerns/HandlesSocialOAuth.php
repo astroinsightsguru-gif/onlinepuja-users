@@ -50,7 +50,7 @@ trait HandlesSocialOAuth
 
     protected function finishSocialCallback(string $platform, Request $request)
     {
-        $return = redirect()->route($this->oauthReturnRoute());
+        $return = redirect()->route($this->oauthReturnRoute(), ['tab' => 'meta']);
         $publisher = $this->oauthManager()->publisher($platform);
 
         if (! $publisher) {
@@ -112,7 +112,7 @@ trait HandlesSocialOAuth
     protected function finishAccountPick(Request $request)
     {
         $request->validate(['key' => 'required|string', 'selected' => 'array']);
-        $return = redirect()->route($this->oauthReturnRoute());
+        $return = redirect()->route($this->oauthReturnRoute(), ['tab' => 'meta']);
 
         $cached = Cache::pull($request->input('key'));
 

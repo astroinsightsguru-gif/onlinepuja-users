@@ -105,6 +105,50 @@
         </div>
     </div>
 
+    {{-- FLASH ALERTS FOR OAUTH & SYSTEM ACTIONS --}}
+    @if(session('error'))
+        <div style="background: #fef2f2 !important; border: 1px solid #fecaca !important; color: #991b1b !important; padding: 14px 18px !important; border-radius: 14px !important; font-size: 13px !important; font-weight: 700 !important; display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 10px !important; margin: 16px 0 !important; box-shadow: 0 4px 12px rgba(239,68,68,0.1) !important;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">⚠️</span>
+                <span>{{ session('error') }}</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #991b1b; font-weight: 900;">✕</button>
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div style="background: #f0fdf4 !important; border: 1px solid #bbf7d0 !important; color: #166534 !important; padding: 14px 18px !important; border-radius: 14px !important; font-size: 13px !important; font-weight: 700 !important; display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 10px !important; margin: 16px 0 !important; box-shadow: 0 4px 12px rgba(34,197,94,0.1) !important;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">✅</span>
+                <span>{{ session('success') }}</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #166534; font-weight: 900;">✕</button>
+        </div>
+    @endif
+
+    @if(session('pick_accounts'))
+        @php $pick = session('pick_accounts'); @endphp
+        <div style="background: #eff6ff !important; border: 2px solid #3b82f6 !important; color: #1e3a8a !important; padding: 18px 20px !important; border-radius: 16px !important; margin: 16px 0 !important; box-shadow: 0 6px 20px rgba(59,130,246,0.15) !important;">
+            <h4 style="font-size: 15px; font-weight: 800; margin: 0 0 10px 0;">Select Facebook / Instagram Accounts to Connect</h4>
+            <form action="{{ route('social.confirm') }}" method="POST">
+                @csrf
+                <input type="hidden" name="key" value="{{ $pick['key'] }}">
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
+                    @foreach($pick['accounts'] as $idx => $acc)
+                        <label style="display: flex; align-items: center; gap: 10px; background: #ffffff; padding: 10px 14px; border-radius: 10px; border: 1px solid #bfdbfe; cursor: pointer;">
+                            <input type="checkbox" name="selected[]" value="{{ $idx }}" checked style="width: 18px; height: 18px;">
+                            <span style="font-weight: 700; font-size: 13px; color: #0f172a;">{{ $acc['label'] }}</span>
+                            <span style="font-size: 11px; color: #64748b; font-family: monospace;">(ID: {{ $acc['external_id'] }})</span>
+                        </label>
+                    @endforeach
+                </div>
+                <button type="submit" style="background: #2563eb; color: #ffffff; font-weight: 800; font-size: 12px; padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer;">
+                    Confirm & Save Selected Accounts
+                </button>
+            </form>
+        </div>
+    @endif
+
     {{-- SECTION SWITCHER TABS --}}
     <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px;">
         <div style="background: #f1f5f9; padding: 6px; border-radius: 16px; border: 1px solid #cbd5e1; display: inline-flex; gap: 6px; align-items: center; overflow-x: auto; max-width: 100%;">
@@ -279,10 +323,16 @@
                     </p>
                 </div>
             </div>
-            <div style="flex-shrink: 0;">
-                <a href="{{ route('social.connect', 'instagram') }}" style="background: linear-gradient(135deg, #9333ea, #db2777) !important; color: #ffffff !important; font-weight: 800 !important; font-size: 12px !important; border-radius: 12px !important; padding: 11px 20px !important; text-decoration: none !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; box-shadow: 0 4px 14px rgba(219,39,119,0.35) !important;">
-                    <span>🔗</span> <span>Reconnect via OAuth</span>
-                </a>
+            <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <a href="{{ route('social.connect', 'instagram') }}" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(135deg, #9333ea, #db2777) !important; color: #ffffff !important; font-weight: 800 !important; font-size: 11.5px !important; border-radius: 12px !important; padding: 10px 16px !important; text-decoration: none !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; box-shadow: 0 4px 14px rgba(219,39,119,0.35) !important;">
+                        <span>📸</span> <span>Connect Instagram OAuth</span>
+                    </a>
+                    <a href="{{ route('social.connect', 'facebook') }}" target="_blank" rel="noopener noreferrer" style="background: #2563eb !important; color: #ffffff !important; font-weight: 800 !important; font-size: 11.5px !important; border-radius: 12px !important; padding: 10px 16px !important; text-decoration: none !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; box-shadow: 0 4px 14px rgba(37,99,235,0.35) !important;">
+                        <span>f</span> <span>Connect Facebook OAuth</span>
+                    </a>
+                </div>
+                <span style="font-size: 10.5px; color: #94a3b8; text-align: right;">Requires Meta Developer App Admin login or use Direct Page Token below</span>
             </div>
         </div>
 
