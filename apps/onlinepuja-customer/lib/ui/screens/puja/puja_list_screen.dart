@@ -656,22 +656,7 @@ class _PujaListScreenState extends State<PujaListScreen> {
 
   String _cleanPujaSubtitle(Puja p, [bool isHi = false]) {
     if (isHi) {
-      final rawTitle = (p.title ?? '').toLowerCase();
-      if (rawTitle.contains('narayan nagbali') || (rawTitle.contains('narayan') && rawTitle.contains('nagbali'))) {
-        return 'काशी के वेदमूर्ति तीर्थ पुरोहितों द्वारा नारायण बलि (पितृ मोक्ष) एवं नागबलि (सर्प दोष शांति) विधि';
-      }
-      if (rawTitle.contains('deepdaan') || rawTitle.contains('deepawali')) {
-        return 'दशाश्वमेध घाट पर यजमान के नाम व गोत्र से प्रज्वलित 108 दीपदान व पावन संकल्प';
-      }
-      if (rawTitle.contains('rudrabhishek')) {
-        return 'गंगाजल, दूध, मधु एवं पंचामृत से भगवान शिव का अभिषेक एवं दारिद्र्य दहन स्तोत्र पाठ';
-      }
-      if (rawTitle.contains('mahamrityunjaya')) {
-        return 'दीर्घायु, आरोग्य एवं समस्त संकटों से रक्षा हेतु महामृत्युंजय मंत्र जप व हवन';
-      }
-      if (rawTitle.contains('pind daan') || rawTitle.contains('shradh')) {
-        return 'फल्गु नदी, विष्णुपद मंदिर व अक्षयवट पर वेदोक्त पिंडदान से पितरों की सदगति';
-      }
+      return VedicHindiLocalizer.localizeSubtitle(p.subtitle?.toString(), p.title?.toString(), true);
     }
     final sub = p.subtitle?.toString() ?? '';
     if (sub.isNotEmpty) {
@@ -703,7 +688,7 @@ class _PujaListScreenState extends State<PujaListScreen> {
     final price = p.startingPrice ?? 501;
     final strikePrice = (price * 2.2).round();
     final place = (p.place != null && p.place.toString().isNotEmpty)
-        ? p.place.toString()
+        ? VedicHindiLocalizer.localizePlace(p.place.toString(), isHi)
         : (isHi ? "पावन तीर्थ धाम" : "Holy Pilgrimage Teerth");
     final tithi = _formatTithi(p.startDatetime, isHi);
 

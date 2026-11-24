@@ -141,54 +141,11 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
   }
 
   String _localizePackageName(String? name, bool isHi) {
-    if (!isHi || name == null) return name ?? 'Package';
-    final lower = name.toLowerCase();
-    if (lower.contains('individual') || lower.contains('single') || lower.contains('1 person')) {
-      return 'एकल यजमान संकल्प';
-    }
-    if (lower.contains('family') || lower.contains('parivar')) {
-      return 'सपरिवार महासंकल्प';
-    }
-    if (lower.contains('sampoorna') || lower.contains('grand') || lower.contains('complete')) {
-      return 'संपूर्ण तीर्थ महापूजा एवं महाप्रसाद';
-    }
-    if (lower.contains('sankalp seva') || lower.contains('vedic')) {
-      return 'वैदिक संकल्प सेवा';
-    }
-    return name;
+    return VedicHindiLocalizer.localizePackageName(name, isHi);
   }
 
   String _localizeInclusion(String inc, bool isHi) {
-    if (!isHi) return inc;
-    final lower = inc.toLowerCase();
-    if (lower.contains('sankalp for 1 devotee') || lower.contains('personal sankalp')) {
-      return 'नाम एवं गोत्र के साथ व्यक्तिगत संकल्प';
-    }
-    if (lower.contains('live chadhava') || lower.contains('pushpanjali')) {
-      return 'प्रत्यक्ष पुष्पार्पण एवं चढ़ावा अर्पण';
-    }
-    if (lower.contains('video') && lower.contains('whatsapp')) {
-      return 'पूजा का संपूर्ण वीडियो रिकॉर्डिंग व्हाट्सएप पर';
-    }
-    if (lower.contains('family members') || lower.contains('family')) {
-      return 'समस्त परिवार जन संकल्प में सम्मिलित';
-    }
-    if (lower.contains('archana') || lower.contains('ahuti') || lower.contains('navgrah')) {
-      return 'विशेष अर्चना एवं नवग्रह आहुति';
-    }
-    if (lower.contains('prasad delivered') || lower.contains('holy prasad')) {
-      return 'अभिमंत्रित महाप्रसाद आपके घर तक';
-    }
-    if (lower.contains('hawan') || lower.contains('brahmin bhojan')) {
-      return 'संपूर्ण वैदिक हवन एवं ब्राह्मण भोजन';
-    }
-    if (lower.contains('raksha sutra') || lower.contains('energized')) {
-      return 'सिद्ध रक्षा सूत्र एवं महाप्रसाद बॉक्स';
-    }
-    if (lower.contains('mantra chanting') || lower.contains('acharyas')) {
-      return 'तीर्थ पुरोहितों द्वारा सस्वर वेदोक्त मंत्रोच्चार';
-    }
-    return inc;
+    return VedicHindiLocalizer.localizeInclusion(inc, isHi);
   }
 
   @override
@@ -464,7 +421,7 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                       const SizedBox(width: 5),
                       Text(
                         (p.place ?? '').toString().isNotEmpty
-                            ? p.place.toString()
+                            ? VedicHindiLocalizer.localizePlace(p.place.toString(), isHi)
                             : (isHi ? 'पावन तीर्थ क्षेत्र' : 'Holy Teerth Kshetra'),
                         style: const TextStyle(
                           fontSize: 11,
@@ -550,7 +507,7 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                 if ((p.subtitle ?? '').toString().isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    p.subtitle.toString(),
+                    VedicHindiLocalizer.localizeSubtitle(p.subtitle?.toString(), p.title?.toString(), isHi),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -727,7 +684,7 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  b,
+                                  VedicHindiLocalizer.localizeBenefit(b, isHi),
                                   style: const TextStyle(
                                     fontSize: 13,
                                     color: Color(0xFF78350F),
@@ -832,7 +789,7 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                         tilePadding:
                             const EdgeInsets.symmetric(horizontal: 14),
                         title: Text(
-                          (f['question'] ?? f['title'] ?? 'Q').toString(),
+                          VedicHindiLocalizer.localizeFaq((f['question'] ?? f['title'] ?? 'Q').toString(), isHi),
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700,
@@ -845,8 +802,9 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              (f['answer'] ?? f['description'] ?? '')
-                                  .toString(),
+                              VedicHindiLocalizer.localizeFaq(
+                                  (f['answer'] ?? f['description'] ?? '').toString(),
+                                  isHi),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: textSecondary,

@@ -29,6 +29,7 @@ export 'src/services/growth_ai_os_service.dart';
 export 'src/services/ai_twin_api.dart';
 export 'src/services/push_notification_service.dart';
 export 'src/l10n/app_strings.dart';
+export 'src/l10n/vedic_hindi_localizer.dart';
 export 'src/rtc/live_kit_call.dart';
 export 'src/theme/app_theme.dart';
 export 'src/widgets/status_views.dart';
