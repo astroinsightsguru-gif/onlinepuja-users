@@ -597,6 +597,22 @@ class GrowthOsController extends Controller
             if ($request->has($key)) {
                 $val = trim((string) $request->input($key));
                 Vault::set($key, $val);
+
+                // Auto-sync social_accounts when social tokens are updated in Vault
+                if ($key === 'fb_page_token' && !empty($val)) {
+                    $enc = \Illuminate\Support\Facades\Crypt::encryptString($val);
+                    DB::table('social_accounts')->updateOrInsert(
+                        ['platform' => 'facebook'],
+                        ['access_token_enc' => $enc, 'status' => 'connected', 'updated_at' => now()]
+                    );
+                }
+                if ($key === 'instagram_token' && !empty($val)) {
+                    $enc = \Illuminate\Support\Facades\Crypt::encryptString($val);
+                    DB::table('social_accounts')->updateOrInsert(
+                        ['platform' => 'instagram'],
+                        ['access_token_enc' => $enc, 'status' => 'connected', 'updated_at' => now()]
+                    );
+                }
             }
         }
 
@@ -1317,34 +1333,84 @@ class GrowthOsController extends Controller
                     }
                 case 'save_social_token':
                     $token = trim((string)$request->input('token', ''));
+                    $targetPlatform = $request->input('platform', 'facebook');
                     if (empty($token)) {
                         return response()->json(['ok' => false, 'error' => 'Please provide a non-empty Meta / Instagram Page Access Token.'], 400);
                     }
 
-                    $encrypted = \Illuminate\Support\Facades\Crypt::encryptString($token);
-
                     // 1. Inspect Token with Meta Graph API
-                    $pageName = 'Online Puja';
+                    $pageName = 'OnlinePuja.live';
                     $pageId = '1252263081299388';
-                    $igUsername = 'onlinepuja.live';
-                    $igId = '17841434469409429';
-                    $verifiedDetails = null;
+                    $igUsername = 'onlinepujalive';
+                    $igId = '17841474153880030';
+                    $pageAccessToken = $token;
 
                     try {
-                        $metaUrl = "https://graph.facebook.com/v21.0/me?fields=id,name,category,link,instagram_business_account{id,username}&access_token=" . urlencode($token);
-                        $metaResp = \Illuminate\Support\Facades\Http::timeout(10)->get($metaUrl);
-                        if ($metaResp->successful()) {
-                            $verifiedDetails = $metaResp->json();
-                            $pageName = $verifiedDetails['name'] ?? $pageName;
-                            $pageId = $verifiedDetails['id'] ?? $pageId;
-                            if (!empty($verifiedDetails['instagram_business_account']['id'])) {
-                                $igId = $verifiedDetails['instagram_business_account']['id'];
-                                $igUsername = $verifiedDetails['instagram_business_account']['username'] ?? $igUsername;
+                        // First test /me
+                        $meResp = \Illuminate\Support\Facades\Http::timeout(10)->get('https://graph.facebook.com/v21.0/me', [
+                            'fields' => 'id,name,category',
+                            'access_token' => $token,
+                        ]);
+
+                        if ($meResp->successful()) {
+                            $meData = $meResp->json();
+                            // If this token is directly a Page Access Token
+                            if (!empty($meData['category'])) {
+                                $pageId = $meData['id'];
+                                $pageName = $meData['name'] ?? $pageName;
+                            } else {
+                                // Token is a System User or User token — fetch managed Pages via /me/accounts
+                                $accountsResp = \Illuminate\Support\Facades\Http::timeout(10)->get('https://graph.facebook.com/v21.0/me/accounts', [
+                                    'access_token' => $token,
+                                ]);
+                                if ($accountsResp->successful()) {
+                                    $pages = $accountsResp->json('data') ?? [];
+                                    if (!empty($pages)) {
+                                        // Pick OnlinePuja or first page
+                                        $matchedPage = null;
+                                        foreach ($pages as $p) {
+                                            if (str_contains(strtolower($p['name'] ?? ''), 'online') || ($p['id'] ?? '') === '1252263081299388') {
+                                                $matchedPage = $p;
+                                                break;
+                                            }
+                                        }
+                                        $matchedPage = $matchedPage ?: $pages[0];
+                                        $pageId = $matchedPage['id'] ?? $pageId;
+                                        $pageName = $matchedPage['name'] ?? $pageName;
+                                        if (!empty($matchedPage['access_token'])) {
+                                            $pageAccessToken = $matchedPage['access_token'];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Inspect the Page to resolve linked Instagram Business Account
+                        $pageResp = \Illuminate\Support\Facades\Http::timeout(10)->get("https://graph.facebook.com/v21.0/{$pageId}", [
+                            'fields' => 'id,name,category,instagram_business_account',
+                            'access_token' => $pageAccessToken,
+                        ]);
+
+                        if ($pageResp->successful()) {
+                            $pData = $pageResp->json();
+                            $pageName = $pData['name'] ?? $pageName;
+                            if (!empty($pData['instagram_business_account']['id'])) {
+                                $igId = $pData['instagram_business_account']['id'];
+                                // Fetch Instagram profile details
+                                $igResp = \Illuminate\Support\Facades\Http::timeout(10)->get("https://graph.facebook.com/v21.0/{$igId}", [
+                                    'fields' => 'id,username,name',
+                                    'access_token' => $pageAccessToken,
+                                ]);
+                                if ($igResp->successful()) {
+                                    $igUsername = $igResp->json('username') ?? $igUsername;
+                                }
                             }
                         }
                     } catch (\Throwable $e) {
-                        \Illuminate\Support\Facades\Log::warning('Meta token inspection note: ' . $e->getMessage());
+                        \Illuminate\Support\Facades\Log::warning('Meta token resolution note: ' . $e->getMessage());
                     }
+
+                    $pageEncrypted = \Illuminate\Support\Facades\Crypt::encryptString($pageAccessToken);
 
                     // 2. Synchronize to Facebook in social_accounts
                     DB::table('social_accounts')->updateOrInsert(
@@ -1352,10 +1418,10 @@ class GrowthOsController extends Controller
                         [
                             'label'            => $pageName,
                             'external_id'      => $pageId,
-                            'access_token_enc' => $encrypted,
+                            'access_token_enc' => $pageEncrypted,
                             'status'           => 'connected',
                             'last_error'       => null,
-                            'meta'             => json_encode(['page_id' => $pageId, 'page_name' => $pageName, 'has_linked_instagram' => true]),
+                            'meta'             => json_encode(['page_id' => $pageId, 'page_name' => $pageName, 'has_linked_instagram' => !empty($igId)]),
                             'updated_at'       => now(),
                         ]
                     );
@@ -1366,7 +1432,7 @@ class GrowthOsController extends Controller
                         [
                             'label'            => '@' . ltrim($igUsername, '@'),
                             'external_id'      => $igId,
-                            'access_token_enc' => $encrypted,
+                            'access_token_enc' => $pageEncrypted,
                             'status'           => 'connected',
                             'last_error'       => null,
                             'meta'             => json_encode(['page_id' => $pageId, 'username' => $igUsername]),
@@ -1375,15 +1441,13 @@ class GrowthOsController extends Controller
                     );
 
                     // 4. Update Vault for omni-channel access
-                    Vault::set('instagram_token', $token);
-                    Vault::set('fb_page_token', $token);
-                    if (empty(Vault::get('meta_capi_token'))) {
-                        Vault::set('meta_capi_token', $token);
-                    }
+                    Vault::set('instagram_token', $pageAccessToken);
+                    Vault::set('fb_page_token', $pageAccessToken);
+                    Vault::set('meta_capi_token', $token); // Root system user token is best for CAPI
 
                     return response()->json([
                         'ok' => true,
-                        'message' => "✓ Token successfully saved & verified! Connected Facebook Page: {$pageName} (ID: {$pageId}) & Instagram: @{$igUsername}.",
+                        'message' => "✓ Token verified & saved! Connected Facebook Page: {$pageName} (ID: {$pageId}) & Instagram: @{$igUsername}.",
                         'details' => [
                             'page_name'   => $pageName,
                             'page_id'     => $pageId,

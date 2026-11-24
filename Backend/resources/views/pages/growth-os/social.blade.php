@@ -403,9 +403,15 @@
                                 <span style="font-size: 11px; font-weight: 800; color: #1e293b;">Autonomous (Blogs & Pujas)</span>
                             </div>
                         </div>
-                        <p style="font-size: 11px; color: #64748b; line-height: 1.5; margin: 4px 0 0 0;">
-                            Posts and banners are dispatched automatically on schedule. Verified live with recent post published successfully.
-                        </p>
+                        <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+                            <label style="font-size: 11px; font-weight: 700; color: #334155;">Paste Page / System User Token</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="password" id="input-fb-token-meta" placeholder="Paste Page Access or System User Token (EAA...)" style="flex: 1; font-size: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: monospace; color: #0f172a;">
+                                <button type="button" id="btn-save-fb-token-meta" onclick="saveMetaToken(this, 'facebook')" style="background: #2563eb !important; color: #ffffff !important; font-weight: 800 !important; font-size: 11px !important; border-radius: 10px !important; padding: 10px 16px !important; border: 1px solid #2563eb !important; cursor: pointer !important; white-space: nowrap !important;">
+                                    Save Token
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1186,16 +1192,18 @@ window.switchSectionTab = function(tab) {
     }
 };
 
-window.saveMetaToken = function(btn) {
-    var input = document.getElementById('input-ig-token-meta');
+window.saveMetaToken = function(btn, platform) {
+    platform = platform || 'facebook';
+    var inputId = platform === 'facebook' ? 'input-fb-token-meta' : 'input-ig-token-meta';
+    var input = document.getElementById(inputId) || document.getElementById('input-fb-token-meta') || document.getElementById('input-ig-token-meta');
     if (!input) return;
     var tok = input.value.trim();
     if (!tok) {
-        alert('Please enter a valid Meta / Instagram Page Access Token.');
+        alert('Please enter a valid Meta Page or System User Access Token.');
         input.focus();
         return;
     }
-    var b = btn || document.getElementById('btn-save-ig-token-meta');
+    var b = btn || document.getElementById(platform === 'facebook' ? 'btn-save-fb-token-meta' : 'btn-save-ig-token-meta');
     var origText = b ? b.textContent : 'Save Token';
     if (b) {
         b.disabled = true;
@@ -1204,7 +1212,7 @@ window.saveMetaToken = function(btn) {
     fetch('{{ route("growth-os.action") }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' },
-        body: JSON.stringify({ action: 'save_social_token', platform: 'instagram', token: tok })
+        body: JSON.stringify({ action: 'save_social_token', platform: platform, token: tok })
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {
