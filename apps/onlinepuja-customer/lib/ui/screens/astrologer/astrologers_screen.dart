@@ -22,6 +22,7 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
   Map<String, dynamic>? _firstConsultOffer;
   String _query = '';
   String _selectedFilter = 'All';
+  bool _isGridView = true;
   final TextEditingController _searchController = TextEditingController();
 
   static const List<String> _filters = [
@@ -702,81 +703,198 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
     );
   }
 
-  /// Clean Horizontal Filter Pills
+  /// Clean Horizontal Filter Pills & View Switcher Bar
   Widget _filterPills(bool isDark, bool isHi) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: SizedBox(
-        height: 38,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: _filters.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 8),
-          itemBuilder: (context, i) {
-            final f = _filters[i];
-            final isSelected = _selectedFilter == f;
-            final isOnlinePill = f == 'Online Now';
-            final label = isHi ? (_filterHiLabels[f] ?? f) : f;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _filters.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, i) {
+              final f = _filters[i];
+              final isSelected = _selectedFilter == f;
+              final isOnlinePill = f == 'Online Now';
+              final label = isHi ? (_filterHiLabels[f] ?? f) : f;
 
-            return GestureDetector(
-              onTap: () => setState(() => _selectedFilter = f),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? CustomerTheme.brandSaffron
-                      : (isDark ? const Color(0xFF1E1830) : Colors.white),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
+              return GestureDetector(
+                onTap: () => setState(() => _selectedFilter = f),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
                     color: isSelected
                         ? CustomerTheme.brandSaffron
-                        : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                    width: 1,
+                        : (isDark ? const Color(0xFF1E1830) : Colors.white),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                          ? CustomerTheme.brandSaffron
+                          : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                      width: 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: CustomerTheme.brandSaffron.withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
                   ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: CustomerTheme.brandSaffron.withValues(alpha: 0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isOnlinePill) ...[
+                        Container(
+                          width: 7,
+                          height: 7,
+                          margin: const EdgeInsets.only(right: 6),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
                           ),
-                        ]
-                      : null,
+                        ),
+                      ],
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                          color: isSelected
+                              ? Colors.white
+                              : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Section Title & View Switcher Strip (Grid vs List)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 3.5,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: CustomerTheme.brandSaffron,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    isHi ? 'प्रमाणित वैदिक ज्योतिषी' : 'Verified Vedic Astrologers',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
+              ),
+              // View Toggle Chip
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1830) : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                    width: 0.8,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (isOnlinePill) ...[
-                      Container(
-                        width: 7,
-                        height: 7,
-                        margin: const EdgeInsets.only(right: 6),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          shape: BoxShape.circle,
+                    InkWell(
+                      onTap: () => setState(() => _isGridView = true),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _isGridView ? CustomerTheme.brandSaffron : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.grid_view_rounded,
+                              size: 13,
+                              color: _isGridView
+                                  ? Colors.white
+                                  : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              isHi ? 'ग्रिड' : 'Grid',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: _isGridView
+                                    ? Colors.white
+                                    : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                        color: isSelected
-                            ? Colors.white
-                            : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                    ),
+                    InkWell(
+                      onTap: () => setState(() => _isGridView = false),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: !_isGridView ? CustomerTheme.brandSaffron : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.view_agenda_rounded,
+                              size: 13,
+                              color: !_isGridView
+                                  ? Colors.white
+                                  : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              isHi ? 'सूची' : 'List',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: !_isGridView
+                                    ? Colors.white
+                                    : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            );
-          },
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 
@@ -888,6 +1006,32 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
 
     final isEligible = _firstConsultOffer?['eligible'] == true;
 
+    if (_isGridView) {
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.65,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 12,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, i) => _buildAstrologerGridCard(
+              context,
+              list[i],
+              session,
+              currency,
+              isEligible,
+              isDark,
+              isHi,
+            ),
+            childCount: list.length,
+          ),
+        ),
+      );
+    }
+
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverList.separated(
@@ -897,6 +1041,428 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
           final a = list[i];
           return _cleanAstrologerCard(context, a, session, currency, isEligible, isDark, isHi);
         },
+      ),
+    );
+  }
+
+  /// Sacred Vedic 2-Column Grid Card (Optimized for High Conversion & Zero Overflow)
+  Widget _buildAstrologerGridCard(
+    BuildContext context,
+    Astrologer a,
+    AppSession session,
+    String currency,
+    bool isEligible,
+    bool isDark,
+    bool isHi,
+  ) {
+    final isAiAcharya = a.email == 'ai@onlinepuja.live';
+    final isOnline = isAiAcharya || a.isChatOnline || a.isCallOnline;
+    final hiMeta = isHi ? _aiHindiMeta[a.id] : null;
+    final displayName = hiMeta?['name'] ?? a.name;
+    final displaySkill = hiMeta?['skill'] ??
+        (a.primarySkill.isNotEmpty
+            ? a.primarySkill
+            : (isHi ? 'वैदिक ज्योतिषी' : 'Vedic Astrologer'));
+    final displayLang = hiMeta?['lang'] ??
+        (a.languageKnown.isNotEmpty
+            ? a.languageKnown
+            : (isHi ? 'हिंदी, अंग्रेज़ी' : 'Hindi, English'));
+    final rate = a.charge > 0
+        ? '$currency${a.charge.toInt()}/${isHi ? 'मि' : 'm'}'
+        : (isHi ? 'निःशुल्क' : 'FREE');
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1429) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isAiAcharya
+              ? const Color(0xFFF59E0B).withValues(alpha: 0.6)
+              : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+          width: isAiAcharya ? 1.4 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isAiAcharya
+                ? const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.2 : 0.08)
+                : Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: isAiAcharya
+              ? () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => OnlinePujaAiScreen(
+                        initialAiAstrologerId: a.id,
+                        startInCallMode: false,
+                      ),
+                    ),
+                  )
+              : () => context.openAstrologer(a.id ?? 0).then((_) => _reload()),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 1. Top Badges Row: Rating (Left) & Offer/Status (Right)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Rating Pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star_rounded, size: 11.5, color: Color(0xFFD97706)),
+                          const SizedBox(width: 2),
+                          Text(
+                            a.rating > 0 ? a.rating.toStringAsFixed(1) : '4.8',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF92400E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Status / Offer Badge
+                    if (isEligible && a.charge > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFDC2626), Color(0xFFEA580C)],
+                          ),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          isHi ? '₹1 ऑफर' : '₹1 OFFER',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      )
+                    else if (isAiAcharya)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF7C3AED),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Text(
+                          'AI 24/7',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      )
+                    else
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: isOnline ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            isOnline ? (isHi ? 'ऑनलाइन' : 'Online') : (isHi ? 'ऑफलाइन' : 'Offline'),
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w700,
+                              color: isOnline
+                                  ? const Color(0xFF10B981)
+                                  : (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // 2. Avatar with Status Ring & Verified Tick
+                Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isOnline
+                              ? const Color(0xFF10B981)
+                              : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                          width: 2,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: a.imageUrl.isNotEmpty
+                            ? Image.network(
+                                a.imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => _avatarFallback(a.name),
+                              )
+                            : _avatarFallback(a.name),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: isAiAcharya
+                          ? Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF7C3AED),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.auto_awesome_rounded, size: 10, color: Colors.white),
+                            )
+                          : Container(
+                              padding: const EdgeInsets.all(1.5),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1A1429) : Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.verified_rounded, size: 13, color: Color(0xFF0284C7)),
+                            ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+
+                // 3. Name
+                Text(
+                  displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.1,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 1.5),
+
+                // 4. Primary Vedic Skill
+                Text(
+                  displaySkill,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 1.5),
+
+                // 5. Experience & Language
+                Text(
+                  '${a.experienceInYears > 0 ? a.experienceInYears : 5}+ ${isHi ? 'वर्ष' : 'yrs'} • $displayLang',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                  ),
+                ),
+                const Spacer(),
+
+                // 6. Pricing Strip
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 5),
+                  child: isEligible && a.charge > 0
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              isHi ? '₹1/मि' : '₹1/m',
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFDC2626),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              rate,
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                decoration: TextDecoration.lineThrough,
+                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          rate,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            color: a.charge > 0
+                                ? (isDark ? const Color(0xFF34D399) : const Color(0xFF047857))
+                                : const Color(0xFF10B981),
+                          ),
+                        ),
+                ),
+
+                // 7. Compact Dual Action Buttons: Chat & Call
+                Row(
+                  children: [
+                    // Chat Action
+                    Expanded(
+                      child: SizedBox(
+                        height: 28,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: (isAiAcharya || a.isChatOnline)
+                                ? const Color(0xFF047857)
+                                : const Color(0xFF7C3AED),
+                            side: BorderSide(
+                              color: (isAiAcharya || a.isChatOnline)
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFF7C3AED).withValues(alpha: 0.65),
+                              width: 1,
+                            ),
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: isAiAcharya
+                              ? () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => OnlinePujaAiScreen(
+                                        initialAiAstrologerId: a.id,
+                                        startInCallMode: false,
+                                      ),
+                                    ),
+                                  )
+                              : (a.isChatOnline
+                                  ? () => context.openChat(
+                                        astrologerId: a.id ?? 0,
+                                        astrologerName: a.name,
+                                        isFree: a.isFreeAvailable,
+                                      )
+                                  : () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => OnlinePujaAiScreen(
+                                            initialAstrologerId: a.id ?? 1,
+                                            initialAstrologerName: a.name,
+                                            initialAstrologerSkill: a.primarySkill,
+                                            initialAstrologerRate: a.charge > 0 ? a.charge.toDouble() : 10.0,
+                                          ),
+                                        ),
+                                      )),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                (isAiAcharya || a.isChatOnline)
+                                    ? Icons.chat_bubble_outline_rounded
+                                    : Icons.auto_awesome_rounded,
+                                size: 11,
+                              ),
+                              const SizedBox(width: 2.5),
+                              Text(
+                                isHi ? 'चैट' : 'Chat',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+
+                    // Call Action
+                    Expanded(
+                      child: SizedBox(
+                        height: 28,
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: (isAiAcharya || a.isCallOnline)
+                                ? const Color(0xFFD97706)
+                                : (isDark ? const Color(0xFF261E38) : const Color(0xFFE2E8F0)),
+                            foregroundColor: (isAiAcharya || a.isCallOnline)
+                                ? Colors.white
+                                : (isDark ? Colors.white38 : const Color(0xFF64748B)),
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            elevation: (isAiAcharya || a.isCallOnline) ? 1 : 0,
+                          ),
+                          onPressed: isAiAcharya
+                              ? () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => OnlinePujaAiScreen(
+                                        initialAiAstrologerId: a.id,
+                                        startInCallMode: true,
+                                      ),
+                                    ),
+                                  )
+                              : (a.isCallOnline
+                                  ? () => context.openCall(
+                                        astrologerId: a.id ?? 0,
+                                        astrologerName: a.name,
+                                        ratePerMinute: a.charge > 0 ? a.charge.toDouble() : 15.0,
+                                      )
+                                  : () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => OnlinePujaAiScreen(
+                                            initialAstrologerId: a.id ?? 1,
+                                            initialAstrologerName: a.name,
+                                            initialAstrologerSkill: a.primarySkill,
+                                            initialAstrologerRate: a.charge > 0 ? a.charge.toDouble() : 10.0,
+                                            startInCallMode: true,
+                                          ),
+                                        ),
+                                      )),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.phone_rounded, size: 11),
+                              const SizedBox(width: 2.5),
+                              Text(
+                                isHi ? 'कॉल' : 'Call',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
