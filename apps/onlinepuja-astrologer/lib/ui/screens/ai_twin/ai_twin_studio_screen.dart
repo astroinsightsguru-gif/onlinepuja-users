@@ -188,9 +188,9 @@ class _AiTwinStudioScreenState extends State<AiTwinStudioScreen>
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final bg = dark ? PartnerTheme.darkBg : PartnerTheme.lightBg;
+    final bg = dark ? PartnerTheme.darkBg : const Color(0xFFF8FAFC);
     final surface = dark ? PartnerTheme.darkSurface : Colors.white;
-    final border = dark ? PartnerTheme.darkBorder : PartnerTheme.lightBorder;
+    final border = dark ? PartnerTheme.darkBorder : const Color(0xFFE2E8F0);
 
     return Scaffold(
       backgroundColor: bg,
@@ -644,7 +644,7 @@ class _AiTwinStudioScreenState extends State<AiTwinStudioScreen>
   void _showAddQaDialog() {
     showModalBottomSheet(
       context: context,
-      isScrollable: true,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
