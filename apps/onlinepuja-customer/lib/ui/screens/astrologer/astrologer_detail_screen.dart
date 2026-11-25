@@ -63,15 +63,34 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
     }
   }
 
+  static const Map<int, Map<String, String>> _astroHindiMeta = {
+    1: {'name': 'पं. शशि भूषण त्रिपाठी जी', 'skill': 'वैदिक ज्योतिष • कर्मकांड • दशा विचार'},
+    2: {'name': 'पं. अंकित शास्त्री', 'skill': 'वैदिक कुंडली • मुहूर्त • ग्रह शांति'},
+    3: {'name': 'महंत राम दास त्यागी जी महाराज', 'skill': 'अध्यात्म • वैदिक ज्योतिष • भागवत'},
+    5: {'name': 'परमहंसाचार्य दास', 'skill': 'वैदिक ज्योतिष • साधना • मंत्र रहस्य'},
+    6: {'name': 'आचार्य सोमनाथ शास्त्री', 'skill': 'वैदिक ज्योतिष • कुंडली • ग्रह शांति'},
+    7: {'name': 'पं. राधाकांत शर्मा', 'skill': 'प्रश्न कुंडली • मुहूर्त • वैदिक ज्योतिष'},
+    9: {'name': 'आचार्य विक्रम शास्त्री', 'skill': 'वैदिक ज्योतिष • कुंडली • वास्तु शास्त्र'},
+    11: {'name': 'आचार्य देवव्रत जी', 'skill': 'ज्योतिष • हस्तरेखा • मुहूर्त विचार'},
+    12: {'name': 'आचार्य रामानंद शास्त्री', 'skill': 'वैदिक ज्योतिष • फलित • अंक विद्या'},
+    13: {'name': 'आचार्य सुनील पाठक', 'skill': 'वैदिक ज्योतिष • कर्मकांड • कालसर्प'},
+    14: {'name': 'साकेत धाम आश्रम ज्योतिषाचार्य', 'skill': 'वैदिक अनुष्ठान • कुंडली विश्लेषण'},
+    15: {'name': 'आचार्य प्रांजल द्विवेदी', 'skill': 'वैदिक ज्योतिष • हस्तरेखा • कर्मकांड'},
+    16: {'name': 'पं. महेश्वर दीक्षित', 'skill': 'वैदिक ज्योतिष • प्रश्न कुंडली • वास्तु'},
+  };
+
   @override
   Widget build(BuildContext context) {
     final session = context.watch<AppSession>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isHi = LocaleManager.instance.currentLanguage.value != AppLanguage.en;
     final a = _astro;
+    final hiMeta = (isHi && a != null) ? _astroHindiMeta[a.id] : null;
+    final displayName = hiMeta?['name'] ?? a?.name ?? (isHi ? 'वैदिक ज्योतिषाचार्य' : 'Astrologer Sanctum');
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(a?.name ?? 'Astrologer Sanctum'),
+        title: Text(displayName),
         actions: [
           if (a != null)
             IconButton(
@@ -104,25 +123,25 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     children: [
                       // 1. Astrologer Profile Hero Card
-                      _profileHeroCard(context, a, isDark),
+                      _profileHeroCard(context, a, isDark, isHi, hiMeta),
                       const SizedBox(height: 14),
 
                       // 2. Stats Strip
-                      _statsStrip(context, a, isDark),
+                      _statsStrip(context, a, isDark, isHi),
                       const SizedBox(height: 16),
 
                       // 3. Specialties & Skills
-                      _specialtiesCard(context, a, isDark),
+                      _specialtiesCard(context, a, isDark, isHi),
                       const SizedBox(height: 16),
 
                       // 4. Vedic Bio & Experience
                       if (a.loginBio.isNotEmpty) ...[
-                        _bioCard(context, a, isDark),
+                        _bioCard(context, a, isDark, isHi),
                         const SizedBox(height: 16),
                       ],
 
                       // 5. Consultation Options & Live Actions
-                      _consultationOptions(context, a, session, isDark),
+                      _consultationOptions(context, a, session, isDark, isHi, displayName),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -130,7 +149,10 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
     );
   }
 
-  Widget _profileHeroCard(BuildContext context, Astrologer a, bool isDark) {
+  Widget _profileHeroCard(BuildContext context, Astrologer a, bool isDark, bool isHi, Map<String, String>? hiMeta) {
+    final name = hiMeta?['name'] ?? a.name;
+    final skill = hiMeta?['skill'] ?? (a.primarySkill.isNotEmpty ? a.primarySkill : (isHi ? 'वैदिक ज्योतिषी' : 'Vedic Astrologer'));
+
     return SacredCard(
       padding: const EdgeInsets.all(16),
       elevation: 2,
@@ -141,7 +163,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
             imageUrl: a.imageUrl,
             radius: 38,
             isOnline: a.isChatOnline || a.isCallOnline,
-            badgeText: a.isChatOnline || a.isCallOnline ? 'LIVE' : null,
+            badgeText: a.isChatOnline || a.isCallOnline ? (isHi ? 'लाइव' : 'LIVE') : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -152,7 +174,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
                   children: [
                     Flexible(
                       child: Text(
-                        a.name,
+                        name,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
@@ -170,7 +192,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  a.primarySkill.isNotEmpty ? a.primarySkill : 'Vedic Astrologer',
+                  skill,
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
@@ -179,7 +201,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Languages: ${a.languageKnown.isNotEmpty ? a.languageKnown : 'Hindi, English'}',
+                  '${isHi ? 'भाषाएं' : 'Languages'}: ${a.languageKnown.isNotEmpty ? a.languageKnown : (isHi ? 'हिंदी, अंग्रेज़ी' : 'Hindi, English')}',
                   style: TextStyle(
                     fontSize: 11.5,
                     color: isDark ? Colors.white60 : Colors.black54,
@@ -219,7 +241,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '${a.reviews} Reviews',
+                      '${a.reviews} ${isHi ? 'समीक्षाएं' : 'Reviews'}',
                       style: TextStyle(
                         fontSize: 11,
                         color: isDark ? Colors.white54 : Colors.black45,
@@ -235,7 +257,10 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
     );
   }
 
-  Widget _statsStrip(BuildContext context, Astrologer a, bool isDark) {
+  Widget _statsStrip(BuildContext context, Astrologer a, bool isDark, bool isHi) {
+    final expStr = '${a.experienceInYears > 0 ? a.experienceInYears : 5}+ ${isHi ? 'वर्ष' : 'Yrs'}';
+    final ordersStr = '${a.reviews > 0 ? a.reviews : 480}+';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -250,11 +275,11 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _statItem('${a.experienceInYears}+ Yrs', 'Experience', Icons.workspace_premium_rounded),
+          _statItem(expStr, isHi ? 'अनुभव' : 'Experience', Icons.workspace_premium_rounded),
           Container(height: 24, width: 1, color: Colors.grey.withValues(alpha: 0.2)),
-          _statItem('${a.reviews}+', 'Orders', Icons.phone_in_talk_rounded),
+          _statItem(ordersStr, isHi ? 'परामर्श' : 'Orders', Icons.phone_in_talk_rounded),
           Container(height: 24, width: 1, color: Colors.grey.withValues(alpha: 0.2)),
-          _statItem('₹${a.charge.toStringAsFixed(0)}/min', 'Dakshina', Icons.currency_rupee_rounded),
+          _statItem('₹${a.charge.toStringAsFixed(0)}/${isHi ? 'मि' : 'min'}', isHi ? 'दक्षिणा' : 'Dakshina', Icons.currency_rupee_rounded),
         ],
       ),
     );
@@ -284,7 +309,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
     );
   }
 
-  Widget _specialtiesCard(BuildContext context, Astrologer a, bool isDark) {
+  Widget _specialtiesCard(BuildContext context, Astrologer a, bool isDark, bool isHi) {
     final skills = (a.allSkill.isNotEmpty ? a.allSkill : a.primarySkill)
         .split(',')
         .map((s) => s.trim())
@@ -296,9 +321,9 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Vedic Specialties & Expertise',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
+          Text(
+            isHi ? 'वैदिक कौशल एवं विशेषज्ञता' : 'Vedic Specialties & Expertise',
+            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -332,15 +357,15 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
     );
   }
 
-  Widget _bioCard(BuildContext context, Astrologer a, bool isDark) {
+  Widget _bioCard(BuildContext context, Astrologer a, bool isDark, bool isHi) {
     return SacredCard(
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'About Astrologer',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
+          Text(
+            isHi ? 'आचार्य जी का परिचय' : 'About Astrologer',
+            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
@@ -361,33 +386,35 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
     Astrologer a,
     AppSession session,
     bool isDark,
+    bool isHi,
+    String displayName,
   ) {
     final isFree = a.isFreeAvailable && !(session.user?.isFreeChat ?? false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Start Consultation',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+        Text(
+          isHi ? 'परामर्श आरंभ करें' : 'Start Consultation',
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 10),
         _actionTile(
           icon: Icons.chat_bubble_rounded,
-          title: 'Start Chat Consultation',
+          title: isHi ? 'चैट परामर्श आरंभ करें' : 'Start Chat Consultation',
           subtitle: a.isChatOnline
-              ? 'Instant live conversation with astrologer'
-              : 'Astrologer is currently offline',
+              ? (isHi ? 'आचार्य जी से सीधी त्वरित बातचीत' : 'Instant live conversation with astrologer')
+              : (isHi ? 'आचार्य जी अभी ऑफलाइन हैं' : 'Astrologer is currently offline'),
           price: isFree
-              ? 'FREE'
-              : '₹${a.charge.toStringAsFixed(0)}/min',
+              ? (isHi ? 'निःशुल्क' : 'FREE')
+              : '₹${a.charge.toStringAsFixed(0)}/${isHi ? 'मि' : 'min'}',
           isFree: isFree,
           isOnline: a.isChatOnline,
           gradient: CustomerTheme.saffronGradient,
           onTap: a.isChatOnline
               ? () => context.openChat(
                     astrologerId: widget.id,
-                    astrologerName: a.name,
+                    astrologerName: displayName,
                     ratePerMinute: a.charge > 0 ? a.charge.toDouble() : 15.0,
                     isFree: isFree,
                   )
@@ -396,18 +423,18 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
         const SizedBox(height: 10),
         _actionTile(
           icon: Icons.phone_rounded,
-          title: 'Audio Call Consultation',
+          title: isHi ? 'ऑडियो कॉल पर परामर्श' : 'Audio Call Consultation',
           subtitle: a.isCallOnline
-              ? 'High-clarity private spiritual voice call'
-              : 'Astrologer is currently on another call',
-          price: '₹${a.charge.toStringAsFixed(0)}/min',
+              ? (isHi ? 'गोपनीय व स्पष्ट आध्यात्मिक वॉयस कॉल' : 'High-clarity private spiritual voice call')
+              : (isHi ? 'आचार्य जी अभी दूसरे यजमान से बात कर रहे हैं' : 'Astrologer is currently on another call'),
+          price: '₹${a.charge.toStringAsFixed(0)}/${isHi ? 'मि' : 'min'}',
           isFree: false,
           isOnline: a.isCallOnline,
           gradient: CustomerTheme.dakshinaGradient,
           onTap: a.isCallOnline
               ? () => context.openCall(
                     astrologerId: widget.id,
-                    astrologerName: a.name,
+                    astrologerName: displayName,
                     ratePerMinute:
                         a.charge > 0 ? a.charge.toDouble() : 15.0,
                   )
@@ -416,11 +443,11 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
         const SizedBox(height: 10),
         _actionTile(
           icon: Icons.videocam_rounded,
-          title: 'Live Video Consultation',
+          title: isHi ? 'प्रत्यक्ष वीडियो परामर्श' : 'Live Video Consultation',
           subtitle: a.isCallOnline
-              ? 'Face-to-face face reading & Kundli analysis'
-              : 'Video line currently unavailable',
-          price: '₹${(a.videoCallRate > 0 ? a.videoCallRate : a.charge * 1.5).toStringAsFixed(0)}/min',
+              ? (isHi ? 'सामने बैठकर मुखाकृति व कुंडली दर्शन' : 'Face-to-face face reading & Kundli analysis')
+              : (isHi ? 'वीडियो लाइन अभी उपलब्ध नहीं है' : 'Video line currently unavailable'),
+          price: '₹${(a.videoCallRate > 0 ? a.videoCallRate : a.charge * 1.5).toStringAsFixed(0)}/${isHi ? 'मि' : 'min'}',
           isFree: false,
           isOnline: a.isCallOnline,
           gradient: const LinearGradient(
@@ -429,7 +456,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
           onTap: a.isCallOnline
               ? () => context.openCall(
                     astrologerId: widget.id,
-                    astrologerName: a.name,
+                    astrologerName: displayName,
                     isVideo: true,
                     ratePerMinute: a.videoCallRate > 0
                         ? a.videoCallRate.toDouble()
@@ -440,9 +467,9 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
         const SizedBox(height: 10),
         _actionTile(
           icon: Icons.auto_awesome_rounded,
-          title: 'Chat with ${a.name}\'s AI Twin (24/7)',
-          subtitle: 'Trained on ${a.name}\'s exact Vedic Jyotish & Upay style • Zero wait',
-          price: '₹${(a.charge > 0 ? (a.charge * 0.5).clamp(5, 25) : 10).toStringAsFixed(0)}/min',
+          title: isHi ? 'आचार्य जी के AI स्वरूप से संवाद (24/7)' : 'Chat with $displayName\'s AI Twin (24/7)',
+          subtitle: isHi ? 'आचार्य जी की वेदोक्त शैली व उपायों पर आधारित • शून्य प्रतीक्षा' : 'Trained on exact Vedic Jyotish & Upay style • Zero wait',
+          price: '₹${(a.charge > 0 ? (a.charge * 0.5).clamp(5, 25) : 10).toStringAsFixed(0)}/${isHi ? 'मि' : 'min'}',
           isFree: false,
           isOnline: true,
           gradient: const LinearGradient(
@@ -452,7 +479,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
             MaterialPageRoute(
               builder: (_) => OnlinePujaAiScreen(
                 initialAstrologerId: widget.id,
-                initialAstrologerName: a.name,
+                initialAstrologerName: displayName,
                 initialAstrologerSkill: a.primarySkill,
                 initialAstrologerRate: a.charge > 0 ? a.charge.toDouble() : 10.0,
               ),

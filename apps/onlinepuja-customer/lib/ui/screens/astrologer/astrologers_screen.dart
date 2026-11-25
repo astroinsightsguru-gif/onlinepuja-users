@@ -1129,10 +1129,6 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
         (a.primarySkill.isNotEmpty
             ? a.primarySkill
             : (isHi ? 'वैदिक ज्योतिषी' : 'Vedic Astrologer'));
-    final displayLang = hiMeta?['lang'] ??
-        (a.languageKnown.isNotEmpty
-            ? a.languageKnown
-            : (isHi ? 'हिंदी, अंग्रेज़ी' : 'Hindi, English'));
     final rate = a.charge > 0
         ? '$currency${a.charge.toInt()}/${isHi ? 'मि' : 'm'}'
         : (isHi ? 'निःशुल्क' : 'FREE');
