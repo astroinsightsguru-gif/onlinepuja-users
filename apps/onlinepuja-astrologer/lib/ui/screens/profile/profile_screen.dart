@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../state/app_session.dart';
 import '../../theme/partner_theme.dart';
 import '../../widgets/partner_widgets.dart';
+import '../ai_twin/ai_twin_studio_screen.dart';
 import '../auth/login_screen.dart';
 
 /// Partner profile: credentials, consultation rates, skills,
@@ -365,7 +366,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
 
                 if (_aiTwinEnabled) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF8B5CF6),
+                        side: const BorderSide(color: Color(0xFF8B5CF6)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.school_rounded, size: 16),
+                      label: const Text('विस्तृत AI स्टूडियो खोलें (Open Training Studio) →', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                      onPressed: () => Navigator.pushNamed(context, AiTwinStudioScreen.route),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   const Divider(height: 1),
                   const SizedBox(height: 14),
 

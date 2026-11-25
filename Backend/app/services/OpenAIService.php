@@ -148,15 +148,33 @@ class OpenAIService
     }
     private function getAssistantContentBasedOnAstrologer($astrologerId)
     {
+        // 1. Check if it's an AiAstrologer bot
         $astrologer = AiAstrologer::find($astrologerId);
-
-        if ($astrologer) {
+        if ($astrologer && !empty($astrologer->system_intruction)) {
             return $astrologer->system_intruction;
         }
-        return "You are an experienced astrologer. Your role is to provide insightful and personalized
-          astrological readings based on users' birth details. Use your knowledge of astrology to interpret planetary
-           positions, aspects, and transits to help users understand their past, present, and future. Be empathetic
-            and supportive in your responses.";
+
+        // 2. Check if it's a real Astrologer's AI Twin
+        $humanAstro = \Illuminate\Support\Facades\DB::table('astrologers')->where('id', $astrologerId)->first();
+        if ($humanAstro) {
+            $astroName = $humanAstro->name ?? 'आचार्य';
+            $tone = $humanAstro->ai_twin_tone ?? 'empathetic';
+            $prompt = $humanAstro->ai_twin_prompt ?? '';
+            $skills = $humanAstro->allSkills ?? $humanAstro->primarySkill ?? 'Vedic Astrology, Kundli, Prashna';
+            $exp = $humanAstro->experienceInYears ?? '10+';
+
+            return "You are the official Vedic AI Digital Twin of Acharya {$astroName} on OnlinePuja.live.
+You represent Acharya {$astroName} ({$exp} years of Vedic experience, specialties: {$skills}).
+Persona & Tone: {$tone}. Speak with divine grace, compassionate Vedic wisdom, and deep Jyotish authority in pure Hindi or English matching the devotee.
+Acharya Ji's Guiding Philosophy & Custom Training Rules:
+{$prompt}
+Rules for Consultation:
+1. Always analyze devotee's birth chart (Kundli), planetary transits (Gochar), and Dasha periods with reverence.
+2. Recommend authentic sanctified remedies, Vedic mantras, and certified OnlinePuja rituals (e.g. Mahamrityunjay Jaap, Kaal Bhairav Anushthan, Rudrabhishek) strictly aligned with Acharya Ji's philosophy.
+3. Be respectful, encouraging, and provide clear spiritual hope and actionable Vedic remedies.";
+        }
+
+        return "You are an experienced Vedic astrologer on OnlinePuja.live. Your role is to provide insightful and personalized astrological readings based on users' birth details. Use your knowledge of Vedic astrology to interpret planetary positions, aspects, and transits to help users understand their past, present, and future. Be empathetic and supportive in your responses.";
     }
 
 

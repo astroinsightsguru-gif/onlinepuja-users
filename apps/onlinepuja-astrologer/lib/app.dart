@@ -3,6 +3,7 @@ import 'package:op_shared/op_shared.dart';
 import 'package:provider/provider.dart';
 
 import 'state/app_session.dart';
+import 'ui/screens/ai_twin/ai_twin_studio_screen.dart';
 import 'ui/screens/auth/login_screen.dart';
 import 'ui/screens/auth/otp_screen.dart';
 import 'ui/screens/auth/partner_register_screen.dart';
@@ -47,6 +48,7 @@ class OnlinePujaPartnerApp extends StatelessWidget {
         ProfileScreen.route: (_) => const ProfileScreen(),
         WalletScreen.route: (_) => const WalletScreen(),
         AstrologerSocialGrowthScreen.route: (_) => const AstrologerSocialGrowthScreen(),
+        AiTwinStudioScreen.route: (_) => const AiTwinStudioScreen(),
         VedicToolkitScreen.route: (_) => const VedicToolkitScreen(),
         MasterAiChatbotScreen.route: (_) => const MasterAiChatbotScreen(),
       },

@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../state/app_session.dart';
 import '../../theme/partner_theme.dart';
 import '../../widgets/partner_widgets.dart';
+import '../ai_twin/ai_twin_studio_screen.dart';
 import '../auth/login_screen.dart';
 import '../call/call_session_screen.dart';
 import '../chat/chat_session_screen.dart';
@@ -1082,6 +1083,80 @@ class _HomeShellState extends State<HomeShell> {
               ],
             ),
           ),
+          const SizedBox(height: 14),
+
+          // Vedic AI Twin & Social Media Autopilot Cards
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => Navigator.pushNamed(context, AiTwinStudioScreen.route),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFF59E0B).withValues(alpha: dark ? 0.2 : 0.12),
+                          const Color(0xFFD97706).withValues(alpha: dark ? 0.1 : 0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.smart_toy_rounded, color: Color(0xFFF59E0B), size: 18),
+                            SizedBox(width: 6),
+                            Text('AI ट्विन स्टूडियो', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                          ],
+                        ),
+                        SizedBox(height: 4),
+                        Text('२४/७ अवतार व ६०% आय', style: TextStyle(fontSize: 10.5, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: InkWell(
+                  onTap: () => Navigator.pushNamed(context, AstrologerSocialGrowthScreen.route),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFEA580C).withValues(alpha: dark ? 0.2 : 0.12),
+                          const Color(0xFFC2410C).withValues(alpha: dark ? 0.1 : 0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFEA580C).withValues(alpha: 0.3)),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.hub_rounded, color: Color(0xFFEA580C), size: 18),
+                            SizedBox(width: 6),
+                            Text('सोशल ग्रोथ इंजन', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                          ],
+                        ),
+                        SizedBox(height: 4),
+                        Text('FB, Insta, YT रील्स', style: TextStyle(fontSize: 10.5, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // Astrologer Performance Grid
@@ -1283,6 +1358,24 @@ class _HomeShellState extends State<HomeShell> {
               leading: const Icon(Icons.rocket_launch_rounded, color: PartnerTheme.gold),
               title: const Text('AI Social Growth Hub'),
               subtitle: const Text('Auto-Grow FB, Insta & YouTube'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AstrologerSocialGrowthScreen.route);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.smart_toy_rounded, color: Color(0xFFF59E0B)),
+              title: const Text('वैदिक AI ट्विन स्टूडियो (AI Twin Studio)'),
+              subtitle: const Text('प्रशिक्षित करें अपना 24/7 वैदिक डिजिटल अवतार'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AiTwinStudioScreen.route);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.hub_rounded, color: Color(0xFFEA580C)),
+              title: const Text('सोशल मीडिया ऑटोपायलट (Growth Engine)'),
+              subtitle: const Text('FB, Insta, YouTube पर रील्स व पोस्ट्स से ग्रोथ'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, AstrologerSocialGrowthScreen.route);

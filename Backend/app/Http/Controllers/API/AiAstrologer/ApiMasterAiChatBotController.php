@@ -66,7 +66,17 @@ class ApiMasterAiChatBotController extends Controller
                     'birthPlace' => $user->birthPlace,
                 ] : null;
 
-                $sys = "You are a revered Vedic Astrologer & spiritual counselor for OnlinePuja.live. Provide compassionate, authentic Jyotish guidance, remedies, and puja recommendations in natural Hindi or English matching the user's query.";
+                $humanAstro = \Illuminate\Support\Facades\DB::table('astrologers')->where('id', $astrologerId)->first();
+                if ($humanAstro) {
+                    $astroName = $humanAstro->name ?? 'आचार्य';
+                    $tone = $humanAstro->ai_twin_tone ?? 'empathetic';
+                    $prompt = $humanAstro->ai_twin_prompt ?? '';
+                    $skills = $humanAstro->allSkills ?? $humanAstro->primarySkill ?? 'Vedic Astrology, Kundli';
+
+                    $sys = "You are the official Vedic AI Digital Twin of Acharya {$astroName} on OnlinePuja.live (Specialties: {$skills}). Tone: {$tone}. Provide compassionate, authentic Jyotish guidance matching Acharya Ji's custom philosophy and rules: {$prompt}. Speak in natural Hindi or English matching the devotee's language.";
+                } else {
+                    $sys = "You are a revered Vedic Astrologer & spiritual counselor for OnlinePuja.live. Provide compassionate, authentic Jyotish guidance, remedies, and puja recommendations in natural Hindi or English matching the user's query.";
+                }
                 $response = $aiEngine->generateText($message, $sys, $context);
             }
             
