@@ -277,6 +277,72 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
       'skill': 'स्वास्थ्य ज्योतिष एवं आरोग्य मंत्र',
       'lang': 'संस्कृत, हिंदी, अंग्रेज़ी',
     },
+    // Verified Human Acharyas Localization
+    1: {
+      'name': 'पं. शशि भूषण त्रिपाठी जी',
+      'skill': 'वैदिक ज्योतिष • कर्मकांड • दशा विचार',
+      'lang': 'हिंदी, संस्कृत',
+    },
+    2: {
+      'name': 'पं. अंकित शास्त्री',
+      'skill': 'वैदिक कुंडली • मुहूर्त • ग्रह शांति',
+      'lang': 'हिंदी, संस्कृत',
+    },
+    3: {
+      'name': 'महंत राम दास त्यागी जी महाराज',
+      'skill': 'अध्यात्म • वैदिक ज्योतिष • भागवत',
+      'lang': 'हिंदी, संस्कृत',
+    },
+    5: {
+      'name': 'परमहंसाचार्य दास',
+      'skill': 'वैदिक ज्योतिष • साधना • मंत्र रहस्य',
+      'lang': 'हिंदी, संस्कृत',
+    },
+    6: {
+      'name': 'आचार्य सोमनाथ शास्त्री',
+      'skill': 'वैदिक ज्योतिष • कुंडली • ग्रह शांति',
+      'lang': 'हिंदी, संस्कृत, अंग्रेज़ी',
+    },
+    7: {
+      'name': 'पं. राधाकांत शर्मा',
+      'skill': 'प्रश्न कुंडली • मुहूर्त • वैदिक ज्योतिष',
+      'lang': 'हिंदी, संस्कृत',
+    },
+    9: {
+      'name': 'आचार्य विक्रम शास्त्री',
+      'skill': 'वैदिक ज्योतिष • कुंडली • वास्तु शास्त्र',
+      'lang': 'हिंदी, संस्कृत, अंग्रेज़ी',
+    },
+    11: {
+      'name': 'आचार्य देवव्रत जी',
+      'skill': 'ज्योतिष • हस्तरेखा • मुहूर्त विचार',
+      'lang': 'हिंदी, संस्कृत',
+    },
+    12: {
+      'name': 'आचार्य रामानंद शास्त्री',
+      'skill': 'वैदिक ज्योतिष • फलित • अंक विद्या',
+      'lang': 'हिंदी, संस्कृत, अंग्रेज़ी',
+    },
+    13: {
+      'name': 'आचार्य सुनील पाठक',
+      'skill': 'वैदिक ज्योतिष • कर्मकांड • कालसर्प',
+      'lang': 'हिंदी, संस्कृत',
+    },
+    14: {
+      'name': 'साकेत धाम आश्रम ज्योतिषाचार्य',
+      'skill': 'वैदिक अनुष्ठान • कुंडली विश्लेषण',
+      'lang': 'हिंदी, संस्कृत',
+    },
+    15: {
+      'name': 'आचार्य प्रांजल द्विवेदी',
+      'skill': 'वैदिक ज्योतिष • हस्तरेखा • कर्मकांड',
+      'lang': 'हिंदी, संस्कृत, अंग्रेज़ी',
+    },
+    16: {
+      'name': 'पं. महेश्वर दीक्षित',
+      'skill': 'वैदिक ज्योतिष • प्रश्न कुंडली • वास्तु',
+      'lang': 'हिंदी, संस्कृत',
+    },
   };
 
   @override
@@ -1012,7 +1078,7 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.74,
+            childAspectRatio: 0.71,
             crossAxisSpacing: 10,
             mainAxisSpacing: 12,
           ),
@@ -1217,22 +1283,22 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      width: 52,
-                      height: 52,
+                      width: 64,
+                      height: 64,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isOnline
                               ? const Color(0xFF10B981)
                               : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                          width: 2,
+                          width: 2.2,
                         ),
                         boxShadow: isOnline
                             ? [
                                 BoxShadow(
                                   color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                                  blurRadius: 5,
-                                  spreadRadius: 0.5,
+                                  blurRadius: 6,
+                                  spreadRadius: 0.8,
                                 ),
                               ]
                             : null,
@@ -1242,9 +1308,9 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
                             ? Image.network(
                                 a.imageUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => _avatarFallback(a.name, isAi: isAiAcharya, size: 52),
+                                errorBuilder: (_, _, _) => _avatarFallback(a.name, isAi: isAiAcharya, size: 64),
                               )
-                            : _avatarFallback(a.name, isAi: isAiAcharya, size: 52),
+                            : _avatarFallback(a.name, isAi: isAiAcharya, size: 64),
                       ),
                     ),
                     Positioned(

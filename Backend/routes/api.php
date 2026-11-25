@@ -814,6 +814,8 @@ Route::match(['get', 'post'], 'meta/webhook', [\App\Http\Controllers\API\MetaMes
 // 🚀 Astrologer Personal Social Media Growth OS & AI Co-pilot
 Route::prefix('partner/social')->group(function () {
     Route::get('status', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'getStatus']);
+    Route::get('auth-url', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'getAuthUrl']);
+    Route::match(['get', 'post'], 'callback/{platform}', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'handleCallback']);
     Route::post('connect', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'connectPlatform']);
     Route::post('disconnect', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'disconnectPlatform']);
     Route::post('toggle-autopilot', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'toggleAutopilot']);
@@ -821,6 +823,11 @@ Route::prefix('partner/social')->group(function () {
     Route::post('generate-creative', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'generateCreative']);
     Route::post('publish-creative', [\App\Http\Controllers\API\Partner\AstrologerSocialController::class, 'publishCreative']);
 });
+
+// 🛍️ Meta / Facebook & Instagram Commerce Catalogue Feeds
+Route::get('feeds/meta-catalog.xml', [\App\Http\Controllers\API\MetaCommerceFeedController::class, 'xmlFeed'])->name('api.feeds.meta-catalog.xml');
+Route::get('feeds/meta-catalog.csv', [\App\Http\Controllers\API\MetaCommerceFeedController::class, 'csvFeed'])->name('api.feeds.meta-catalog.csv');
+
 
 
 

@@ -105,14 +105,36 @@ class _AstrologerSocialGrowthScreenState
     final astroId = session.astrologerId > 0 ? session.astrologerId : 1;
 
     HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Authenticating ${platform.toUpperCase()} with 1-Click Login...'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
 
     try {
+      // 1. Fetch real official OAuth URL from backend (Meta Facebook/Instagram or Google YouTube)
+      final authRes = await http.get(
+        Uri.parse('$_baseUrl/auth-url?platform=$platform&astrologer_id=$astroId'),
+        headers: {'Accept': 'application/json'},
+      );
+
+      if (authRes.statusCode == 200) {
+        final authData = jsonDecode(authRes.body);
+        final authUrl = authData['auth_url'] as String?;
+        if (authUrl != null && authUrl.isNotEmpty) {
+          final uri = Uri.parse(authUrl);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('सुरक्षित ${platform.toUpperCase()} प्रमाणीकरण ब्राउज़र में खोला गया...'),
+                  backgroundColor: PartnerTheme.emerald,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
+            }
+            return;
+          }
+        }
+      }
+
+      // 2. Direct connection fallback
       final res = await http.post(
         Uri.parse('$_baseUrl/connect'),
         headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},

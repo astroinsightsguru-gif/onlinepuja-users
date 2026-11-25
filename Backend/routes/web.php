@@ -716,3 +716,9 @@ Route::group([], function () use ($professionTitle) {
     Route::post('/admin/tds-gst/reject', [WithdrawlController::class, 'reject'])->name('tds-gst.reject');
     Route::get('/admin/tds-gst', [WithdrawlController::class, 'getTdsGst'])->name('tds-gst');
 });
+
+// 🛍️ Public Meta / Facebook & Instagram Commerce Catalogue Feeds
+Route::get('feeds/meta-catalog.xml', [\App\Http\Controllers\API\MetaCommerceFeedController::class, 'xmlFeed']);
+Route::get('feeds/meta-catalog.csv', [\App\Http\Controllers\API\MetaCommerceFeedController::class, 'csvFeed']);
+Route::get('feeds/facebook-products.xml', [\App\Http\Controllers\API\MetaCommerceFeedController::class, 'xmlFeed']);
+

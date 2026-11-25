@@ -5,7 +5,9 @@ namespace App\Http\Controllers\API\Partner;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Brain\Vault;
 
 class AstrologerSocialController extends Controller
 {
@@ -79,6 +81,301 @@ class AstrologerSocialController extends Controller
                 ],
             ],
         ]);
+    }
+
+    /**
+     * Generate official OAuth 2.0 Authorization URL for Meta (Facebook/Instagram) or Google (YouTube).
+     * GET /api/partner/social/auth-url?platform={facebook|instagram|youtube}&astrologer_id={id}
+     */
+    public function getAuthUrl(Request $request)
+    {
+        $platform = strtolower(trim((string)$request->input('platform', '')));
+        $astrologerId = (int)($request->input('astrologer_id') ?? 1);
+
+        if (!in_array($platform, ['facebook', 'instagram', 'youtube'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid platform. Must be facebook, instagram, or youtube.',
+            ], 422);
+        }
+
+        $creds = Vault::socialCredentials();
+        $state = base64_encode(json_encode([
+            'astrologer_id' => $astrologerId,
+            'platform' => $platform,
+            'time' => time(),
+        ]));
+
+        $baseUrl = 'https://onlinepuja.live';
+        $redirectUri = $baseUrl . '/api/partner/social/callback/' . $platform;
+
+        if ($platform === 'facebook' || $platform === 'instagram') {
+            $appId = $creds['fb_app_id'] ?: $creds['meta_app_id'] ?: Vault::get('meta_app_id', env('META_APP_ID', ''));
+            $scopes = $platform === 'instagram'
+                ? 'instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement,public_profile'
+                : 'pages_show_list,pages_read_engagement,pages_manage_posts,public_profile';
+
+            $authUrl = "https://www.facebook.com/v21.0/dialog/oauth?" . http_build_query([
+                'client_id' => $appId,
+                'redirect_uri' => $redirectUri,
+                'scope' => $scopes,
+                'state' => $state,
+                'response_type' => 'code',
+            ]);
+        } else {
+            // YouTube
+            $clientId = $creds['youtube_client_id'] ?: Vault::get('youtube_client_id', env('YOUTUBE_CLIENT_ID', ''));
+            $scopes = implode(' ', [
+                'https://www.googleapis.com/auth/youtube.upload',
+                'https://www.googleapis.com/auth/youtube.readonly',
+                'https://www.googleapis.com/auth/userinfo.profile',
+            ]);
+
+            $authUrl = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build_query([
+                'client_id' => $clientId,
+                'redirect_uri' => $redirectUri,
+                'response_type' => 'code',
+                'scope' => $scopes,
+                'access_type' => 'offline',
+                'prompt' => 'consent',
+                'state' => $state,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'platform' => $platform,
+            'auth_url' => $authUrl,
+            'redirect_uri' => $redirectUri,
+        ]);
+    }
+
+    /**
+     * Handle OAuth 2.0 Callback from Meta or Google/YouTube.
+     * GET|POST /api/partner/social/callback/{platform}
+     */
+    public function handleCallback(string $platform, Request $request)
+    {
+        $platform = strtolower(trim($platform));
+        $code = $request->input('code');
+        $error = $request->input('error') ?? $request->input('error_description');
+
+        if ($error || empty($code)) {
+            Log::warning("Social OAuth error for $platform: " . ($error ?: 'No authorization code'));
+            return response(
+                $this->renderAuthHtmlResult(false, $platform, 'प्रमाणीकरण अस्वीकृत हुआ: ' . ($error ?: 'Authorization was cancelled')),
+                400,
+                ['Content-Type' => 'text/html; charset=utf-8']
+            );
+        }
+
+        $stateData = [];
+        if ($request->input('state')) {
+            $decoded = json_decode(base64_decode($request->input('state')), true);
+            if (is_array($decoded)) {
+                $stateData = $decoded;
+            }
+        }
+        $astrologerId = (int)($stateData['astrologer_id'] ?? 1);
+
+        $creds = Vault::socialCredentials();
+        $baseUrl = 'https://onlinepuja.live';
+        $redirectUri = $baseUrl . '/api/partner/social/callback/' . $platform;
+
+        try {
+            if ($platform === 'facebook' || $platform === 'instagram') {
+                $appId = $creds['fb_app_id'] ?: $creds['meta_app_id'] ?: Vault::get('meta_app_id', env('META_APP_ID', ''));
+                $appSecret = $creds['fb_app_secret'] ?: $creds['meta_app_secret'] ?: Vault::get('meta_app_secret', env('META_APP_SECRET', ''));
+
+                // 1. Exchange code for short-lived access token
+                $tokenRes = Http::asForm()->post('https://graph.facebook.com/v21.0/oauth/access_token', [
+                    'client_id' => $appId,
+                    'client_secret' => $appSecret,
+                    'redirect_uri' => $redirectUri,
+                    'code' => $code,
+                ]);
+
+                if (!$tokenRes->successful()) {
+                    throw new \Exception('Failed to exchange code with Meta: ' . $tokenRes->body());
+                }
+
+                $shortToken = $tokenRes->json('access_token');
+
+                // 2. Exchange for 60-day long-lived user access token
+                $longRes = Http::get('https://graph.facebook.com/v21.0/oauth/access_token', [
+                    'grant_type' => 'fb_exchange_token',
+                    'client_id' => $appId,
+                    'client_secret' => $appSecret,
+                    'fb_exchange_token' => $shortToken,
+                ]);
+
+                $accessToken = $longRes->successful() ? ($longRes->json('access_token') ?: $shortToken) : $shortToken;
+                $expiresIn = $longRes->json('expires_in') ?: 5184000; // 60 days default
+
+                // 3. Fetch user / page info
+                $userRes = Http::get('https://graph.facebook.com/v21.0/me', [
+                    'fields' => 'id,name,picture',
+                    'access_token' => $accessToken,
+                ]);
+
+                $accountId = $userRes->json('id') ?: 'fb_' . uniqid();
+                $accountName = $userRes->json('name') ?: 'Meta User';
+                $avatarUrl = $userRes->json('picture.data.url') ?: '';
+                $handle = '@' . strtolower(str_replace(' ', '', $accountName));
+                $followers = 0;
+
+                // Check for Page or Instagram business account
+                $accountsRes = Http::get('https://graph.facebook.com/v21.0/me/accounts', [
+                    'fields' => 'id,name,access_token,instagram_business_account{id,username,profile_picture_url,followers_count}',
+                    'access_token' => $accessToken,
+                ]);
+
+                if ($accountsRes->successful()) {
+                    $pages = $accountsRes->json('data') ?? [];
+                    if (!empty($pages)) {
+                        $firstPage = $pages[0];
+                        if ($platform === 'instagram' && !empty($firstPage['instagram_business_account'])) {
+                            $ig = $firstPage['instagram_business_account'];
+                            $accountId = $ig['id'];
+                            $handle = '@' . ($ig['username'] ?? $handle);
+                            $avatarUrl = $ig['profile_picture_url'] ?? $avatarUrl;
+                            $followers = (int)($ig['followers_count'] ?? 0);
+                        } else {
+                            $accountId = $firstPage['id'];
+                            $accountName = $firstPage['name'];
+                            $accessToken = $firstPage['access_token'] ?: $accessToken; // Use perpetual page token!
+                        }
+                    }
+                }
+
+                // Save to database
+                DB::table('astrologer_social_accounts')->updateOrInsert(
+                    ['astrologer_id' => $astrologerId, 'platform' => $platform],
+                    [
+                        'account_id' => $accountId,
+                        'account_name' => $accountName,
+                        'handle' => $handle,
+                        'avatar_url' => $avatarUrl,
+                        'access_token' => $accessToken,
+                        'refresh_token' => null,
+                        'token_expires_at' => now()->addSeconds($expiresIn),
+                        'is_autopilot_enabled' => 1,
+                        'followers_count' => $followers,
+                        'updated_at' => now(),
+                    ]
+                );
+
+            } else {
+                // YouTube
+                $clientId = $creds['youtube_client_id'] ?: Vault::get('youtube_client_id', env('YOUTUBE_CLIENT_ID', ''));
+                $clientSecret = $creds['youtube_client_secret'] ?: Vault::get('youtube_client_secret', env('YOUTUBE_CLIENT_SECRET', ''));
+
+                // 1. Exchange code for access & refresh token
+                $tokenRes = Http::asForm()->post('https://oauth2.googleapis.com/token', [
+                    'code' => $code,
+                    'client_id' => $clientId,
+                    'client_secret' => $clientSecret,
+                    'redirect_uri' => $redirectUri,
+                    'grant_type' => 'authorization_code',
+                ]);
+
+                if (!$tokenRes->successful()) {
+                    throw new \Exception('Failed to exchange code with Google: ' . $tokenRes->body());
+                }
+
+                $tokenData = $tokenRes->json();
+                $accessToken = $tokenData['access_token'];
+                $refreshToken = $tokenData['refresh_token'] ?? null;
+                $expiresIn = $tokenData['expires_in'] ?? 3600;
+
+                // 2. Fetch YouTube channel info
+                $chanRes = Http::withToken($accessToken)->get('https://www.googleapis.com/youtube/v3/channels', [
+                    'part' => 'snippet,statistics',
+                    'mine' => 'true',
+                ]);
+
+                $channel = $chanRes->json('items.0') ?? [];
+                $accountId = $channel['id'] ?? ('yt_' . uniqid());
+                $accountName = $channel['snippet']['title'] ?? 'YouTube Channel';
+                $handle = $channel['snippet']['customUrl'] ?? ('@' . strtolower(str_replace(' ', '', $accountName)));
+                $avatarUrl = $channel['snippet']['thumbnails']['default']['url'] ?? '';
+                $followers = (int)($channel['statistics']['subscriberCount'] ?? 0);
+
+                // Save to database
+                DB::table('astrologer_social_accounts')->updateOrInsert(
+                    ['astrologer_id' => $astrologerId, 'platform' => 'youtube'],
+                    [
+                        'account_id' => $accountId,
+                        'account_name' => $accountName,
+                        'handle' => $handle,
+                        'avatar_url' => $avatarUrl,
+                        'access_token' => $accessToken,
+                        'refresh_token' => $refreshToken,
+                        'token_expires_at' => now()->addSeconds($expiresIn),
+                        'is_autopilot_enabled' => 1,
+                        'followers_count' => $followers,
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+
+            return response(
+                $this->renderAuthHtmlResult(true, $platform, 'खाता सफलतापूर्वक सत्यापित व कनेक्ट हो गया है।'),
+                200,
+                ['Content-Type' => 'text/html; charset=utf-8']
+            );
+
+        } catch (\Throwable $e) {
+            Log::error("OAuth callback processing failed for $platform: " . $e->getMessage());
+            return response(
+                $this->renderAuthHtmlResult(false, $platform, 'प्रमाणीकरण त्रुटि: ' . $e->getMessage()),
+                500,
+                ['Content-Type' => 'text/html; charset=utf-8']
+            );
+        }
+    }
+
+    /**
+     * Render beautiful HTML result page for deep linking back to mobile app.
+     */
+    protected function renderAuthHtmlResult(bool $success, string $platform, string $msg): string
+    {
+        $title = $success ? 'सत्यापन सफल' : 'प्रमाणीकरण त्रुटि';
+        $icon = $success ? '✓' : '✗';
+        $color = $success ? '#10B981' : '#EF4444';
+        $pName = ucfirst($platform);
+
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OnlinePuja.live - {$pName} {$title}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0F0A1A; color: #FFFFFF; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; text-align: center; }
+    .card { background: #1B122C; border: 1px solid #33214E; border-radius: 20px; padding: 36px 28px; max-width: 420px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+    .badge { width: 72px; height: 72px; border-radius: 50%; background: {$color}22; border: 2px solid {$color}; display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 20px; color: {$color}; }
+    h2 { margin: 0 0 12px; font-size: 22px; color: #FFFFFF; }
+    p { margin: 0 0 24px; font-size: 14px; color: #94A3B8; line-height: 1.5; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #FF6F00, #F59E0B); color: #FFFFFF; text-decoration: none; padding: 12px 28px; border-radius: 12px; font-weight: 700; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">{$icon}</div>
+    <h2>{$pName} {$title}</h2>
+    <p>{$msg}</p>
+    <a href="onlinepuja://social-growth" class="btn" onclick="window.close();">ऐप पर वापस जाएं</a>
+  </div>
+  <script>
+    setTimeout(function() {
+      window.location.href = "onlinepuja://social-growth";
+    }, 1500);
+  </script>
+</body>
+</html>
+HTML;
     }
 
     /**
