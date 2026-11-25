@@ -30,6 +30,15 @@ class SocialConnectController
 
     public function callback(string $platform, Request $request)
     {
+        $state = $request->input('state');
+        if ($state) {
+            $decoded = json_decode(base64_decode($state), true);
+            if (is_array($decoded) && !empty($decoded['astrologer_id'])) {
+                return app(\App\Http\Controllers\API\Partner\AstrologerSocialController::class)
+                    ->handleCallback($platform, $request);
+            }
+        }
+
         return $this->finishSocialCallback($platform, $request);
     }
 

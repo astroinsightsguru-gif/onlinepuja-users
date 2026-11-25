@@ -121,10 +121,14 @@ Route::middleware(['auth'])->prefix('growth-os')->group(function () {
     Route::post('action', [GrowthOsController::class, 'runAction'])->name('growth-os.action');
 });
 
-// Social Media OAuth Connect Flow (Meta Facebook, Instagram Business, X, Pinterest, YouTube)
+// Public OAuth 2.0 Callback (Meta Facebook/Instagram, YouTube, Google - validated via cryptographic state token)
+Route::prefix('social')->group(function () {
+    Route::match(['get', 'post'], 'callback/{platform}', [\App\Http\Controllers\Admin\SocialConnectController::class, 'callback'])->name('social.callback');
+});
+
+// Authenticated Admin Social Actions
 Route::middleware(['auth'])->prefix('social')->group(function () {
     Route::get('connect/{platform}', [\App\Http\Controllers\Admin\SocialConnectController::class, 'connect'])->name('social.connect');
-    Route::get('callback/{platform}', [\App\Http\Controllers\Admin\SocialConnectController::class, 'callback'])->name('social.callback');
     Route::post('confirm', [\App\Http\Controllers\Admin\SocialConnectController::class, 'confirmAccounts'])->name('social.confirm');
     Route::delete('{id}', [\App\Http\Controllers\Admin\SocialConnectController::class, 'disconnect'])->name('social.disconnect');
 });

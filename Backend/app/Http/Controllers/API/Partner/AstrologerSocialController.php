@@ -107,7 +107,7 @@ class AstrologerSocialController extends Controller
         ]));
 
         $baseUrl = 'https://onlinepuja.live';
-        $redirectUri = $baseUrl . '/api/partner/social/callback/' . $platform;
+        $redirectUri = $baseUrl . '/admin/social/callback/' . $platform;
 
         if ($platform === 'facebook' || $platform === 'instagram') {
             $appId = $creds['fb_app_id'] ?: $creds['meta_app_id'] ?: Vault::get('meta_app_id', env('META_APP_ID', ''));
@@ -180,7 +180,7 @@ class AstrologerSocialController extends Controller
 
         $creds = Vault::socialCredentials();
         $baseUrl = 'https://onlinepuja.live';
-        $redirectUri = $baseUrl . '/api/partner/social/callback/' . $platform;
+        $redirectUri = $baseUrl . '/admin/social/callback/' . $platform;
 
         try {
             if ($platform === 'facebook' || $platform === 'instagram') {
@@ -265,6 +265,25 @@ class AstrologerSocialController extends Controller
                     ]
                 );
 
+                // Also synchronize with main PublisherManager social_accounts for scheduled autopilot broadcasts
+                try {
+                    app(\App\Social\PublisherManager::class)->saveAccount($platform, [
+                        'external_id' => $accountId,
+                        'label' => $accountName ?: $handle,
+                        'access_token' => $accessToken,
+                        'refresh_token' => null,
+                        'expires_at' => now()->addSeconds($expiresIn),
+                        'scopes' => explode(',', $scopes ?? ''),
+                        'meta' => [
+                            'handle' => $handle,
+                            'avatar_url' => $avatarUrl,
+                            'followers_count' => $followers,
+                        ],
+                    ], null, $astrologerId);
+                } catch (\Throwable $e) {
+                    Log::warning("Failed to sync to social_accounts for {$platform}: " . $e->getMessage());
+                }
+
             } else {
                 // YouTube
                 $clientId = $creds['youtube_client_id'] ?: Vault::get('youtube_client_id', env('YOUTUBE_CLIENT_ID', ''));
@@ -317,6 +336,25 @@ class AstrologerSocialController extends Controller
                         'updated_at' => now(),
                     ]
                 );
+
+                // Also synchronize with main PublisherManager social_accounts for scheduled autopilot broadcasts
+                try {
+                    app(\App\Social\PublisherManager::class)->saveAccount('youtube', [
+                        'external_id' => $accountId,
+                        'label' => $accountName ?: $handle,
+                        'access_token' => $accessToken,
+                        'refresh_token' => $refreshToken,
+                        'expires_at' => now()->addSeconds($expiresIn),
+                        'scopes' => ['https://www.googleapis.com/auth/youtube.upload'],
+                        'meta' => [
+                            'handle' => $handle,
+                            'avatar_url' => $avatarUrl,
+                            'subscribers_count' => $followers,
+                        ],
+                    ], null, $astrologerId);
+                } catch (\Throwable $e) {
+                    Log::warning("Failed to sync to social_accounts for youtube: " . $e->getMessage());
+                }
             }
 
             return response(
