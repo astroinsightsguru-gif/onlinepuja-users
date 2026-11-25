@@ -331,37 +331,164 @@ class VedicHindiLocalizer {
 
   /// Localize FAQ Question & Answer
   static String localizeFaq(String text, bool isHi) {
-    if (!isHi) return text;
-    final lower = text.toLowerCase().trim();
+    if (!isHi || text.trim().isEmpty) return text;
 
-    // Questions
-    if (lower.contains('how will i know') || lower.contains('performed for me') || lower.contains('proof')) {
-      return 'मुझे कैसे ज्ञात होगा कि पूजा मेरे नाम-गोत्र से ही संपन्न हुई है?';
+    // If already Devanagari Hindi, return as is
+    if (RegExp(r'[\u0900-\u097F]').allMatches(text).length > 10) {
+      return text;
     }
-    if (lower.contains('what do i need to provide') || lower.contains('details required') || lower.contains('sankalp details')) {
-      return 'पूजा संकल्प हेतु मुझे क्या-क्या विवरण प्रदान करना होगा?';
+
+    // Normalize quotes and whitespace for bulletproof matching
+    final normalized = text
+        .replaceAll(RegExp(r'[\u2018\u2019\u201A\u201B]'), "'")
+        .replaceAll(RegExp(r'[\u201C\u201D\u201E\u201F]'), '"')
+        .toLowerCase()
+        .trim();
+
+    // ---------------- QUESTIONS ----------------
+
+    // FAQ 1: Why choose online puja
+    if (normalized.contains('why should i choose') ||
+        (normalized.contains('why') && normalized.contains('online puja') && normalized.contains('performing'))) {
+      return 'पूजा एवं अनुष्ठान संपन्न करने हेतु ऑनलाइन पूजा को ही क्यों चुनें?';
     }
-    if (lower.contains('when will i receive') || lower.contains('prasad delivery') || lower.contains('how many days')) {
-      return 'अभिमंत्रित महाप्रसाद मुझे कितने दिनों में प्राप्त होगा?';
-    }
-    if (lower.contains('attend') || lower.contains('online live') || lower.contains('watch live')) {
-      return 'क्या मैं पूजा का प्रत्यक्ष दर्शन ऑनलाइन कर सकता हूँ?';
-    }
-    if (lower.contains('not know my gotra') || lower.contains('don\'t know gotra') || lower.contains('unknown gotra')) {
+
+    // FAQ 2: Don't know gotra
+    if (normalized.contains('know my gotra') ||
+        normalized.contains("don't know gotra") ||
+        normalized.contains('unknown gotra') ||
+        (normalized.contains('gotra') && normalized.contains('what should i do'))) {
       return 'यदि मुझे अपना गोत्र ज्ञात न हो, तो क्या मेरा संकल्प हो सकता है?';
     }
 
-    // Answers
-    if (lower.contains('video') && lower.contains('whatsapp') && lower.contains('gotra')) {
+    // FAQ 3: Video proof & darshan
+    if (normalized.contains('video proof') ||
+        normalized.contains('how will i receive') ||
+        normalized.contains('how will i know') ||
+        normalized.contains('performed for me') ||
+        normalized.contains('darshan of my puja')) {
+      return 'मुझे कैसे ज्ञात होगा कि पूजा मेरे नाम-गोत्र से ही संपन्न हुई है?';
+    }
+
+    // FAQ 4: Home delivery of prasad
+    if (normalized.contains('home delivery') ||
+        (normalized.contains('consecrated prasad') && normalized.contains('work')) ||
+        (normalized.contains('delivery') && normalized.contains('prasad'))) {
+      return 'अभिमंत्रित महाप्रसाद घर तक पहुंचाने की क्या प्रक्रिया है?';
+    }
+
+    // FAQ 5: Family members in another city / abroad
+    if (normalized.contains('family members') &&
+        (normalized.contains('another city') || normalized.contains('abroad') || normalized.contains('living in'))) {
+      return 'क्या मैं दूसरे शहर या विदेश में रह रहे परिजनों के नाम संकल्प में जोड़ सकता हूँ?';
+    }
+
+    // FAQ 6: Who performs sacred pujas
+    if (normalized.contains('who performs') ||
+        (normalized.contains('performs') && normalized.contains('sacred pujas')) ||
+        (normalized.contains('pilgrimage temples') && normalized.contains('who'))) {
+      return 'पावन तीर्थ मंदिरों में पूजा कौन संपन्न कराते हैं?';
+    }
+
+    // FAQ 7: Festival date rescheduled / postponed
+    if (normalized.contains('rescheduled') ||
+        normalized.contains('postponed') ||
+        (normalized.contains('festival puja date') && (normalized.contains('what happens') || normalized.contains('change')))) {
+      return 'यदि पर्व अथवा ग्रह गोचर के कारण पूजा की तिथि में परिवर्तन हो तो क्या होगा?';
+    }
+
+    // FAQ 8: Book on behalf of parents / children
+    if ((normalized.contains('behalf of') || normalized.contains('parents or children')) &&
+        (normalized.contains('sankalp') || normalized.contains('gotra'))) {
+      return 'क्या मैं अपने माता-पिता, बच्चों या जीवनसाथी के निमित्त संकल्प ले सकता हूँ?';
+    }
+
+    // Additional generic questions
+    if (normalized.contains('what do i need to provide') ||
+        normalized.contains('details required') ||
+        normalized.contains('sankalp details')) {
+      return 'पूजा संकल्प हेतु मुझे क्या-क्या विवरण प्रदान करना होगा?';
+    }
+    if (normalized.contains('attend') || normalized.contains('online live') || normalized.contains('watch live')) {
+      return 'क्या मैं पूजा का प्रत्यक्ष दर्शन ऑनलाइन कर सकता हूँ?';
+    }
+    if (normalized.contains('cancel') || normalized.contains('refund')) {
+      return 'क्या मैं अपनी पूजा बुकिंग रद्द कर सकता हूँ अथवा रिफंड प्राप्त होगा?';
+    }
+
+    // ---------------- ANSWERS ----------------
+
+    // Answer 1: Largest devotion tech company / 1 Cr+
+    if (normalized.contains('largest devotion') ||
+        normalized.contains('1 cr+') ||
+        (normalized.contains('kamakhya-guwahati') && normalized.contains('haridwar')) ||
+        normalized.contains('hari aum') ||
+        (normalized.contains('shastras') && normalized.contains('bhava') && normalized.contains('whatsapp'))) {
+      return 'ऑनलाइन पूजा भारत का सर्वाधिक प्रतिष्ठित व विश्वसनीय देवस्थानम मंच है, जिस पर देश-विदेश के १ करोड़+ सनातन धर्मावलंबी अटूट विश्वास करते हैं। हमारे द्वारा आयोजित सभी पूजाएं काशी, हरिद्वार, उज्जैन, कामाख्या व कोल्हापुर जैसे परम पावन सिद्ध तीर्थों पर परंपरागत वेदपाठी ब्राह्मणों द्वारा संपन्न कराई जाती हैं। आचार्य जी पूर्ण शास्त्रोक्त विधि से आपके नाम व गोत्र का सस्वर संकल्प लेते हैं। संपूर्ण पूजन का व्यक्तिगत वीडियो व फोटो दर्शन आपके व्हाट्सएप पर प्रेषित किया जाता है तथा अभिमंत्रित महाप्रसाद आपके घर तक सुरक्षित पहुंचाया जाता है।';
+    }
+
+    // Answer 2: Kashyap gotra
+    if (normalized.contains('consult elders') ||
+        normalized.contains('kashyap gotra') ||
+        (normalized.contains('kashyap') && normalized.contains('sankalpa form'))) {
+      return 'सनातन धर्म एवं पराशर स्मृति के अनुसार यदि किसी यजमान को अपना कुल गोत्र ज्ञात न हो, तो उन्हें आद्य महर्षि "कश्यप गोत्र" से संकल्पित करने का शास्त्रसम्मत विधान है। कश्यप गोत्र समस्त मानव जाति के मूल गोत्रों में से एक है। अतः आप बुकिंग के समय गोत्र में \'कश्यप\' (Kashyap) दर्ज करके निश्चिंत होकर अपना वैदिक संकल्प करा सकते हैं, आपको पूजा का पूर्ण एवं अभीष्ट फल प्राप्त होगा।';
+    }
+
+    // Answer 3: Video proof 24 to 48 hours
+    if ((normalized.contains('24 to 48 hours') || normalized.contains('sanctum sanctorum')) &&
+        (normalized.contains('video') || normalized.contains('proof'))) {
+      return 'पूजा अनुष्ठान संपन्न होने के २४ से ४८ घंटों के भीतर हमारे तीर्थ समन्वयक आपके पंजीकृत व्हाट्सएप नंबर पर उच्च गुणवत्ता (HD) वीडियो रिकॉर्डिंग एवं दर्शन फोटो प्रेषित करते हैं। वीडियो में स्पष्ट रूप से देखा जा सकता है कि विद्वान तीर्थ पुरोहित जी मंदिर गर्भगृह में आपके नाम, गोत्र व मनोकामना का उच्चारण करते हुए वैदिक संकल्प व आहुति समर्पित कर रहे हैं।';
+    }
+
+    // Answer 4: Home delivery of prasad (moisture-resistant box / BlueDart)
+    if (normalized.contains('moisture-resistant') ||
+        normalized.contains('bluedart') ||
+        normalized.contains('india post') ||
+        (normalized.contains('consecrated bhasma') && normalized.contains('ganga jal')) ||
+        (normalized.contains('4 to 7') && normalized.contains('courier'))) {
+      return 'पूजा की पूर्णाहूति के उपरांत तीर्थ से सिद्ध रक्षा सूत्र, पवित्र भस्म/विभूति, चरणामृत/गंगाजल एवं विशेष भोग प्रसाद को नमी-रोधी पावन डिब्बे में सुरक्षित पैक किया जाता है। इसे प्रतिष्ठित स्पीड पोस्ट या एक्सप्रेस कूरियर (BlueDart/DTDC/India Post) द्वारा सीधे आपके पते पर भेजा जाता है, जो सामान्यतः ४ से ७ कार्यदिवसों में घर पहुंच जाता है। कूरियर ट्रैकिंग विवरण व्हाट्सएप पर साझा किया जाता है।';
+    }
+
+    // Answer 5: Family members abroad / physical distances
+    if (normalized.contains('transcends physical distances') ||
+        normalized.contains('karta') ||
+        (normalized.contains('4 or 6 family members') || normalized.contains('india or overseas'))) {
+      return 'हाँ, बिल्कुल। वैदिक शास्त्रों के अनुसार कर्ता (परिवार के मुखिया) द्वारा सिद्ध तीर्थ पर लिया गया संकल्प देश-काल की सीमाओं से परे होता है। आप अपने परिवार के ४ से ६ सदस्यों (माता-पिता, पति/पत्नी, संतान) के नाम, गोत्र व जन्म नक्षत्र संकल्प में सम्मिलित कर सकते हैं, चाहे वे भारत में हों या विदेश में। अनुष्ठान का दिव्य पुण्यफल सभी सदस्यों को समान रूप से प्राप्त होता है।';
+    }
+
+    // Answer 6: Verified hereditary Purohits & historic Dhamas
+    if (normalized.contains('hereditary') ||
+        normalized.contains('historic dhamas') ||
+        (normalized.contains('shukla yajurveda') && normalized.contains('samaveda')) ||
+        (normalized.contains('trimbakeshwar') && normalized.contains('kashi vishwanath'))) {
+      return 'सभी अनुष्ठान केवल अधिकृत, परंपरागत एवं पीढ़ियों से तीर्थ सेवा में रत शीर्षस्थ वैदिक ब्राह्मणों व आचार्यों द्वारा ही संपन्न कराए जाते हैं। हमारे सभी पुरोहित काशी विश्वनाथ, महाकालेश्वर उज्जैन, त्र्यंबकेश्वर व विंध्याचल जैसे सिद्ध पीठों पर शुक्ल यजुर्वेद व सामवेद के विधि-विधान अनुसार सस्वर मंत्रोच्चार से पूजा संपन्न करते हैं।';
+    }
+
+    // Answer 7: Auspicious Tithi, Muhurta & Panchang adjustment
+    if (normalized.contains('choghadiya') ||
+        normalized.contains('abhijit') ||
+        (normalized.contains('planetary transit timings shift') && normalized.contains('panchang')) ||
+        (normalized.contains('peak muhurta') && normalized.contains('senior shastris'))) {
+      return 'वैदिक ज्योतिष में प्रत्येक अनुष्ठान का सर्वोच्च फल शास्त्रसम्मत शुभ मुहूर्त, चौघड़िया व तिथि में ही प्राप्त होता है। यदि पंचांग गणना के अनुसार ग्रह गोचर अथवा पर्व काल के मुहूर्त में कोई संशोधन होता है, तो हमारे मुख्य ज्योतिषाचार्य तुरंत उस पावन वेला में पूजन का समय तय करते हैं और सभी पंजीकृत यजमानों को व्हाट्सएप व एसएमएस द्वारा समय पूर्व सूचित किया जाता है।';
+    }
+
+    // Answer 8: Prime beneficiaries (parents / children)
+    if (normalized.contains('prime beneficiaries') ||
+        (normalized.contains('relationship') && normalized.contains('janma nakshatra') && normalized.contains('spouse'))) {
+      return 'हाँ, आप अपने माता-पिता, संतान, पति/पत्नी अथवा किसी रुग्ण परिजन के स्वास्थ्य, दीर्घायु एवं संकट निवारण हेतु उनकी ओर से संकल्प ले सकते हैं। चेकआउट के समय यजमान विवरण में उनका नाम, गोत्र व मनोकामना दर्ज करें। आचार्य जी संकल्प के समय मुख्य फल-प्राप्तकर्ता के रूप में उन्हीं के नाम का उच्चारण करेंगे।';
+    }
+
+    // Fallback checks for previous answers
+    if (normalized.contains('video') && normalized.contains('whatsapp') && normalized.contains('gotra')) {
       return 'पवित्र तीर्थ पर आचार्य जी आपके नाम, गोत्र व मनोकामना का सस्वर संकल्प करेंगे। इसका संपूर्ण व्यक्तिगत वीडियो रिकॉर्डिंग एवं दर्शन फोटो पूजा संपन्न होने के बाद आपके व्हाट्सएप पर भेजा जाएगा।';
     }
-    if (lower.contains('name') && lower.contains('gotra') && (lower.contains('date of birth') || lower.contains('wish'))) {
+    if (normalized.contains('name') && normalized.contains('gotra') && (normalized.contains('date of birth') || normalized.contains('wish'))) {
       return 'चेकआउट के समय आपको यजमान का नाम, गोत्र, जन्म तिथि (यदि ज्ञात हो) एवं अपनी विशेष मनोकामना दर्ज करनी होगी। परिवार पैकेज में आप परिवार के अन्य सदस्यों के नाम भी जोड़ सकते हैं।';
     }
-    if (lower.contains('3-5') || lower.contains('courier') || lower.contains('tracking') || lower.contains('prasad box')) {
+    if (normalized.contains('3-5') || normalized.contains('courier') || normalized.contains('tracking') || normalized.contains('prasad box')) {
       return 'पूजा संपन्न होने के उपरांत तीर्थ से अभिमंत्रित रक्षा सूत्र, भस्म व महाप्रसाद को पवित्रता से पैक कर स्पीड पोस्ट/कूरियर द्वारा भेजा जाता है, जो सामान्यतः ३ से ५ कार्यदिवसों में आपके पते पर पहुंच जाता है।';
     }
-    if (lower.contains('kashyap') || lower.contains('brahmin') || lower.contains('shastras')) {
+    if (normalized.contains('kashyap') || normalized.contains('brahmin') || normalized.contains('shastras')) {
       return 'शास्त्रों के अनुसार यदि गोत्र ज्ञात न हो तो वैदिक परंपरा अनुसार "कश्यप गोत्र" मानकर संकल्प लिया जाता है, जिसका पूर्ण फल प्राप्त होता है।';
     }
 
