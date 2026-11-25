@@ -19,12 +19,12 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   static const _defaultCuratedPlans = [
-    {'amount': 50, 'bonus': '100% Extra'},
-    {'amount': 100, 'bonus': 'POPULAR'},
-    {'amount': 200, 'bonus': '+₹20 Bonus'},
-    {'amount': 500, 'bonus': '+₹75 Bonus'},
-    {'amount': 1000, 'bonus': '+₹200 Bonus'},
-    {'amount': 2000, 'bonus': '+₹500 Bonus'},
+    {'amount': 50, 'bonus': '100% Extra', 'bonusHi': '१००% अतिरिक्त'},
+    {'amount': 100, 'bonus': 'POPULAR', 'bonusHi': 'सर्वाधिक लोकप्रिय'},
+    {'amount': 200, 'bonus': '+₹20 Bonus', 'bonusHi': '+₹२० बोनस'},
+    {'amount': 500, 'bonus': '+₹75 Bonus', 'bonusHi': '+₹७५ बोनस'},
+    {'amount': 1000, 'bonus': '+₹200 Bonus', 'bonusHi': '+₹२०० बोनस'},
+    {'amount': 2000, 'bonus': '+₹500 Bonus', 'bonusHi': '+₹५०० बोनस'},
   ];
   final _customAmountController = TextEditingController();
 
@@ -50,7 +50,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
   void _reload() => setState(() => _future = _load());
 
-  Future<void> _recharge(double amount) async {
+  Future<void> _recharge(double amount, bool isHi) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final ok = await showDialog<bool>(
@@ -65,23 +65,27 @@ class _WalletScreenState extends State<WalletScreen> {
               color: CustomerTheme.sacredEmerald,
             ),
             const SizedBox(width: 8),
-            Text('Recharge ₹${amount.toStringAsFixed(0)}'),
+            Text(isHi
+                ? 'वॉलेट रिचार्ज: ₹${amount.toStringAsFixed(0)}'
+                : 'Recharge ₹${amount.toStringAsFixed(0)}'),
           ],
         ),
-        content: const Text(
-          'You will be taken to the secure payment gateway (UPI, NetBanking, Cards) to complete this sacred recharge.',
+        content: Text(
+          isHi
+              ? 'सुरक्षित भुगतान (UPI, गूगल पे, फोनपे, कार्ड्स या नेटबैंकिंग) हेतु आपको पेमेंट गेटवे पर ले जाया जाएगा।'
+              : 'You will be taken to the secure payment gateway (UPI, NetBanking, Cards) to complete this sacred recharge.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(isHi ? 'रद्द करें' : 'Cancel'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: CustomerTheme.brandSaffron,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Proceed to Pay'),
+            child: Text(isHi ? 'भुगतान करें' : 'Proceed to Pay'),
           ),
         ],
       ),
@@ -100,7 +104,9 @@ class _WalletScreenState extends State<WalletScreen> {
       if (mounted) {
         showSnack(
           context,
-          'Complete payment in checkout window to update balance.',
+          isHi
+              ? 'शेष राशि अपडेट करने हेतु चेकआउट विंडो में भुगतान पूर्ण करें।'
+              : 'Complete payment in checkout window to update balance.',
         );
         await context.read<AppSession>().refreshUser();
       }
@@ -114,72 +120,84 @@ class _WalletScreenState extends State<WalletScreen> {
     final session = context.watch<AppSession>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final balance = session.user?.walletAmount ?? 0;
-    final currency = session.flags.currency;
+    final currency = session.flags.currency.isNotEmpty ? session.flags.currency : '₹';
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Dakshina Wallet')),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: isDark
-              ? CustomerTheme.cosmicDarkGradient
-              : const LinearGradient(
-                  colors: [
-                    Color(0xFFFFFBEB),
-                    Color(0xFFFAF7F2),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-        ),
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _future,
-          builder: (context, snap) {
-            if (snap.connectionState == ConnectionState.waiting &&
-                !snap.hasData) {
-              return StatusViews.loading(context);
-            }
-            if (snap.hasError) {
-              return StatusViews.error(context, snap.error!, onRetry: _reload);
-            }
-            final plans = snap.data ?? const <Map<String, dynamic>>[];
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: LocaleManager.instance.currentLanguage,
+      builder: (context, lang, _) {
+        final isHi = lang != AppLanguage.en;
 
-            return RefreshIndicator(
-              onRefresh: () async => _reload(),
-              child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                children: [
-                  // 1. Balance Hero Card
-                  _walletHeroCard(context, balance, currency, isDark),
-                  const SizedBox(height: 20),
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(isHi ? 'दक्षिणा वॉलेट' : 'Dakshina Wallet'),
+          ),
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: isDark
+                  ? CustomerTheme.cosmicDarkGradient
+                  : const LinearGradient(
+                      colors: [
+                        Color(0xFFFFFBEB),
+                        Color(0xFFFAF7F2),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+            ),
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _future,
+              builder: (context, snap) {
+                if (snap.connectionState == ConnectionState.waiting &&
+                    !snap.hasData) {
+                  return StatusViews.loading(context);
+                }
+                if (snap.hasError) {
+                  return StatusViews.error(context, snap.error!, onRetry: _reload);
+                }
+                final plans = snap.data ?? const <Map<String, dynamic>>[];
 
-                  // 2. Recharge Plans Grid
-                  const SectionHeader(
-                    title: 'Select Recharge Pack',
-                    subtitle: 'Extra dakshina bonus added to all packs',
-                    icon: Icons.card_giftcard_rounded,
+                return RefreshIndicator(
+                  onRefresh: () async => _reload(),
+                  child: ListView(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    children: [
+                      // 1. Balance Hero Card
+                      _walletHeroCard(context, balance, currency, isDark, isHi),
+                      const SizedBox(height: 20),
+
+                      // 2. Recharge Plans Grid
+                      SectionHeader(
+                        title: isHi ? 'रिचार्ज दक्षिणा पैक चुनें' : 'Select Recharge Pack',
+                        subtitle: isHi
+                            ? 'प्रत्येक पैक पर विशेष अतिरिक्त दक्षिणा बोनस उपलब्ध'
+                            : 'Extra dakshina bonus added to all packs',
+                        icon: Icons.card_giftcard_rounded,
+                      ),
+                      const SizedBox(height: 8),
+                      _plansGrid(
+                        context,
+                        plans.isNotEmpty ? plans : _defaultCuratedPlans,
+                        isDark,
+                        isHi,
+                      ),
+                      const SizedBox(height: 20),
+
+                      // 3. Custom Amount Card
+                      _customAmountCard(context, isDark, isHi),
+                      const SizedBox(height: 20),
+
+                      // 4. Trust Badges
+                      _trustAssuranceCard(context, isDark, isHi),
+                      const SizedBox(height: 32),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  _plansGrid(
-                    context,
-                    plans.isNotEmpty ? plans : _defaultCuratedPlans,
-                    isDark,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // 3. Custom Amount Card
-                  _customAmountCard(context, isDark),
-                  const SizedBox(height: 20),
-
-                  // 4. Trust Badges
-                  _trustAssuranceCard(context, isDark),
-                  const SizedBox(height: 32),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -188,6 +206,7 @@ class _WalletScreenState extends State<WalletScreen> {
     double balance,
     String currency,
     bool isDark,
+    bool isHi,
   ) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -223,17 +242,17 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'Available Dakshina Balance',
-                style: TextStyle(
+              Text(
+                isHi ? 'उपलब्ध दक्षिणा शेष' : 'Available Dakshina Balance',
+                style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const Spacer(),
-              const SacredBadge(
-                label: 'SECURE',
+              SacredBadge(
+                label: isHi ? '१००% सुरक्षित' : 'SECURE',
                 color: CustomerTheme.sacredEmerald,
                 fontSize: 8.5,
               ),
@@ -250,9 +269,11 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Use this balance for instant Astrologer chat, audio calls, video consultations, and holy pujas.',
-            style: TextStyle(
+          Text(
+            isHi
+                ? 'इस शेष राशि का उपयोग शीर्ष आचार्यों से तुरंत चैट, ऑडियो कॉल, वीडियो परामर्श एवं पावन पूजा अनुष्ठान संकल्प हेतु करें।'
+                : 'Use this balance for instant Astrologer chat, audio calls, video consultations, and holy pujas.',
+            style: const TextStyle(
               color: Colors.white60,
               fontSize: 12,
               height: 1.35,
@@ -267,6 +288,7 @@ class _WalletScreenState extends State<WalletScreen> {
     BuildContext context,
     List<Map<String, dynamic>> plans,
     bool isDark,
+    bool isHi,
   ) {
     return GridView.builder(
       shrinkWrap: true,
@@ -282,12 +304,14 @@ class _WalletScreenState extends State<WalletScreen> {
         final plan = plans[i];
         final amount =
             double.tryParse(plan['amount']?.toString() ?? '') ?? 0;
-        final bonus = plan['bonus']?.toString();
+        final bonus = isHi
+            ? (plan['bonusHi']?.toString() ?? plan['bonus']?.toString())
+            : plan['bonus']?.toString();
 
         return SacredCard(
           padding: const EdgeInsets.all(8),
           elevation: 1,
-          onTap: () => _recharge(amount),
+          onTap: () => _recharge(amount, isHi),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -327,15 +351,15 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _customAmountCard(BuildContext context, bool isDark) {
+  Widget _customAmountCard(BuildContext context, bool isDark, bool isHi) {
     return SacredCard(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Add Custom Amount',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          Text(
+            isHi ? 'अन्य राशि दर्ज करें' : 'Add Custom Amount',
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
           ),
           const SizedBox(height: 10),
           Row(
@@ -344,17 +368,17 @@ class _WalletScreenState extends State<WalletScreen> {
                 child: TextField(
                   controller: _customAmountController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     prefixText: '₹ ',
-                    hintText: 'Enter amount (e.g. 250)',
+                    hintText: isHi ? 'राशि दर्ज करें (उदा. २५०)' : 'Enter amount (e.g. 250)',
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               SacredButton(
-                text: 'Recharge',
+                text: isHi ? 'रिचार्ज करें' : 'Recharge',
                 isFullWidth: false,
                 height: 48,
                 onPressed: () {
@@ -362,11 +386,11 @@ class _WalletScreenState extends State<WalletScreen> {
                           _customAmountController.text.trim()) ??
                       0;
                   if (val > 0) {
-                    _recharge(val);
+                    _recharge(val, isHi);
                   } else {
                     showSnack(
                       context,
-                      'Please enter a valid amount',
+                      isHi ? 'कृपया एक वैध राशि दर्ज करें' : 'Please enter a valid amount',
                       error: true,
                     );
                   }
@@ -379,7 +403,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _trustAssuranceCard(BuildContext context, bool isDark) {
+  Widget _trustAssuranceCard(BuildContext context, bool isDark, bool isHi) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -397,15 +421,15 @@ class _WalletScreenState extends State<WalletScreen> {
         children: [
           _trustRow(
             Icons.verified_user_rounded,
-            '100% Safe & Encrypted Payments',
-            'Authorized payment channels via UPI, Rupay, Visa & Mastercard',
+            isHi ? '१००% सुरक्षित एवं एन्क्रिप्टेड भुगतान' : '100% Safe & Encrypted Payments',
+            isHi ? 'UPI, RuPay, Visa एवं MasterCard द्वारा अधिकृत भुगतान प्रणाली' : 'Authorized payment channels via UPI, Rupay, Visa & Mastercard',
             CustomerTheme.sacredEmerald,
           ),
           const SizedBox(height: 12),
           _trustRow(
             Icons.restart_alt_rounded,
-            'Instant Unused Balance Refund',
-            'Full refund guarantee if consultation fails to connect',
+            isHi ? 'अव्ययित शेष राशि की तत्काल वापसी' : 'Instant Unused Balance Refund',
+            isHi ? 'परामर्श न जुड़ने की स्थिति में पूर्ण राशि वापसी की गारंटी' : 'Full refund guarantee if consultation fails to connect',
             CustomerTheme.brandGold,
           ),
         ],

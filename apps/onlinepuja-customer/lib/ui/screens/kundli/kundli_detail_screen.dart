@@ -40,47 +40,74 @@ class _KundliDetailScreenState extends State<KundliDetailScreen>
     _load();
   }
 
+  static const List<String> _hiMonths = [
+    'जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून',
+    'जुलाई', 'अगस्त', 'सितम्बर', 'अक्टूबर', 'नवम्बर', 'दिसम्बर'
+  ];
+
   Future<void> _load() async {
     setState(() => _error = null);
     final k = widget.kundli;
     final api = KundliApi.instance;
     try {
-      final results = await Future.wait([
+      KundliBasic? basicRes;
+      Map<String, dynamic>? chartRes;
+      Map<String, dynamic>? dashaRes;
+      Map<String, dynamic>? doshaRes;
+
+      await Future.wait([
         api.basic(
-            id: k.id,
-            date: k.birthDate,
-            time: k.birthTime,
-            lat: k.latitude ?? 0,
-            lng: k.longitude ?? 0,
-            tz: _tz),
+          id: k.id,
+          date: k.birthDate,
+          time: k.birthTime,
+          lat: k.latitude ?? 0,
+          lng: k.longitude ?? 0,
+          tz: _tz,
+        ).then((v) => basicRes = v).catchError((e) {
+          debugPrint('Kundli basic error: $e');
+          return KundliBasic.fromJson({'name': k.name, 'gender': k.gender});
+        }),
         api.chart(
-            id: k.id,
-            date: k.birthDate,
-            time: k.birthTime,
-            lat: k.latitude ?? 0,
-            lng: k.longitude ?? 0,
-            tz: _tz),
+          id: k.id,
+          date: k.birthDate,
+          time: k.birthTime,
+          lat: k.latitude ?? 0,
+          lng: k.longitude ?? 0,
+          tz: _tz,
+        ).then((v) => chartRes = v).catchError((e) {
+          debugPrint('Kundli chart error: $e');
+          return <String, dynamic>{};
+        }),
         api.dasha(
-            id: k.id,
-            date: k.birthDate,
-            time: k.birthTime,
-            lat: k.latitude ?? 0,
-            lng: k.longitude ?? 0,
-            tz: _tz),
+          id: k.id,
+          date: k.birthDate,
+          time: k.birthTime,
+          lat: k.latitude ?? 0,
+          lng: k.longitude ?? 0,
+          tz: _tz,
+        ).then((v) => dashaRes = v).catchError((e) {
+          debugPrint('Kundli dasha error: $e');
+          return <String, dynamic>{};
+        }),
         api.dosha(
-            id: k.id,
-            date: k.birthDate,
-            time: k.birthTime,
-            lat: k.latitude ?? 0,
-            lng: k.longitude ?? 0,
-            tz: _tz),
+          id: k.id,
+          date: k.birthDate,
+          time: k.birthTime,
+          lat: k.latitude ?? 0,
+          lng: k.longitude ?? 0,
+          tz: _tz,
+        ).then((v) => doshaRes = v).catchError((e) {
+          debugPrint('Kundli dosha error: $e');
+          return <String, dynamic>{};
+        }),
       ]);
+
       if (!mounted) return;
       setState(() {
-        _basic = results[0] as KundliBasic;
-        _chart = results[1] as Map<String, dynamic>;
-        _dasha = results[2] as Map<String, dynamic>;
-        _dosha = results[3] as Map<String, dynamic>;
+        _basic = basicRes ?? KundliBasic.fromJson({'name': k.name, 'gender': k.gender});
+        _chart = chartRes ?? const {};
+        _dasha = dashaRes ?? const {};
+        _dosha = doshaRes ?? const {};
       });
     } catch (e) {
       if (mounted) setState(() => _error = e);
@@ -136,8 +163,9 @@ class _KundliDetailScreenState extends State<KundliDetailScreen>
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Text(
-              '${k.birthDate.toIso8601String().substring(0, 10)} · '
-              '${k.birthTime} · $placeText',
+              isHi
+                  ? '${k.birthDate.day} ${_hiMonths[(k.birthDate.month - 1).clamp(0, 11)]} ${k.birthDate.year} · ${k.birthTime} · $placeText'
+                  : '${k.birthDate.toIso8601String().substring(0, 10)} · ${k.birthTime} · $placeText',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall

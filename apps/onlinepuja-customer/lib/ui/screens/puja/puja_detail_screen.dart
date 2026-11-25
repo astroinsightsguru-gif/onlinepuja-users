@@ -368,7 +368,7 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: LocaleManager.instance.currentLanguage,
       builder: (context, lang, _) {
-        final isHi = lang == AppLanguage.hi;
+        final isHi = lang != AppLanguage.en;
         final packages = (p.packages != null && p.packages!.isNotEmpty)
             ? p.packages!
             : [

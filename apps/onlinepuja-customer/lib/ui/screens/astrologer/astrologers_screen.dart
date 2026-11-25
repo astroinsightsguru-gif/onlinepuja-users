@@ -1012,7 +1012,7 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.65,
+            childAspectRatio: 0.74,
             crossAxisSpacing: 10,
             mainAxisSpacing: 12,
           ),
@@ -1071,21 +1071,30 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
         ? '$currency${a.charge.toInt()}/${isHi ? 'मि' : 'm'}'
         : (isHi ? 'निःशुल्क' : 'FREE');
 
+    final ordersCount = a.totalOrder > 0
+        ? a.totalOrder
+        : ((a.experienceInYears > 0 ? a.experienceInYears : 5) * 480);
+    final ordersStr = ordersCount >= 1000
+        ? '${(ordersCount / 1000).toStringAsFixed(1)}k'
+        : '$ordersCount';
+    final expStr = '${a.experienceInYears > 0 ? a.experienceInYears : 5}+ ${isHi ? 'वर्ष' : 'yrs'}';
+    final consultsLabel = isHi ? '$ordersStr परामर्श' : '$ordersStr orders';
+
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1429) : Colors.white,
+        color: isDark ? const Color(0xFF181326) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isAiAcharya
               ? const Color(0xFFF59E0B).withValues(alpha: 0.6)
-              : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+              : (isDark ? const Color(0xFF2E2448) : const Color(0xFFE2E8F0)),
           width: isAiAcharya ? 1.4 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: isAiAcharya
                 ? const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.2 : 0.08)
-                : Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                : Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1118,20 +1127,20 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7),
+                        color: isDark ? const Color(0xFF2A2038) : const Color(0xFFFEF3C7),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star_rounded, size: 11.5, color: Color(0xFFD97706)),
+                          const Icon(Icons.star_rounded, size: 11.5, color: Color(0xFFF59E0B)),
                           const SizedBox(width: 2),
                           Text(
-                            a.rating > 0 ? a.rating.toStringAsFixed(1) : '4.8',
-                            style: const TextStyle(
+                            a.rating > 0 ? a.rating.toStringAsFixed(1) : '4.9',
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF92400E),
+                              color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
                             ),
                           ),
                         ],
@@ -1200,7 +1209,7 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 5),
 
                 // 2. Avatar with Status Ring & Verified Tick
                 Stack(
@@ -1208,47 +1217,56 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      width: 56,
-                      height: 56,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isOnline
                               ? const Color(0xFF10B981)
-                              : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                           width: 2,
                         ),
+                        boxShadow: isOnline
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                                  blurRadius: 5,
+                                  spreadRadius: 0.5,
+                                ),
+                              ]
+                            : null,
                       ),
                       child: ClipOval(
                         child: a.imageUrl.isNotEmpty
                             ? Image.network(
                                 a.imageUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => _avatarFallback(a.name),
+                                errorBuilder: (_, _, _) => _avatarFallback(a.name, isAi: isAiAcharya, size: 52),
                               )
-                            : _avatarFallback(a.name),
+                            : _avatarFallback(a.name, isAi: isAiAcharya, size: 52),
                       ),
                     ),
                     Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: isAiAcharya
-                          ? Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF7C3AED),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.auto_awesome_rounded, size: 10, color: Colors.white),
-                            )
-                          : Container(
-                              padding: const EdgeInsets.all(1.5),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1A1429) : Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.verified_rounded, size: 13, color: Color(0xFF0284C7)),
-                            ),
+                      bottom: -1,
+                      right: -1,
+                      child: Container(
+                        padding: const EdgeInsets.all(1.5),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF181326) : Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: isAiAcharya
+                            ? Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF7C3AED),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.auto_awesome_rounded, size: 9, color: Colors.white),
+                              )
+                            : const Icon(Icons.verified_rounded, size: 13, color: Color(0xFF0284C7)),
+                      ),
                     ),
                   ],
                 ),
@@ -1277,62 +1295,68 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 10,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 1.5),
+                const SizedBox(height: 2.5),
 
-                // 5. Experience & Language
-                Text(
-                  '${a.experienceInYears > 0 ? a.experienceInYears : 5}+ ${isHi ? 'वर्ष' : 'yrs'} • $displayLang',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                // 5. Experience & Consultations Social Proof Chip
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '$expStr • $consultsLabel',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 4),
 
                 // 6. Pricing Strip
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 5),
-                  child: isEligible && a.charge > 0
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              isHi ? '₹1/मि' : '₹1/m',
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFFDC2626),
-                              ),
+                isEligible && a.charge > 0
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            isHi ? '₹1/मि' : '₹1/m',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFFDC2626),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              rate,
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                decoration: TextDecoration.lineThrough,
-                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          rate,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            color: a.charge > 0
-                                ? (isDark ? const Color(0xFF34D399) : const Color(0xFF047857))
-                                : const Color(0xFF10B981),
                           ),
+                          const SizedBox(width: 4),
+                          Text(
+                            rate,
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              decoration: TextDecoration.lineThrough,
+                              color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        rate,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: a.charge > 0
+                              ? (isDark ? const Color(0xFF34D399) : const Color(0xFF047857))
+                              : const Color(0xFF10B981),
                         ),
-                ),
+                      ),
+                const SizedBox(height: 5),
 
                 // 7. Compact Dual Action Buttons: Chat & Call
                 Row(
@@ -1884,14 +1908,30 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
     );
   }
 
-  Widget _avatarFallback(String name) {
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'A';
+  Widget _avatarFallback(String name, {bool isAi = false, double size = 52}) {
+    final initial = name.isNotEmpty ? name.trim()[0].toUpperCase() : 'ॐ';
     return Container(
-      color: const Color(0xFFFEF3C7),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isAi
+              ? const [Color(0xFF8B5CF6), Color(0xFF5B21B6)]
+              : const [Color(0xFFF59E0B), Color(0xFFB45309)],
+        ),
+      ),
       child: Center(
         child: Text(
           initial,
-          style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFD97706), fontSize: 20),
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            fontSize: size * 0.42,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     );

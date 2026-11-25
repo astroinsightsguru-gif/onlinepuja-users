@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
+
 /// Loading / error / empty states shared by both apps.
 class StatusViews {
   StatusViews._();
+
+  static bool _isHindi(BuildContext context) {
+    try {
+      if (Localizations.maybeLocaleOf(context)?.languageCode == 'hi') return true;
+      return LocaleManager.instance.currentLanguage.value != AppLanguage.en;
+    } catch (_) {
+      return false;
+    }
+  }
 
   static Widget loading(BuildContext context, [String? label]) => Center(
         child: Column(
@@ -21,6 +32,7 @@ class StatusViews {
   static Widget error(BuildContext context, Object error,
       {VoidCallback? onRetry}) {
     final scheme = Theme.of(context).colorScheme;
+    final isHi = _isHindi(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -30,7 +42,9 @@ class StatusViews {
             Icon(Icons.auto_awesome_outlined, size: 44, color: scheme.primary),
             const SizedBox(height: 12),
             Text(
-              'The stars are aligning… please retry.',
+              isHi
+                  ? 'नक्षत्र संरेखित हो रहे हैं... कृपया पुनः प्रयास करें।'
+                  : 'The stars are aligning… please retry.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
             ),
@@ -50,7 +64,7 @@ class StatusViews {
               FilledButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(isHi ? 'पुनः प्रयास करें' : 'Retry'),
               ),
             ],
           ],
@@ -59,8 +73,10 @@ class StatusViews {
     );
   }
 
-  static Widget empty(BuildContext context, {String message = 'Nothing here yet'}) {
+  static Widget empty(BuildContext context, {String? message}) {
     final scheme = Theme.of(context).colorScheme;
+    final isHi = _isHindi(context);
+    final displayMessage = message ?? (isHi ? 'यहाँ अभी कोई जानकारी उपलब्ध नहीं है' : 'Nothing here yet');
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -69,7 +85,7 @@ class StatusViews {
           children: [
             Icon(Icons.hourglass_empty, size: 40, color: scheme.outline),
             const SizedBox(height: 10),
-            Text(message, style: Theme.of(context).textTheme.bodyLarge),
+            Text(displayMessage, style: Theme.of(context).textTheme.bodyLarge),
           ],
         ),
       ),
