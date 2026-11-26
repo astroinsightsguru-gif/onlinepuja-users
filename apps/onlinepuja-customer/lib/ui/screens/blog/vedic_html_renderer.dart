@@ -520,7 +520,7 @@ class _ImageBlock extends _VedicBlock {
         child: CachedNetworkImage(
           imageUrl: MiscApi.imageUrl(imageUrl),
           fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+          errorWidget: (context, url, error) => const SizedBox.shrink(),
         ),
       ),
     );

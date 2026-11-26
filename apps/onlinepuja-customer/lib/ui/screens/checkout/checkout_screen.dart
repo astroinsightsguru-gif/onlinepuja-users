@@ -755,36 +755,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
     );
   }
-
-  Widget _row(String label, String value, Color textPrimary, Color textSecondary,
-      {bool isHighlight = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.5,
-                color: textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isHighlight ? 14.5 : 13.5,
-              fontWeight: FontWeight.w800,
-              color: isHighlight ? const Color(0xFF10B981) : textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// Bottom-sheet form to create a delivery address

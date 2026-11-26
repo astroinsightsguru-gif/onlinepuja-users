@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 
 import '../../../state/app_session.dart';
 import '../../theme/partner_theme.dart';
-import '../../widgets/partner_widgets.dart';
 import '../chat/chat_session_screen.dart';
 import '../social/astrologer_social_growth_screen.dart';
 
@@ -258,6 +257,16 @@ class _AiTwinStudioScreenState extends State<AiTwinStudioScreen>
     );
   }
 
+  Widget _buildStatItem(String label, String value) {
+    return Column(
+      children: [
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+        const SizedBox(height: 2),
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+      ],
+    );
+  }
+
   // 1. Persona & Parampara Tab
   Widget _buildPersonaTab(bool dark, Color surface, Color border) {
     return ListView(
@@ -316,7 +325,7 @@ class _AiTwinStudioScreenState extends State<AiTwinStudioScreen>
                   ),
                   Switch(
                     value: _aiTwinEnabled,
-                    activeColor: const Color(0xFFF59E0B),
+                    activeTrackColor: const Color(0xFFF59E0B),
                     onChanged: (v) => setState(() => _aiTwinEnabled = v),
                   ),
                 ],
@@ -344,7 +353,7 @@ class _AiTwinStudioScreenState extends State<AiTwinStudioScreen>
                   ),
                   Switch(
                     value: _aiTwinAutoOffline,
-                    activeColor: const Color(0xFF059669),
+                    activeTrackColor: const Color(0xFF059669),
                     onChanged: (v) => setState(() => _aiTwinAutoOffline = v),
                   ),
                 ],
@@ -375,6 +384,25 @@ class _AiTwinStudioScreenState extends State<AiTwinStudioScreen>
             ],
           ),
         ),
+        if (_aiTwinStats != null && _aiTwinStats!.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: border),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem('परामर्श', '${_aiTwinStats!['total_sessions'] ?? 0}'),
+                _buildStatItem('अर्जित आय', '₹${_aiTwinStats!['revenue'] ?? 0}'),
+                _buildStatItem('संतुष्टि', '${_aiTwinStats!['rating'] ?? '5.0'}★'),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 20),
 
         // Tradition / Parampara Selector

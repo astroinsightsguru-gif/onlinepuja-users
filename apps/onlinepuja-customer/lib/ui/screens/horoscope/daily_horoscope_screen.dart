@@ -72,18 +72,31 @@ class _DailyHoroscopeScreenState extends State<DailyHoroscopeScreen>
         final m = user!.birthDate!.month;
         final d = user.birthDate!.day;
         String signName = 'Aries';
-        if ((m == 3 && d >= 21) || (m == 4 && d <= 19)) signName = 'Aries';
-        else if ((m == 4 && d >= 20) || (m == 5 && d <= 20)) signName = 'Taurus';
-        else if ((m == 5 && d >= 21) || (m == 6 && d <= 20)) signName = 'Gemini';
-        else if ((m == 6 && d >= 21) || (m == 7 && d <= 22)) signName = 'Cancer';
-        else if ((m == 7 && d >= 23) || (m == 8 && d <= 22)) signName = 'Leo';
-        else if ((m == 8 && d >= 23) || (m == 9 && d <= 22)) signName = 'Virgo';
-        else if ((m == 9 && d >= 23) || (m == 10 && d <= 22)) signName = 'Libra';
-        else if ((m == 10 && d >= 23) || (m == 11 && d <= 21)) signName = 'Scorpio';
-        else if ((m == 11 && d >= 22) || (m == 12 && d <= 21)) signName = 'Sagittarius';
-        else if ((m == 12 && d >= 22) || (m == 1 && d <= 19)) signName = 'Capricorn';
-        else if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) signName = 'Aquarius';
-        else if ((m == 2 && d >= 19) || (m == 3 && d <= 20)) signName = 'Pisces';
+        if ((m == 3 && d >= 21) || (m == 4 && d <= 19)) {
+          signName = 'Aries';
+        } else if ((m == 4 && d >= 20) || (m == 5 && d <= 20)) {
+          signName = 'Taurus';
+        } else if ((m == 5 && d >= 21) || (m == 6 && d <= 20)) {
+          signName = 'Gemini';
+        } else if ((m == 6 && d >= 21) || (m == 7 && d <= 22)) {
+          signName = 'Cancer';
+        } else if ((m == 7 && d >= 23) || (m == 8 && d <= 22)) {
+          signName = 'Leo';
+        } else if ((m == 8 && d >= 23) || (m == 9 && d <= 22)) {
+          signName = 'Virgo';
+        } else if ((m == 9 && d >= 23) || (m == 10 && d <= 22)) {
+          signName = 'Libra';
+        } else if ((m == 10 && d >= 23) || (m == 11 && d <= 21)) {
+          signName = 'Scorpio';
+        } else if ((m == 11 && d >= 22) || (m == 12 && d <= 21)) {
+          signName = 'Sagittarius';
+        } else if ((m == 12 && d >= 22) || (m == 1 && d <= 19)) {
+          signName = 'Capricorn';
+        } else if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) {
+          signName = 'Aquarius';
+        } else if ((m == 2 && d >= 19) || (m == 3 && d <= 20)) {
+          signName = 'Pisces';
+        }
 
         final matched = signs.where((s) => (s.name?.toLowerCase() ?? '') == signName.toLowerCase());
         if (matched.isNotEmpty) {

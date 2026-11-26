@@ -1268,13 +1268,69 @@ class _HomeShellState extends State<HomeShell> {
                       style: const TextStyle(fontWeight: FontWeight.w700)),
                   subtitle: Text(AppStrings.viewKundli),
                   trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => DevoteeKundliSheet.show(
-                    context,
-                    devoteeName: 'Sample Devotee Kundli',
-                  ),
+                  onTap: () => _showDevoteeKundliDialog(context),
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDevoteeKundliDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.auto_awesome, color: PartnerTheme.purple),
+            SizedBox(width: 8),
+            Text('यजमान कुंडली खोज', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'जिस भक्त या यजमान की जन्मपत्रिका देखनी हो, उनका नाम दर्ज करें:',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'उदा. अमित शर्मा (Amit Sharma)',
+                prefixIcon: const Icon(Icons.person_outline_rounded),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('रद्द करें'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: PartnerTheme.purple,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              final name = controller.text.trim();
+              Navigator.pop(ctx);
+              DevoteeKundliSheet.show(
+                context,
+                devoteeName: name.isNotEmpty ? name : 'यजमान (Devotee)',
+              );
+            },
+            child: const Text('कुंडली खोलें'),
           ),
         ],
       ),

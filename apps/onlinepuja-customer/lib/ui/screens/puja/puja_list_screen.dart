@@ -24,6 +24,8 @@ class _PujaListScreenState extends State<PujaListScreen> {
   bool _isPlaying = true;
 
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
 
   final List<Map<String, String>> _deityPills = [
     {"id": "All", "label": "All Pujas", "labelHi": "समस्त पावन पूजाएं", "icon": "ॐ"},
@@ -47,6 +49,8 @@ class _PujaListScreenState extends State<PujaListScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -170,7 +174,16 @@ class _PujaListScreenState extends State<PujaListScreen> {
             actions: [
               // Search Icon Button
               InkWell(
-                onTap: () {},
+                onTap: () {
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                  _searchFocusNode.requestFocus();
+                },
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   width: 36,
@@ -255,6 +268,7 @@ class _PujaListScreenState extends State<PujaListScreen> {
                   onRefresh: _load,
                   color: const Color(0xFFD97706),
                   child: CustomScrollView(
+                    controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
                       // 1. Sleek Search Bar at Top
@@ -491,6 +505,7 @@ class _PujaListScreenState extends State<PujaListScreen> {
         ),
         child: TextField(
           controller: _searchController,
+          focusNode: _searchFocusNode,
           onChanged: (v) => setState(() => _searchQuery = v),
           style: TextStyle(fontSize: 12.5, color: textPrimary),
           decoration: InputDecoration(

@@ -1124,7 +1124,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                   CachedNetworkImage(
                     imageUrl: b.image,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(color: Colors.white.withValues(alpha: 0.15)),
+                    placeholder: (context, url) => Container(color: Colors.white.withValues(alpha: 0.15)),
                     errorWidget: (_, error, stack) => Container(
                       color: Colors.white.withValues(alpha: 0.2),
                       child: Center(
