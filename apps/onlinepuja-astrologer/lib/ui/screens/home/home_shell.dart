@@ -1321,122 +1321,168 @@ class _HomeShellState extends State<HomeShell> {
                 ],
               ),
             ),
+
+            // --- Section 1: मुख्य सेवाएं (Core Services) ---
+            _drawerSectionHeader('मुख्य सेवाएं'),
             ListTile(
-              leading: const Icon(Icons.dashboard_outlined),
-              title: Text(AppStrings.overview),
+              dense: true,
+              leading: const Icon(Icons.dashboard_rounded, color: PartnerTheme.gold, size: 22),
+              title: Text(AppStrings.overview, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
               onTap: () {
                 Navigator.pop(context);
                 setState(() => _tab = 0);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.call_outlined),
-              title: Text(AppStrings.consultationRequests),
+              dense: true,
+              leading: const Icon(Icons.headset_mic_rounded, color: Color(0xFF38BDF8), size: 22),
+              title: Text(AppStrings.consultationRequests, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
               onTap: () {
                 Navigator.pop(context);
                 setState(() => _tab = 1);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.temple_hindu_outlined),
-              title: Text(AppStrings.orderFulfillmentTitle),
-              subtitle: Text(AppStrings.pujaFulfillment),
+              dense: true,
+              leading: const Icon(Icons.temple_hindu_rounded, color: PartnerTheme.saffron, size: 22),
+              title: Text(AppStrings.orderFulfillmentTitle, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+              subtitle: Text(AppStrings.pujaFulfillment, style: const TextStyle(fontSize: 11, color: Colors.white60)),
               onTap: () {
                 Navigator.pop(context);
                 setState(() => _tab = 2);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.account_balance_wallet_outlined),
-              title: Text(AppStrings.earningsWallet),
+              dense: true,
+              leading: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF10B981), size: 22),
+              title: Text(AppStrings.earningsWallet, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
               onTap: () {
                 Navigator.pop(context);
                 setState(() => _tab = 3);
               },
             ),
+
+            const Divider(height: 16, thickness: 0.6, indent: 16, endIndent: 16),
+
+            // --- Section 2: AI एवं डिजिटल ग्रोथ (AI & Growth Hub) ---
+            _drawerSectionHeader('AI एवं डिजिटल ग्रोथ'),
             ListTile(
-              leading: const Icon(Icons.rocket_launch_rounded, color: PartnerTheme.gold),
-              title: const Text('AI Social Growth Hub'),
-              subtitle: const Text('Auto-Grow FB, Insta & YouTube'),
+              dense: true,
+              leading: const Icon(Icons.rocket_launch_rounded, color: PartnerTheme.gold, size: 22),
+              title: const Text('सोशल मीडिया ऑटोपायलट', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+              subtitle: const Text('FB, Instagram व YouTube पर स्वतः रील्स व पोस्ट्स', style: TextStyle(fontSize: 11, color: Colors.white60)),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: PartnerTheme.gold.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: PartnerTheme.gold, width: 0.8),
+                ),
+                child: const Text('AUTO', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: PartnerTheme.gold)),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, AstrologerSocialGrowthScreen.route);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.smart_toy_rounded, color: Color(0xFFF59E0B)),
-              title: const Text('वैदिक AI ट्विन स्टूडियो (AI Twin Studio)'),
-              subtitle: const Text('प्रशिक्षित करें अपना 24/7 वैदिक डिजिटल अवतार'),
+              dense: true,
+              leading: const Icon(Icons.smart_toy_rounded, color: Color(0xFFF59E0B), size: 22),
+              title: const Text('वैदिक AI ट्विन स्टूडियो', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+              subtitle: const Text('24/7 डिजिटल वैदिक अवतार', style: TextStyle(fontSize: 11, color: Colors.white60)),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, AiTwinStudioScreen.route);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.hub_rounded, color: Color(0xFFEA580C)),
-              title: const Text('सोशल मीडिया ऑटोपायलट (Growth Engine)'),
-              subtitle: const Text('FB, Insta, YouTube पर रील्स व पोस्ट्स से ग्रोथ'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, AstrologerSocialGrowthScreen.route);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.auto_stories_rounded, color: PartnerTheme.saffron),
-              title: const Text('वैदिक टूलकिट (Vedic Toolkit)'),
-              subtitle: const Text('कुंडली, पंचांग व पूजा संस्तुति'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, VedicToolkitScreen.route);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF10B981)),
-              title: const Text('मास्टर AI ज्योतिषी (Master AI)'),
-              subtitle: const Text('पंडित जी का वैदिक AI सह-पायलट'),
+              dense: true,
+              leading: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF10B981), size: 22),
+              title: const Text('मास्टर AI ज्योतिषी', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+              subtitle: const Text('पंडित जी का वैदिक AI सह-पायलट', style: TextStyle(fontSize: 11, color: Colors.white60)),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, MasterAiChatbotScreen.route);
               },
             ),
+
+            const Divider(height: 16, thickness: 0.6, indent: 16, endIndent: 16),
+
+            // --- Section 3: वैदिक टूल्स (Vedic Tools) ---
+            _drawerSectionHeader('वैदिक टूल्स'),
             ListTile(
-              leading: const Icon(Icons.toggle_on_outlined),
-              title: Text(AppStrings.availabilityHours),
+              dense: true,
+              leading: const Icon(Icons.auto_stories_rounded, color: PartnerTheme.saffron, size: 22),
+              title: const Text('वैदिक टूलकिट', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+              subtitle: const Text('कुंडली, पंचांग व पूजा संस्तुति', style: TextStyle(fontSize: 11, color: Colors.white60)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, VedicToolkitScreen.route);
+              },
+            ),
+
+            const Divider(height: 16, thickness: 0.6, indent: 16, endIndent: 16),
+
+            // --- Section 4: खाता एवं सेटिंग्स (Account & Settings) ---
+            _drawerSectionHeader('खाता एवं सेटिंग्स'),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.schedule_rounded, color: Colors.white70, size: 22),
+              title: Text(AppStrings.availabilityHours, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, AvailabilityScreen.route);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.person_outline_rounded),
-              title: Text(AppStrings.myProfile),
+              dense: true,
+              leading: const Icon(Icons.badge_outlined, color: Colors.white70, size: 22),
+              title: Text(AppStrings.myProfile, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
               onTap: () {
                 Navigator.pop(context);
                 setState(() => _tab = 4);
               },
             ),
             ListTile(
+              dense: true,
               leading:
-                  const Icon(Icons.translate_rounded, color: PartnerTheme.saffron),
-              title: Text(AppStrings.appLanguage),
+                  const Icon(Icons.translate_rounded, color: PartnerTheme.saffron, size: 22),
+              title: Text(AppStrings.appLanguage, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
               subtitle: Text(
                 '${LocaleManager.instance.currentLanguage.value.label} (${LocaleManager.instance.currentLanguage.value.englishName})',
-                style: const TextStyle(fontSize: 12),
+                style: const TextStyle(fontSize: 11, color: Colors.white60),
               ),
               onTap: () {
                 Navigator.pop(context);
                 LanguagePickerSheet.show(context);
               },
             ),
-            const Divider(),
+            const Divider(height: 16, thickness: 0.6, indent: 16, endIndent: 16),
             ListTile(
+              dense: true,
               leading:
-                  const Icon(Icons.logout_rounded, color: PartnerTheme.crimson),
+                  const Icon(Icons.logout_rounded, color: PartnerTheme.crimson, size: 22),
               title: Text(AppStrings.logout,
-                  style: const TextStyle(color: PartnerTheme.crimson)),
+                  style: const TextStyle(color: PartnerTheme.crimson, fontWeight: FontWeight.w700, fontSize: 13.5)),
               onTap: () => _logout(context, session),
             ),
+            const SizedBox(height: 24),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      child: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          color: PartnerTheme.gold,
+          letterSpacing: 0.9,
         ),
       ),
     );
