@@ -385,6 +385,35 @@ public function addCallRequest(Request $req)
                     ]
                 );
 
+                // Dual-dispatch to OneSignal for reliable background ringing on locked devices
+                try {
+                    $playerIds = $userDeviceDetail->pluck('subscription_id')
+                        ->filter(function($id) { return !empty($id); })
+                        ->values()->toArray();
+                    if (!empty($playerIds)) {
+                        $oneSignalService = new OneSignalService();
+                        $oneSignalService->sendNotification($playerIds, [
+                            'title' => 'Hey '.$userDeviceDetail[0]->name.', you received a '.$call.' request from ' . $user[0]->name,
+                            'priority' => 'custom',
+                            'body' => [
+                                "notificationType" => 2,
+                                "id" => $user[0]->id,
+                                "name" => $user[0]->name ?: 'User',
+                                "profile" => $user[0]->profile ?: $blankimg,
+                                "token" => $callrequestdata->token,
+                                "callId" => $callrequestdata->id,
+                                "call_type" => $callrequestdata->call_type,
+                                "call_duration" => $req['call_duration'],
+                                'description' => 'Hey '.$userDeviceDetail[0]->name.', you received a '.$call.' request from ' . $user[0]->name,
+                                'icon' => asset('public/notification-icon/telephone-call.png'),
+                                'call_method' => $call_method ?? 'agora',
+                            ],
+                        ]);
+                    }
+                } catch (\Exception $ex) {
+                    \Illuminate\Support\Facades\Log::warning('OneSignal call dispatch non-fatal: ' . $ex->getMessage());
+                }
+
 
 				 $notification = array(
                     'userId' => $userDeviceDetail[0]->astrologerUserId,

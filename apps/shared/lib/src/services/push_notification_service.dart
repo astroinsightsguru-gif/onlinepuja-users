@@ -18,6 +18,9 @@ class PushNotificationService {
   bool _initialized = false;
   int? _currentUserId;
 
+  /// Optional callback invoked when a notification is tapped by the user.
+  void Function(Map<String, dynamic> data)? onNotificationClick;
+
   /// Initialize OneSignal SDK. Safe to call multiple times.
   Future<void> init({String? appId}) async {
     if (kIsWeb) {
@@ -46,6 +49,20 @@ class PushNotificationService {
         final newSubId = state.current.id;
         if (newSubId != null && newSubId.isNotEmpty && _currentUserId != null) {
           syncDeviceToken(userId: _currentUserId!, subscriptionId: newSubId);
+        }
+      });
+
+      // Handle notification clicks for deep linking / opening consultation requests
+      OneSignal.Notifications.addClickListener((event) {
+        final rawData = event.notification.additionalData;
+        debugPrint('[PushNotificationService] Notification tapped: $rawData');
+        if (rawData != null && onNotificationClick != null) {
+          try {
+            final map = Map<String, dynamic>.from(rawData);
+            onNotificationClick!(map);
+          } catch (e) {
+            debugPrint('[PushNotificationService] Error parsing notification data: $e');
+          }
         }
       });
 

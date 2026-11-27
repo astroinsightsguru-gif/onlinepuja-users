@@ -185,6 +185,38 @@ class ChatRequestController extends Controller
                     ]
                 );
 
+                // Dual-dispatch to OneSignal for reliable background ringing on locked devices
+                try {
+                    $playerIds = $userDeviceDetail->pluck('subscription_id')
+                        ->filter(function($id) { return !empty($id); })
+                        ->values()->toArray();
+                    if (!empty($playerIds)) {
+                        $oneSignalService = new OneSignalService();
+                        $oneSignalService->sendNotification($playerIds, [
+                            'title' => 'Chat Request',
+                            'priority' => 'custom',
+                            'body' => [
+                                'description' => 'Hey ' . $userDeviceDetail[0]->name . ', you received a chat request from ' . $user[0]->name,
+                                'notificationType' => 8,
+                                'icon' => asset('public/notification-icon/chat.png'),
+                                'userName' => $user[0]->name,
+                                'profile' => $user[0]->profile ? asset($user[0]->profile) : asset($blankimg),
+                                'userId' => $chatRequest->userId,
+                                'astroUserId' => $astroUserId->userId ?? null,
+                                'astrologerId' => $chatRequest->astrologerId,
+                                'channelName' => $chatRequest->channelName,
+                                'chat_duration' => $chatRequest->chat_duration,
+                                'receiverId' => $chatRequest->receiverId,
+                                'senderId' => $chatRequest->senderId,
+                                'chatId' => $chatRequest->id,
+                                'sound' => 'app_sound'
+                            ],
+                        ]);
+                    }
+                } catch (\Exception $ex) {
+                    \Illuminate\Support\Facades\Log::warning('OneSignal chat dispatch non-fatal: ' . $ex->getMessage());
+                }
+
                 $notification = array(
                     'userId' => $userDeviceDetail[0]->astrologerUserId,
                     'title' => 'Hey '.$userDeviceDetail[0]->name.', you received a chat request from ' . $user[0]->name,
