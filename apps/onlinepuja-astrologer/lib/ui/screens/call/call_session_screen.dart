@@ -650,13 +650,13 @@ class _CallSessionScreenState extends State<CallSessionScreen> {
 
           // Audio Controls Bar
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            margin: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.6),
+              color: Colors.black.withValues(alpha: 0.65),
               borderRadius: BorderRadius.circular(32),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.12),
+                color: Colors.white.withValues(alpha: 0.15),
               ),
             ),
             child: Row(
@@ -666,6 +666,7 @@ class _CallSessionScreenState extends State<CallSessionScreen> {
                   icon: rtc?.micMuted == true
                       ? Icons.mic_off_rounded
                       : Icons.mic_rounded,
+                  label: rtc?.micMuted == true ? 'अनम्यूट' : 'म्यूट',
                   color: rtc?.micMuted == true
                       ? PartnerTheme.crimson
                       : Colors.white24,
@@ -673,22 +674,45 @@ class _CallSessionScreenState extends State<CallSessionScreen> {
                 ),
                 _roundAction(
                   icon: Icons.temple_hindu_rounded,
+                  label: 'पूजा संस्तुति',
                   color: PartnerTheme.saffron.withValues(alpha: 0.45),
                   onTap: _showPrescribeRemedySheet,
                 ),
                 _roundAction(
                   icon: Icons.auto_awesome,
-                  color: PartnerTheme.gold.withValues(alpha: 0.3),
+                  label: 'यजमान कुंडली',
+                  color: PartnerTheme.gold.withValues(alpha: 0.35),
                   onTap: _showClientInfoSheet,
                 ),
-                IconButton(
-                  style: IconButton.styleFrom(
-                    backgroundColor: PartnerTheme.crimson,
-                    padding: const EdgeInsets.all(16),
+                InkWell(
+                  onTap: _ending ? null : _end,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: const BoxDecoration(
+                            color: PartnerTheme.crimson,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.call_end_rounded,
+                              color: Colors.white, size: 22),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'समाप्त',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  onPressed: _ending ? null : _end,
-                  icon: const Icon(Icons.call_end_rounded,
-                      color: Colors.white, size: 28),
                 ),
               ],
             ),
@@ -702,16 +726,39 @@ class _CallSessionScreenState extends State<CallSessionScreen> {
   Widget _roundAction({
     required IconData icon,
     required VoidCallback? onTap,
+    String? label,
     Color? color,
   }) {
-    return IconButton(
-      style: IconButton.styleFrom(
-        backgroundColor: color ?? Colors.white.withValues(alpha: 0.15),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.all(12),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color ?? Colors.white.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 22, color: Colors.white),
+            ),
+            if (label != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
-      icon: Icon(icon, size: 22),
-      onPressed: onTap,
     );
   }
 

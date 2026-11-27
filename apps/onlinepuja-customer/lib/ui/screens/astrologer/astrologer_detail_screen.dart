@@ -432,12 +432,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
           isOnline: a.isCallOnline,
           gradient: CustomerTheme.dakshinaGradient,
           onTap: a.isCallOnline
-              ? () => context.openCall(
-                    astrologerId: widget.id,
-                    astrologerName: displayName,
-                    ratePerMinute:
-                        a.charge > 0 ? a.charge.toDouble() : 15.0,
-                  )
+              ? () => _startConsultationFlow(isVideo: false)
               : null,
         ),
         const SizedBox(height: 10),
@@ -454,14 +449,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
             colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
           ),
           onTap: a.isCallOnline
-              ? () => context.openCall(
-                    astrologerId: widget.id,
-                    astrologerName: displayName,
-                    isVideo: true,
-                    ratePerMinute: a.videoCallRate > 0
-                        ? a.videoCallRate.toDouble()
-                        : 25.0,
-                  )
+              ? () => _startConsultationFlow(isVideo: true)
               : null,
         ),
         const SizedBox(height: 10),
@@ -487,6 +475,193 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _startConsultationFlow({required bool isVideo}) {
+    final a = _astro;
+    if (a == null) return;
+    final isHi = LocaleManager.instance.currentLanguage.value != AppLanguage.en;
+    final displayName = a.name.isNotEmpty ? a.name : (isHi ? 'आचार्य जी' : 'Astrologer');
+    final rate = isVideo
+        ? (a.videoCallRate > 0 ? a.videoCallRate.toDouble() : 25.0)
+        : (a.charge > 0 ? a.charge.toDouble() : 15.0);
+
+    final suggestedTopics = [
+      isHi ? '💼 नौकरी, पदोन्नति एवं व्यापार में लाभ' : '💼 Career, Job Promotion & Business',
+      isHi ? '💍 विवाह समय, वर/वधू चयन व मांगलिक योग' : '💍 Marriage Timing & Compatibility',
+      isHi ? '🔱 राहु-केतु दशा, साढ़े साती व गृह शांति' : '🔱 Rahu-Ketu Dasha & Planetary Shanti',
+      isHi ? '💰 धन लाभ, अटका हुआ धन एवं कर्ज मुक्ति' : '💰 Financial Growth & Debt Relief',
+      isHi ? '🩺 स्वास्थ्य, दीर्घायु एवं महामृत्युंजय संस्तुति' : '🩺 Health, Vitality & Healing Remedies',
+    ];
+
+    String selectedTopic = suggestedTopics.first;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          final bg = isDark ? const Color(0xFF1E1B2E) : Colors.white;
+          final textPrimary = isDark ? Colors.white : const Color(0xFF1E293B);
+
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: CustomerTheme.dakshinaGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        isVideo ? Icons.videocam_rounded : Icons.phone_in_talk_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isHi ? 'परामर्श की मुख्य जिज्ञासा चुनें' : 'Choose Primary Consultation Focus',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: textPrimary,
+                            ),
+                          ),
+                          Text(
+                            '$displayName • ₹${rate.toStringAsFixed(0)}/${isHi ? 'मि' : 'min'}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFD97706),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isHi
+                      ? 'आचार्य जी से बातचीत शुरू करने से पूर्व अपना मुख्य प्रश्न चुनें ताकि परामर्श सटीक व फलदायी हो:'
+                      : 'Select your core focus so Acharya Ji can prepare your chart instantly:',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: suggestedTopics.map((topic) {
+                    final isSelected = selectedTopic == topic;
+                    return InkWell(
+                      onTap: () => setModalState(() => selectedTopic = topic),
+                      borderRadius: BorderRadius.circular(12),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFFD97706).withValues(alpha: 0.15)
+                              : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04)),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? const Color(0xFFD97706) : Colors.transparent,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          topic,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                            color: isSelected ? const Color(0xFFD97706) : textPrimary,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD97706),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 2,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.openCall(
+                        astrologerId: widget.id,
+                        astrologerName: displayName,
+                        isVideo: isVideo,
+                        ratePerMinute: rate,
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(isVideo ? Icons.videocam_rounded : Icons.phone_forwarded_rounded, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          isHi ? 'परामर्श कॉल प्रारंभ करें' : 'Start Consultation Call',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
