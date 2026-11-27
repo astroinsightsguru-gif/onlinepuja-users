@@ -21,6 +21,7 @@ class _FamilyGotraVaultScreenState extends State<FamilyGotraVaultScreen> {
   final _kuldevtaCtrl = TextEditingController();
 
   List<Map<String, String>> _familyMembers = [];
+  List<Map<String, String>> _pitruMembers = [];
 
   bool _saving = false;
 
@@ -65,6 +66,11 @@ class _FamilyGotraVaultScreenState extends State<FamilyGotraVaultScreen> {
                 .map((e) => Map<String, String>.from(e as Map))
                 .toList();
           }
+          if (data['pitrus'] is List) {
+            _pitruMembers = (data['pitrus'] as List)
+                .map((e) => Map<String, String>.from(e as Map))
+                .toList();
+          }
         });
       } else if (user != null && (user.name ?? '').isNotEmpty && user.name != 'User') {
         setState(() {
@@ -103,6 +109,7 @@ class _FamilyGotraVaultScreenState extends State<FamilyGotraVaultScreen> {
         'gotra': _gotraCtrl.text.trim(),
         'kuldevta': _kuldevtaCtrl.text.trim(),
         'members': _familyMembers,
+        'pitrus': _pitruMembers,
       };
       await sp.setString(_kPrefGotraKey, json.encode(data));
 
@@ -221,6 +228,111 @@ class _FamilyGotraVaultScreenState extends State<FamilyGotraVaultScreen> {
     );
   }
 
+  void _addPitruMemberDialog() {
+    final nameCtrl = TextEditingController();
+    String relation = 'Grandfather (दादाजी)';
+    String tithi = 'सर्वपितृ अमावस्या (Sarvapitru Amavasya)';
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDlgState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Row(
+                children: [
+                  Icon(Icons.self_improvement_rounded, color: Color(0xFF78350F)),
+                  SizedBox(width: 8),
+                  Text('Add Ancestor / पूर्वज', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Name (स्व. पूर्वज का नाम) *',
+                        hintText: 'e.g. स्वर्गीय रामनारायण शर्मा',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: relation,
+                      decoration: const InputDecoration(labelText: 'Relationship (सम्बन्ध)'),
+                      items: const [
+                        DropdownMenuItem(value: 'Father (पिताजी)', child: Text('Father (पिताजी)')),
+                        DropdownMenuItem(value: 'Mother (माताजी)', child: Text('Mother (माताजी)')),
+                        DropdownMenuItem(value: 'Grandfather (दादाजी)', child: Text('Grandfather (दादाजी)')),
+                        DropdownMenuItem(value: 'Grandmother (दादीजी)', child: Text('Grandmother (दादीजी)')),
+                        DropdownMenuItem(value: 'Maternal Grandfather (नानाजी)', child: Text('Maternal Grandfather (नानाजी)')),
+                        DropdownMenuItem(value: 'Maternal Grandmother (नानीजी)', child: Text('Maternal Grandmother (नानीजी)')),
+                        DropdownMenuItem(value: 'Ancestor (कुल पूर्वज)', child: Text('Ancestor (कुल पूर्वज)')),
+                      ],
+                      onChanged: (v) => setDlgState(() => relation = v!),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: tithi,
+                      decoration: const InputDecoration(labelText: 'Shradh / Death Tithi (श्राद्ध तिथि)'),
+                      items: const [
+                        DropdownMenuItem(value: 'सर्वपितृ अमावस्या (Sarvapitru Amavasya)', child: Text('सर्वपितृ अमावस्या (Amavasya)')),
+                        DropdownMenuItem(value: 'प्रतिपदा (Pratipada)', child: Text('प्रतिपदा (Pratipada)')),
+                        DropdownMenuItem(value: 'द्वितीया (Dwitiya)', child: Text('द्वितीया (Dwitiya)')),
+                        DropdownMenuItem(value: 'तृतीया (Tritiya)', child: Text('तृतीया (Tritiya)')),
+                        DropdownMenuItem(value: 'चतुर्थी (Chaturthi)', child: Text('चतुर्थी (Chaturthi)')),
+                        DropdownMenuItem(value: 'पंचमी (Panchami)', child: Text('पंचमी (Panchami)')),
+                        DropdownMenuItem(value: 'षष्ठी (Shashthi)', child: Text('षष्ठी (Shashthi)')),
+                        DropdownMenuItem(value: 'सप्तमी (Saptami)', child: Text('सप्तमी (Saptami)')),
+                        DropdownMenuItem(value: 'अष्टमी (Ashtami)', child: Text('अष्टमी (Ashtami)')),
+                        DropdownMenuItem(value: 'नवमी (Navami - मातृ नवमी)', child: Text('नवमी (Matru Navami)')),
+                        DropdownMenuItem(value: 'दशमी (Dashami)', child: Text('दशमी (Dashami)')),
+                        DropdownMenuItem(value: 'एकादशी (Ekadashi)', child: Text('एकादशी (Ekadashi)')),
+                        DropdownMenuItem(value: 'द्वादशी (Dwadashi)', child: Text('द्वादशी (Dwadashi)')),
+                        DropdownMenuItem(value: 'त्रयोदशी (Trayodashi)', child: Text('त्रयोदशी (Trayodashi)')),
+                        DropdownMenuItem(value: 'चतुर्दशी (Chaturdashi)', child: Text('चतुर्दशी (Chaturdashi)')),
+                        DropdownMenuItem(value: 'पूर्णिमा (Purnima)', child: Text('पूर्णिमा (Purnima)')),
+                      ],
+                      onChanged: (v) => setDlgState(() => tithi = v!),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF78350F),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    if (nameCtrl.text.trim().isNotEmpty) {
+                      setState(() {
+                        _pitruMembers.add({
+                          'name': nameCtrl.text.trim(),
+                          'relation': relation,
+                          'tithi': tithi,
+                        });
+                      });
+                      _saveToStorage();
+                      Navigator.pop(ctx);
+                    }
+                  },
+                  child: const Text('Add Ancestor'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -288,6 +400,64 @@ class _FamilyGotraVaultScreenState extends State<FamilyGotraVaultScreen> {
               final idx = entry.key;
               final m = entry.value;
               return _buildMemberCard(idx, m);
+            }),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.spa_rounded, color: Color(0xFF78350F), size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Ancestral Vault (पितृ मोक्ष स्मृति):',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A132F),
+                    ),
+                  ),
+                ],
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.add, size: 16, color: Color(0xFF78350F)),
+                label: const Text('Add Ancestor',
+                    style: TextStyle(color: Color(0xFF78350F), fontWeight: FontWeight.bold)),
+                onPressed: _addPitruMemberDialog,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_pitruMembers.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.self_improvement_rounded, size: 32, color: Color(0xFF78350F)),
+                  SizedBox(height: 6),
+                  Text(
+                    'No Ancestral Records Added',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Add deceased ancestors to receive automated Shradh Tithi reminders and 1-tap Gaya/Kashi Pind Daan bookings.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11.5, color: Colors.black54),
+                  ),
+                ],
+              ),
+            )
+          else
+            ..._pitruMembers.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final p = entry.value;
+              return _buildPitruCard(idx, p);
             }),
           const SizedBox(height: 24),
           SizedBox(
@@ -434,6 +604,53 @@ class _FamilyGotraVaultScreenState extends State<FamilyGotraVaultScreen> {
                 _saveToStorage();
               },
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPitruCard(int index, Map<String, String> p) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF78350F).withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: const Color(0xFF78350F).withValues(alpha: 0.12),
+                child: const Text('🪷', style: TextStyle(fontSize: 16)),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p['name'] ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${p['relation']} • ${p['tithi']}',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF78350F), fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 18),
+            onPressed: () {
+              setState(() => _pitruMembers.removeAt(index));
+              _saveToStorage();
+            },
+          ),
         ],
       ),
     );
