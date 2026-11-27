@@ -41,13 +41,60 @@ import 'ui/screens/splash_screen.dart';
 
 import 'ui/theme/customer_theme.dart';
 
-class OnlinePujaApp extends StatelessWidget {
+class OnlinePujaApp extends StatefulWidget {
   const OnlinePujaApp({super.key});
+
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  State<OnlinePujaApp> createState() => _OnlinePujaAppState();
+}
+
+class _OnlinePujaAppState extends State<OnlinePujaApp> {
+  @override
+  void initState() {
+    super.initState();
+    _setupNotificationHandling();
+  }
+
+  void _setupNotificationHandling() {
+    PushNotificationService.instance.onNotificationClick = (data) {
+      final type = (data['type'] ?? '').toString();
+      final callId = data['callId'] ?? data['id'];
+      final chatId = data['chatId'];
+
+      if (type == 'incoming_call' || (callId != null && type.contains('call'))) {
+        OnlinePujaApp.navigatorKey.currentState?.pushNamed(
+          AudioCallScreen.route,
+          arguments: {
+            'astrologerId': int.tryParse(data['astrologerId']?.toString() ?? '') ?? 0,
+            'astrologerName': data['astrologerName']?.toString() ?? 'Astrologer',
+            'sessionId': callId?.toString(),
+            'isVideo': data['isVideo'] == true || data['type'] == 'video_call',
+          },
+        );
+      } else if (type == 'incoming_chat' || chatId != null) {
+        OnlinePujaApp.navigatorKey.currentState?.pushNamed(
+          ChatSessionScreen.route,
+          arguments: {
+            'astrologerId': int.tryParse(data['astrologerId']?.toString() ?? '') ?? 0,
+            'astrologerName': data['astrologerName']?.toString() ?? 'Astrologer',
+            'sessionId': chatId?.toString(),
+          },
+        );
+      } else if (type == 'shorts') {
+        OnlinePujaApp.navigatorKey.currentState?.pushNamed(
+          SpiritualShortsScreen.route,
+        );
+      }
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final session = context.watch<AppSession>();
     return MaterialApp(
+      navigatorKey: OnlinePujaApp.navigatorKey,
       title: 'OnlinePuja.live',
       debugShowCheckedModeBanner: false,
       theme: CustomerTheme.light(),

@@ -592,6 +592,7 @@ Route::post('logistics/webhook/awb', [\App\Http\Controllers\API\User\GrowthEngin
 
 Route::get('feed/shorts', [\App\Http\Controllers\API\User\GrowthEngineController::class, 'getSpiritualShorts'])->name('api.feed.shorts');
 Route::post('feed/shorts/like', [\App\Http\Controllers\API\User\GrowthEngineController::class, 'likeShort'])->name('api.feed.shorts.like');
+Route::post('feed/shorts/view', [\App\Http\Controllers\API\User\GrowthEngineController::class, 'viewShort'])->name('api.feed.shorts.view');
 
 Route::prefix('manager')->group(function () {
     // 🔐 Executive Superadmin Authentication Gate

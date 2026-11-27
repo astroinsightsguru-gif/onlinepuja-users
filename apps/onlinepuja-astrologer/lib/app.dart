@@ -20,8 +20,58 @@ import 'ui/screens/splash_screen.dart';
 import 'ui/screens/tools/vedic_toolkit_screen.dart';
 import 'ui/screens/wallet/wallet_screen.dart';
 
-class OnlinePujaPartnerApp extends StatelessWidget {
+class OnlinePujaPartnerApp extends StatefulWidget {
   const OnlinePujaPartnerApp({super.key});
+
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  State<OnlinePujaPartnerApp> createState() => _OnlinePujaPartnerAppState();
+}
+
+class _OnlinePujaPartnerAppState extends State<OnlinePujaPartnerApp> {
+  @override
+  void initState() {
+    super.initState();
+    _setupNotificationHandling();
+  }
+
+  void _setupNotificationHandling() {
+    PushNotificationService.instance.onNotificationClick = (data) {
+      final type = (data['type'] ?? '').toString();
+      final callId = data['callId'] ?? data['id'];
+      final chatId = data['chatId'];
+
+      if (type == 'incoming_call' || (callId != null && type.contains('call'))) {
+        OnlinePujaPartnerApp.navigatorKey.currentState?.pushNamed(
+          CallSessionScreen.route,
+          arguments: {
+            'customerId': int.tryParse(data['customerId']?.toString() ?? '') ?? 0,
+            'customerName': data['customerName']?.toString() ?? 'Devotee',
+            'sessionId': callId?.toString(),
+            'isVideo': data['isVideo'] == true || data['type'] == 'video_call',
+          },
+        );
+      } else if (type == 'incoming_chat' || chatId != null) {
+        OnlinePujaPartnerApp.navigatorKey.currentState?.pushNamed(
+          ChatSessionScreen.route,
+          arguments: {
+            'customerId': int.tryParse(data['customerId']?.toString() ?? '') ?? 0,
+            'customerName': data['customerName']?.toString() ?? 'Devotee',
+            'sessionId': chatId?.toString(),
+          },
+        );
+      } else if (type == 'social_growth') {
+        OnlinePujaPartnerApp.navigatorKey.currentState?.pushNamed(
+          AstrologerSocialGrowthScreen.route,
+        );
+      } else if (type == 'fulfillment') {
+        OnlinePujaPartnerApp.navigatorKey.currentState?.pushNamed(
+          OrdersFulfillmentScreen.route,
+        );
+      }
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +80,7 @@ class OnlinePujaPartnerApp extends StatelessWidget {
       valueListenable: LocaleManager.instance.currentLanguage,
       builder: (context, currentLanguage, _) {
         return MaterialApp(
+          navigatorKey: OnlinePujaPartnerApp.navigatorKey,
           title: 'OnlinePuja.astro',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light(),

@@ -519,6 +519,15 @@ class GrowthEngineController extends Controller
     {
         $shorts = [];
 
+        $getLikes = function ($id, $base) {
+            $cached = \Illuminate\Support\Facades\Cache::get('short_likes_' . $id, 0);
+            return max(0, $base + (int)$cached);
+        };
+        $getViews = function ($id, $base) {
+            $cached = \Illuminate\Support\Facades\Cache::get('short_views_' . $id, 0);
+            return max(0, $base + (int)$cached);
+        };
+
         // 1. Fetch real active Pujas with authentic consecrated imagery
         if (Schema::hasTable('pujas')) {
             $pujas = DB::table('pujas')
@@ -539,9 +548,10 @@ class GrowthEngineController extends Controller
                 $rawImg = !empty($images[0]) ? $images[0] : null;
                 $thumbUrl = $rawImg ? asset($rawImg) : asset('public/storage/puja_images/puja_1764232697222466223.webp');
                 $priceText = $p->puja_price ? ('₹' . number_format($p->puja_price, 0)) : 'पावन संकल्प';
+                $sId = 'puja_' . $p->id;
 
                 $shorts[] = [
-                    'id' => 'puja_' . $p->id,
+                    'id' => $sId,
                     'title' => $p->puja_title,
                     'subtitle' => $p->puja_place ?? 'काशी विश्वनाथ धाम',
                     'category' => 'वैदिक पूजा संकल्प',
@@ -553,8 +563,8 @@ class GrowthEngineController extends Controller
                     'caption' => ($p->puja_title) . ' - ' . ($p->puja_place ?? 'काशी धाम') . '। शास्त्रोक्त वैदिक अनुष्ठान एवं नाम-गोत्र संकल्प। लाइव वीडियो व्हाट्सएप पर भेजा जाएगा।',
                     'cta_label' => 'संकल्प ' . $priceText,
                     'cta_route' => '/puja-details/' . ($p->slug ?? $p->id),
-                    'likes_count' => 1840 + ($p->id * 45),
-                    'views_count' => 8200 + ($p->id * 210),
+                    'likes_count' => $getLikes($sId, 1840 + ($p->id * 45)),
+                    'views_count' => $getViews($sId, 8200 + ($p->id * 210)),
                     'shares_count' => 450 + ($p->id * 18),
                     'is_liked' => false,
                     'index' => $idx,
@@ -578,8 +588,8 @@ class GrowthEngineController extends Controller
                 'caption' => 'द्वादश ज्योतिर्लिंगों में प्रधान श्री काशी विश्वनाथ मंदिर से 24x7 पावन गर्भग्रह दर्शन एवं दैनिक मंगला, भोग व शृंगार आरती।',
                 'cta_label' => 'लाइव दर्शन एवं आरती करें',
                 'cta_route' => '/live-darshan',
-                'likes_count' => 9420,
-                'views_count' => 42100,
+                'likes_count' => $getLikes('live_kashi_vishwanath', 9420),
+                'views_count' => $getViews('live_kashi_vishwanath', 42100),
                 'shares_count' => 2840,
                 'is_liked' => true,
                 'index' => count($shorts),
@@ -598,8 +608,8 @@ class GrowthEngineController extends Controller
                 'caption' => 'काशी के पावन दशाश्वमेध घाट पर विश्व-प्रसिद्ध महा गंगा आरती। वैदिक मंत्रोच्चार, शंखनाद और दिव्य दीपदान का दर्शन।',
                 'cta_label' => 'गंगा आरती दर्शन',
                 'cta_route' => '/live-darshan',
-                'likes_count' => 8140,
-                'views_count' => 36800,
+                'likes_count' => $getLikes('live_ganga_aarti', 8140),
+                'views_count' => $getViews('live_ganga_aarti', 36800),
                 'shares_count' => 2190,
                 'is_liked' => false,
                 'index' => count($shorts) + 1,
@@ -618,8 +628,8 @@ class GrowthEngineController extends Controller
                 'caption' => 'दक्षिणमुखी स्वयंभू श्री महाकालेश्वर ज्योतिर्लिंग की पावन प्रात:कालीन भस्म आरती एवं संध्या शृंगार दर्शन।',
                 'cta_label' => 'भस्म आरती दर्शन',
                 'cta_route' => '/live-darshan',
-                'likes_count' => 11200,
-                'views_count' => 54100,
+                'likes_count' => $getLikes('live_mahakaleshwar', 11200),
+                'views_count' => $getViews('live_mahakaleshwar', 54100),
                 'shares_count' => 3890,
                 'is_liked' => false,
                 'index' => count($shorts) + 2,
@@ -638,8 +648,8 @@ class GrowthEngineController extends Controller
                 'caption' => 'समुद्र तट पर स्थित प्रथम ज्योतिर्लिंग श्री सोमनाथ महादेव के पावन शृंगार दर्शन एवं महाआरती।',
                 'cta_label' => 'सोमनाथ दर्शन',
                 'cta_route' => '/live-darshan',
-                'likes_count' => 7620,
-                'views_count' => 29400,
+                'likes_count' => $getLikes('live_somnath', 7620),
+                'views_count' => $getViews('live_somnath', 29400),
                 'shares_count' => 1840,
                 'is_liked' => false,
                 'index' => count($shorts) + 3,
@@ -708,11 +718,37 @@ class GrowthEngineController extends Controller
     public function likeShort(Request $request)
     {
         $shortId = $request->input('short_id', 'unknown');
+        $delta = (int)$request->input('delta', 1);
+        $key = 'short_likes_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $shortId);
+        $current = (int)\Illuminate\Support\Facades\Cache::get($key, 0);
+        $newCount = max(0, $current + $delta);
+        \Illuminate\Support\Facades\Cache::forever($key, $newCount);
+
         return response()->json([
             'status' => 200,
             'success' => true,
-            'message' => 'Short liked successfully',
-            'short_id' => $shortId
+            'message' => 'Short like recorded successfully',
+            'short_id' => $shortId,
+            'likes_count' => $newCount,
+        ]);
+    }
+
+    /**
+     * 11b. POST /api/feed/shorts/view
+     */
+    public function viewShort(Request $request)
+    {
+        $shortId = $request->input('short_id', 'unknown');
+        $key = 'short_views_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $shortId);
+        $current = (int)\Illuminate\Support\Facades\Cache::get($key, 0);
+        $newCount = $current + 1;
+        \Illuminate\Support\Facades\Cache::forever($key, $newCount);
+
+        return response()->json([
+            'status' => 200,
+            'success' => true,
+            'short_id' => $shortId,
+            'views_count' => $newCount,
         ]);
     }
 
