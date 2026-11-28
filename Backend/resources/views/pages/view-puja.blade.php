@@ -203,7 +203,7 @@
                             @if(isset($puja) && !empty($puja->puja_images) && is_array($puja->puja_images))
                                 @foreach ($puja->puja_images as $imgkey => $img)
                                     <div class="upload__img-box">
-                                        <div style="background-image: url('{{ asset($img) }}');" class="img-bg"
+                                        <div style="background-image: url('{{ Str::startsWith($img, ['http://','https://']) ? $img : asset($img) }}');" class="img-bg"
                                             data-file="{{ $img }}">
                                             <input type="file" name="old_images[]" multiple style="display:none;">
                                             <input type="hidden" name="existing_images[]" value="{{ $img }}">

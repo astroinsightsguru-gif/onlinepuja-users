@@ -106,12 +106,12 @@
                 <div class="col-md-6 d-flex flex-column align-items-center">
                     <div class="w-100 main-image-wrapper">
                         @php
-                            $firstImage = !empty($puja->puja_images) ? $puja->puja_images[0] : 'build/assets/images/person.png';
-                            $mainImageSrc = Str::startsWith($firstImage, ['http://','https://']) ? $firstImage : '/' . $firstImage;
+                            $firstImage = !empty($puja->puja_images) ? $puja->puja_images[0] : 'public/frontend/homeimage/360.png';
+                            $mainImageSrc = Str::startsWith($firstImage, ['http://','https://']) ? $firstImage : asset($firstImage);
                         @endphp
                         <img id="mainImage" class="w-100 h-100 object-fit-cover transition-all"
                              src="{{ $mainImageSrc }}"
-                             onerror="this.onerror=null;this.src='/build/assets/images/person.png';"
+                             onerror="this.onerror=null;this.src='/public/frontend/homeimage/360.png';"
                              alt="{{ $puja->puja_title }}" />
                     </div>
 
@@ -120,8 +120,8 @@
                         <div class="d-flex gap-3 mt-3 overflow-auto w-100 justify-content-center py-2">
                             @foreach ($puja->puja_images as $index => $image)
                                 <img class="thumb-img"
-                                     src="{{ Str::startsWith($image, ['http://','https://']) ? $image : '/' . $image }}"
-                                     onerror="this.onerror=null;this.src='/build/assets/images/person.png';"
+                                     src="{{ Str::startsWith($image, ['http://','https://']) ? $image : asset($image) }}"
+                                     onerror="this.onerror=null;this.src='/public/frontend/homeimage/360.png';"
                                      alt="Puja image thumbnail"
                                      onclick="changeImage(this)" />
                             @endforeach

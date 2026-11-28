@@ -244,7 +244,7 @@
                 <div class="puja-card-media">
                     <img class="puja-card-img"
                          src="{{ $imageSrc }}"
-                         onerror="this.onerror=null;this.src='/build/assets/images/person.png';"
+                         onerror="this.onerror=null;this.src='{{ asset('public/frontend/homeimage/360.png') }}';"
                          alt="{{ $puja->puja_title }}"
                          onclick="openImage('{{ $firstImage }}')" />
                 </div>

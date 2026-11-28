@@ -6,7 +6,7 @@
 
 @section('subcontent')
 @php
- $defaultImage = 'build/assets/images/default.jpg';
+ $defaultImage = 'public/frontend/homeimage/360.png';
 @endphp
 <div class="loader"></div>
 <h2 class="intro-y text-lg font-medium mt-10 d-inline mb-2">{{ucfirst($professionTitle)}} Puja list</h2>

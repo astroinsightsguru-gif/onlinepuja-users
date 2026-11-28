@@ -228,11 +228,11 @@ Route::post('/schedule/delete/{id}', [LiveAstroController::class, 'deleteLiveSch
 
 // Puja related routes
 Route::get('puja/category/list', [PujaController::class, 'pujaCategory'])->name('front.pujaCategory');
-Route::get('puja-list/{id}', [PujaController::class, 'pujaList'])->name('front.pujaList');
+Route::get('puja-list/{id?}', [PujaController::class, 'pujaList'])->name('front.pujaList');
 Route::get('puja-details/{slug}', [PujaController::class, 'pujaDetails'])->name('front.pujaDetails');
 Route::get('/pujas/{slug}', [PujaController::class, 'pujaDetails'])->name('front.pujaDetails.alias1');
 Route::get('/puja/{slug}', [PujaController::class, 'pujaDetails'])->name('front.pujaDetails.alias2');
-Route::get('/pujas', [PujaController::class, 'pujaCategory'])->name('front.pujaCategory.alias');
+Route::get('/pujas', [PujaController::class, 'pujaList'])->name('front.pujaCategory.alias');
 Route::get('/puja', [PujaController::class, 'pujaCategory'])->name('front.puja.root');
 
 Route::get('/puja/checkout/{slug}/{id}/{package_id?}', [PujaController::class, 'pujacheckout'])->name('front.pujacheckout');

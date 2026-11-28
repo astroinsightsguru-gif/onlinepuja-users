@@ -25,37 +25,44 @@ use Symfony\Component\HttpFoundation\Session\Session as HttpSession;
 
 class PujaController extends Controller
 {
-   public function pujaCategory(Request $request)
+    public function pujaCategory(Request $request)
     {
-        $currentDatetime = \Carbon\Carbon::now();
-        $pujaCategories = PujaCategory::where('isActive',1)->paginate(6);
+        $pujaCategories = PujaCategory::where('isActive', 1)->paginate(9);
         return view('frontend.pages.puja-category-list', compact('pujaCategories'));
     }
-    public function pujaList(Request $request, $id)
-{
-    $currentDatetime = \Carbon\Carbon::now();
 
-    $pujalists = Puja::where('puja_status', 1)
-        ->where('category_id', $id)
-        ->where('created_by', 'admin')
-        ->where(function($query) use ($currentDatetime) {
-            $query->where('puja_start_datetime', '>', $currentDatetime)
-                  ->orWhereNull('puja_start_datetime')
-                  ->orWhereNull('puja_end_datetime');
-        })
-        ->whereRaw('(puja_start_datetime IS NULL OR puja_end_datetime IS NULL OR puja_start_datetime != puja_end_datetime)')
-        ->paginate(6);
+    public function pujaList(Request $request, $id = null)
+    {
+        $currentDatetime = \Carbon\Carbon::now();
+        $hasCatFilter = !empty($id) && $id !== '0' && $id !== 'all';
 
-    if ($pujalists->isEmpty()) {
-        $pujalists = Puja::where('puja_status', 1)
-            ->where('category_id', $id)
-            ->where('created_by', 'admin')
+        $buildQuery = function () use ($hasCatFilter, $id) {
+            $q = Puja::with('category')->where('puja_status', 1)->where('created_by', 'admin');
+            if ($hasCatFilter) {
+                $q->where('category_id', $id);
+            }
+            return $q;
+        };
+
+        $pujalists = $buildQuery()
+            ->where(function ($query) use ($currentDatetime) {
+                $query->where('puja_start_datetime', '>', $currentDatetime)
+                      ->orWhereNull('puja_start_datetime')
+                      ->orWhereNull('puja_end_datetime');
+            })
             ->whereRaw('(puja_start_datetime IS NULL OR puja_end_datetime IS NULL OR puja_start_datetime != puja_end_datetime)')
-            ->paginate(6);
-    }
+            ->orderBy('puja_start_datetime', 'asc')
+            ->paginate(9);
 
-    return view('frontend.pages.puja-list', compact('pujalists'));
-}
+        if ($pujalists->isEmpty()) {
+            $pujalists = $buildQuery()
+                ->whereRaw('(puja_start_datetime IS NULL OR puja_end_datetime IS NULL OR puja_start_datetime != puja_end_datetime)')
+                ->orderBy('id', 'desc')
+                ->paginate(9);
+        }
+
+        return view('frontend.pages.puja-list', compact('pujalists'));
+    }
 
 
     #------------------------------------------------------------------------------------------------------------------------

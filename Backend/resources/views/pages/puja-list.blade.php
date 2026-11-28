@@ -41,14 +41,14 @@
         
                     @if($firstImage)
                         <img class="rounded-full cursor-pointer"
-                             src="{{ Str::startsWith( $firstImage, ['http://','https://']) ? $firstImage : '/' . $firstImage }}"
-                             onerror="this.onerror=null;this.src='/build/assets/images/person.png';"
+                             src="{{ Str::startsWith( $firstImage, ['http://','https://']) ? $firstImage : asset($firstImage) }}"
+                             onerror="this.onerror=null;this.src='/public/frontend/homeimage/360.png';"
                              alt="Customer image"
-                             onclick="openImage('{{ Str::startsWith( $firstImage, ['http://','https://']) ? $firstImage : '/' . $firstImage }}')" />
+                             onclick="openImage('{{ Str::startsWith( $firstImage, ['http://','https://']) ? $firstImage : asset($firstImage) }}')" />
                     @else
                         <img class="rounded-full"
-                             src="/build/assets/images/person.png"
-                             onerror="this.onerror=null;this.src='/build/assets/images/person.png';"
+                             src="/public/frontend/homeimage/360.png"
+                             onerror="this.onerror=null;this.src='/public/frontend/homeimage/360.png';"
                              alt="image" />
                     @endif
                 </div>
