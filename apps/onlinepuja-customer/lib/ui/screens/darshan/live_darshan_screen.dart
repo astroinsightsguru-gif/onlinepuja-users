@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:op_shared/op_shared.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../../theme/customer_theme.dart';
 
 /// Configuration for featured sacred aartis with dedicated ₹11 pop-up diya offering.
@@ -17,6 +18,8 @@ class SacredAartiOption {
   final String streamUrl;
   final String? portalUrl;
   final String badge;
+  final String mantra;
+  final List<String> lyrics;
 
   const SacredAartiOption({
     required this.id,
@@ -29,6 +32,8 @@ class SacredAartiOption {
     required this.streamUrl,
     this.portalUrl,
     required this.badge,
+    required this.mantra,
+    required this.lyrics,
   });
 }
 
@@ -62,6 +67,10 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
   String _celebrationDevotee = '';
   Timer? _celebrationTimer;
 
+  WebViewController? _webViewController;
+  bool _isInAppStreaming = false;
+  bool _isPlayerBuffering = false;
+
   static const List<SacredAartiOption> _sacredAartis = [
     SacredAartiOption(
       id: 'kashi_mangala',
@@ -74,6 +83,21 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
       streamUrl: 'https://www.youtube.com/@ShriKashiVishwanathTempleTrust/live',
       portalUrl: 'https://shrikashivishwanath.org/frontend/home/livedarshan',
       badge: '🔱 प्रथम ज्योतिर्लिंग मंगला आरती',
+      mantra: 'ॐ नमः पार्वती पतये हर हर महादेव • कर्पूरगौरं करुणावतारम्',
+      lyrics: [
+        'कर्पूरगौरं करुणावतारं संसारसारम् भुजगेन्द्रहारम्।',
+        'सदावसन्तं हृदयारविन्दे भवं भवानीसहितं नमामि॥',
+        'जय शिव ओंकारा, ॐ जय शिव ओंकारा।',
+        'ब्रह्मा, विष्णु, सदाशिव, अर्द्धांगी धारा॥',
+        'एकानन चतुरानन पञ्चानन राजे।',
+        'हंसासन गरुड़ासन वृषवाहन साजे॥',
+        'दो भुज चारु चतुर्भुज दशभुज अति सोहे।',
+        'तीनों रूप निरखते त्रिभुवन जन मोहे॥',
+        'अक्षमाला वनमाला मुण्डमाला धारी।',
+        'त्रिपुरारी कंसारी कर माला धारी॥',
+        'काशी में विश्वनाथ विराजे, नंदी ब्रह्मचारी।',
+        'नित उठ दर्शन पावत, महिमा अति भारी॥',
+      ],
     ),
     SacredAartiOption(
       id: 'ganga_sandhya',
@@ -86,6 +110,19 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
       streamUrl: 'https://www.youtube.com/@GangaAartiVaranasiOfficial/live',
       portalUrl: 'https://www.gangasevanidhi.org/',
       badge: '🌊 विश्व प्रसिद्ध गंगा आरती',
+      mantra: 'ॐ जय गंगे माता, श्री गंगे माता • पतित पावनी गंगे हर हर महादेव',
+      lyrics: [
+        'ॐ जय गंगे माता, मैया जय गंगे माता।',
+        'जो नर तुमको ध्याता, मनवांछित फल पाता॥',
+        'चन्द्र सी जोत तुम्हारी, जल निर्मल आता।',
+        'शरण पड़े जो तेरी, सो नर तर जाता॥',
+        'पुत्र सगर के तारे, सब जग को ज्ञाता।',
+        'कृपा दृष्टि तुम्हारी, त्रिभुवन सुखदाता॥',
+        'एक ही बार जो नर, मंजन है करता।',
+        'यम की त्रास मिटाकर, सुरलोक में जाता॥',
+        'आरती मात तुम्हारी, जो कोई नर गावे।',
+        'काशी दशाश्वमेध तट, सुख-सम्पत्ति पावे॥',
+      ],
     ),
   ];
 
@@ -158,6 +195,72 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
           .toList();
     }
     return feeds;
+  }
+
+  void _startInAppLiveStream([String? customUrl]) {
+    HapticFeedback.mediumImpact();
+    final url = customUrl ?? _selectedFeed.streamUrl;
+    final embedUrl = _getEmbedUrl(url);
+
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.black)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (_) {
+            if (mounted) setState(() => _isPlayerBuffering = true);
+          },
+          onPageFinished: (_) {
+            if (mounted) setState(() => _isPlayerBuffering = false);
+          },
+        ),
+      )
+      ..loadHtmlString('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body, html { width: 100%; height: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+            iframe { width: 100%; height: 100%; border: none; }
+          </style>
+        </head>
+        <body>
+          <iframe 
+            src="$embedUrl" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            allowfullscreen>
+          </iframe>
+        </body>
+        </html>
+      ''');
+
+    setState(() => _isInAppStreaming = true);
+  }
+
+  void _stopInAppLiveStream() {
+    setState(() {
+      _isInAppStreaming = false;
+      _webViewController = null;
+    });
+  }
+
+  String _getEmbedUrl(String streamUrl) {
+    if (_selectedFeed.id == 'kashi') {
+      return 'https://www.youtube.com/embed/ypTPyVsbV3Y?autoplay=1&mute=0&playsinline=1&controls=1&rel=0';
+    }
+    if (_selectedFeed.id == 'ganga_aarti') {
+      return 'https://www.youtube.com/embed/live_stream?channel=UCj8Y7tM70LgXm5j3jQ3_xZw&autoplay=1&mute=0&playsinline=1&controls=1&rel=0';
+    }
+    if (streamUrl.contains('youtube.com') || streamUrl.contains('youtu.be')) {
+      final regExp = RegExp(r'(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})');
+      final match = regExp.firstMatch(streamUrl);
+      if (match != null) {
+        return 'https://www.youtube.com/embed/${match.group(1)}?autoplay=1&mute=0&playsinline=1&controls=1&rel=0';
+      }
+    }
+    return streamUrl;
   }
 
   Future<void> _openLiveStream({String? customUrl}) async {
@@ -1187,35 +1290,50 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Sanctum Thumbnail
-          Image.network(
-            _selectedFeed.thumbnailUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
-              color: const Color(0xFF1E293B),
-              child: const Center(
-                child: Icon(Icons.temple_hindu_rounded,
-                    size: 64, color: Colors.white38),
+          // 1. Video Player Container: In-App Live Stream vs Sanctum Snapshot
+          if (_isInAppStreaming && _webViewController != null)
+            Stack(
+              fit: StackFit.expand,
+              children: [
+                WebViewWidget(controller: _webViewController!),
+                if (_isPlayerBuffering)
+                  const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFD97706),
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+              ],
+            )
+          else ...[
+            Image.network(
+              _selectedFeed.thumbnailUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => Container(
+                color: const Color(0xFF1E293B),
+                child: const Center(
+                  child: Icon(Icons.temple_hindu_rounded,
+                      size: 64, color: Colors.white38),
+                ),
               ),
             ),
-          ),
-
-          // Gradient Vignette Overlay
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.4),
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.85),
-                ],
+            // Gradient Vignette Overlay
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.4),
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.85),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
 
-          // Top Left: Live Status Badge
+          // Top Left: Live Status Badge & Snapshot Toggle
           Positioned(
             top: 14,
             left: 14,
@@ -1243,9 +1361,9 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
                         ),
                       ),
                       const SizedBox(width: 5),
-                      const Text(
-                        'LIVE SANCTUM',
-                        style: TextStyle(
+                      Text(
+                        _isInAppStreaming ? 'IN-APP LIVE' : 'LIVE SANCTUM',
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10.5,
                             fontWeight: FontWeight.w900),
@@ -1276,6 +1394,31 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
                     ],
                   ),
                 ),
+                if (_isInAppStreaming) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _stopInAppLiveStream,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.stop_circle_outlined, color: Colors.amberAccent, size: 12),
+                          SizedBox(width: 3),
+                          Text(
+                            'Snapshot',
+                            style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1325,86 +1468,120 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
             ),
           ),
 
-          // Center CTA: Watch Live Stream & Portal
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: () => _openLiveStream(),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFDC2626), Color(0xFF991B1B)],
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.redAccent.withValues(alpha: 0.5),
-                          blurRadius: 18,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundColor: Colors.white,
-                          child: Icon(Icons.play_arrow_rounded,
-                              color: Colors.red, size: 20),
-                        ),
-                        SizedBox(width: 10),
-                        Text(
-                          'WATCH LIVE BROADCAST',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (_selectedFeed.officialWebUrl != null) ...[
-                  const SizedBox(height: 8),
+          // Center CTA: In-App Live Play & 24/7 Aarti (Only shown when not streaming)
+          if (!_isInAppStreaming)
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   GestureDetector(
-                    onTap: () => _openLiveStream(customUrl: _selectedFeed.officialWebUrl),
+                    onTap: () => _startInAppLiveStream(),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white30),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFDC2626), Color(0xFF991B1B)],
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.redAccent.withValues(alpha: 0.5),
+                            blurRadius: 18,
+                            spreadRadius: 2,
+                          ),
+                        ],
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.public_rounded, color: Colors.amberAccent, size: 12),
-                          const SizedBox(width: 5),
+                          CircleAvatar(
+                            radius: 13,
+                            backgroundColor: Colors.white,
+                            child: Icon(Icons.play_arrow_rounded,
+                                color: Colors.red, size: 18),
+                          ),
+                          SizedBox(width: 8),
                           Text(
-                            _selectedFeed.id == 'kashi'
-                                ? 'shrikashivishwanath.org पोर्टल दर्शन'
-                                : 'अधिकृत ट्रस्ट पोर्टल दर्शन',
-                            style: const TextStyle(
+                            'इन-ऐप लाइव दर्शन देखें (PLAY LIVE)',
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11.5,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () {
+                      final aarti = _sacredAartis.firstWhere(
+                        (a) => a.feedId == _selectedFeed.id,
+                        orElse: () => _sacredAartis.first,
+                      );
+                      _showRealAartiExperience(aarti);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD97706).withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.amberAccent, width: 1),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('🕉️', style: TextStyle(fontSize: 12)),
+                          SizedBox(width: 5),
+                          Text(
+                            '24/7 पावन आरती दर्शन (Lyrics & Sound)',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_selectedFeed.officialWebUrl != null) ...[
+                    const SizedBox(height: 6),
+                    GestureDetector(
+                      onTap: () => _openLiveStream(customUrl: _selectedFeed.officialWebUrl),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white30),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.public_rounded, color: Colors.amberAccent, size: 11),
+                            const SizedBox(width: 4),
+                            Text(
+                              _selectedFeed.id == 'kashi'
+                                  ? 'shrikashivishwanath.org पोर्टल'
+                                  : 'अधिकृत ट्रस्ट पोर्टल',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
 
           // Diya Lighting Celebration Flame Overlay
           if (_showDiyaCelebration)
@@ -2262,7 +2439,9 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
             ],
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               InkWell(
                 onTap: () {
@@ -2271,11 +2450,11 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
                     orElse: () => _selectedFeed,
                   );
                   setState(() => _selectedFeed = feed);
-                  _openLiveStream(customUrl: aarti.streamUrl);
+                  _startInAppLiveStream(aarti.streamUrl);
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -2284,23 +2463,45 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.play_circle_fill_rounded, size: 12, color: Colors.redAccent),
+                      Icon(Icons.play_circle_fill_rounded, size: 13, color: Colors.redAccent),
                       SizedBox(width: 4),
                       Text(
-                        '🔴 लाइव आरती देखें',
-                        style: TextStyle(fontSize: 10.5, color: Colors.redAccent, fontWeight: FontWeight.bold),
+                        '🔴 इन-ऐप लाइव देखें',
+                        style: TextStyle(fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: () => _showRealAartiExperience(aarti),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD97706).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFD97706).withValues(alpha: 0.5)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('🕉️', style: TextStyle(fontSize: 12)),
+                      SizedBox(width: 4),
+                      Text(
+                        '24/7 आरती (Lyrics)',
+                        style: TextStyle(fontSize: 11, color: Color(0xFFFBBF24), fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                 ),
               ),
               if (aarti.portalUrl != null) ...[
-                const SizedBox(width: 8),
                 InkWell(
                   onTap: () => _openLiveStream(customUrl: aarti.portalUrl),
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                     decoration: BoxDecoration(
                       color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(8),
@@ -2327,6 +2528,301 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _showRealAartiExperience(SacredAartiOption aarti) {
+    HapticFeedback.heavyImpact();
+    int lyricIndex = 0;
+    Timer? lyricTimer;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          lyricTimer ??= Timer.periodic(const Duration(seconds: 5), (_) {
+            if (ctx.mounted && aarti.lyrics.isNotEmpty) {
+              setSheetState(() {
+                lyricIndex = (lyricIndex + 1) % aarti.lyrics.length;
+              });
+            }
+          });
+
+          return Container(
+            height: MediaQuery.of(ctx).size.height * 0.88,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF0F172A), Color(0xFF020617)],
+              ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Text('🪔', style: TextStyle(fontSize: 22)),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                aarti.hindiTitle,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '${aarti.temple} • 24/7 पावन आरती दर्शन',
+                                style: const TextStyle(
+                                  color: Color(0xFFFBBF24),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          lyricTimer?.cancel();
+                          Navigator.pop(ctx);
+                        },
+                        icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(color: Colors.white12, height: 1),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        // Sanctum Visual with Rotating Brass Aarti Thali
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 200,
+                              height: 200,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    const Color(0xFFD97706).withValues(alpha: 0.35),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                            RotationTransition(
+                              turns: _pulseController,
+                              child: Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: const RadialGradient(
+                                    colors: [Color(0xFFFEF08A), Color(0xFFB45309), Color(0xFF78350F)],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFF59E0B).withValues(alpha: 0.5),
+                                      blurRadius: 28,
+                                      spreadRadius: 6,
+                                    ),
+                                  ],
+                                  border: Border.all(color: Colors.amberAccent, width: 3),
+                                ),
+                                child: const Center(
+                                  child: Text('🪔', style: TextStyle(fontSize: 44)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        // Auspicious Mantra Box
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFD97706).withValues(alpha: 0.4)),
+                          ),
+                          child: Text(
+                            aarti.mantra,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFFFDE68A),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        // Synchronized Scrolling Devanagari Lyrics
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'पावन आरती के बोल (Lyrics):',
+                                    style: TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600),
+                                  ),
+                                  Text(
+                                    '${lyricIndex + 1}/${aarti.lyrics.length}',
+                                    style: const TextStyle(color: Color(0xFFD97706), fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 350),
+                                child: Text(
+                                  aarti.lyrics[lyricIndex % aarti.lyrics.length],
+                                  key: ValueKey(lyricIndex),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFFFBBF24),
+                                    fontSize: 15.5,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.5,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              if (lyricIndex + 1 < aarti.lyrics.length)
+                                Text(
+                                  aarti.lyrics[(lyricIndex + 1) % aarti.lyrics.length],
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white38,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Quick Ritual Buttons inside Aarti
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.amberAccent,
+                                  side: const BorderSide(color: Color(0xFFD97706)),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                onPressed: () {
+                                  _ringBell();
+                                },
+                                icon: const Icon(Icons.notifications_active_rounded, size: 16),
+                                label: const Text('घंटा नाद', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.orangeAccent,
+                                  side: const BorderSide(color: Colors.orangeAccent),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                onPressed: () {
+                                  _offerFlowers();
+                                },
+                                icon: const Icon(Icons.local_florist_rounded, size: 16),
+                                label: const Text('पुष्प अर्पण', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Primary ₹11 Diya Lighting CTA
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFD97706),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            onPressed: () {
+                              _showDiyaLightingSheet(initialAartiId: aarti.id);
+                            },
+                            icon: const Text('🪔', style: TextStyle(fontSize: 16)),
+                            label: const Text(
+                              'इस आरती में ₹11 पावन दीप प्रज्वलित करें',
+                              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Switch to In-App Live Stream
+                        TextButton.icon(
+                          onPressed: () {
+                            lyricTimer?.cancel();
+                            Navigator.pop(ctx);
+                            final feed = GrowthAiOsService.instance.activeTempleFeeds.firstWhere(
+                              (f) => f.id == aarti.feedId,
+                              orElse: () => _selectedFeed,
+                            );
+                            setState(() => _selectedFeed = feed);
+                            _startInAppLiveStream(aarti.streamUrl);
+                          },
+                          icon: const Icon(Icons.play_circle_fill_rounded, color: Colors.redAccent, size: 18),
+                          label: const Text(
+                            '🔴 गर्भगृह इन-ऐप लाइव वीडियो प्रसारण देखें',
+                            style: TextStyle(color: Colors.white70, fontSize: 11.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

@@ -289,8 +289,8 @@ class WhatsAppLifecycleCampaignCommand extends Command
         $lines[] = "🎥 *30 सेकंड दिव्य आरती वीडियो रील देखें:*";
         $lines[] = "👉 https://onlinepuja.live/shorts?id=live_kashi_vishwanath";
         $lines[] = "";
-        $lines[] = "🪔 *घर बैठे अपने फोन से वर्चुअल दीप प्रज्वलित करें व मंदिर घंटी बजाएं:*";
-        $lines[] = "📲 24x7 लाइव मंदिर दर्शन: https://onlinepuja.live/live-darshan";
+        $lines[] = "🪔 *मात्र ₹11 में अपने नाम व गोत्र से मंगला आरती में पावन दीप प्रज्वलित करें:*";
+        $lines[] = "📲 इन-ऐप लाइव दर्शन व दीपदान: https://onlinepuja.live/live-darshan?feed=kashi&diya=1";
         $lines[] = "";
         $lines[] = "आज का दिन आपके और आपके परिवार के लिए मंगलमय हो! 🕉️";
         $lines[] = "_(संदेश रोकने हेतु STOP लिखकर भेजें)_";
@@ -329,6 +329,9 @@ class WhatsAppLifecycleCampaignCommand extends Command
         $lines[] = "🌊 *दशाश्वमेध घाट, काशी — महा गंगा आरती दर्शन* 🪔";
         $lines[] = "";
         $lines[] = "काशी के पवित्र गंगा तट से विश्व-प्रसिद्ध संध्या महाआरती प्रारंभ हो रही है। दीपदान एवं शंखनाद से नकारात्मक ऊर्जा का नाश होता है।";
+        $lines[] = "";
+        $lines[] = "🪔 *मात्र ₹11 में दशाश्वमेध घाट गंगा आरती में अपने नाम व गोत्र से पावन दीप अर्पित करें:*";
+        $lines[] = "📲 इन-ऐप लाइव गंगा आरती व दीपदान: https://onlinepuja.live/live-darshan?feed=ganga_aarti&diya=1";
         $lines[] = "";
         $lines[] = "📿 *आज की विशेष पूजा में अपने परिवार के नाम-गोत्र से संकल्प लें:*";
         $lines[] = "• श्री महामृत्युंजय आरोग्य रक्षा अनुष्ठान";
