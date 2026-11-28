@@ -106,9 +106,9 @@ class PujaController extends Controller
             $categoryId = $request->input('category_id');
             $hasCatFilter = !empty($categoryId) && $categoryId !== '0' && $categoryId !== 'all';
 
-            // Build base query
+            // Build base query with eager-loaded category
             $buildQuery = function () use ($hasCatFilter, $categoryId) {
-                $q = Puja::where('puja_status', 1)->where('created_by', 'admin');
+                $q = Puja::with('category')->where('puja_status', 1)->where('created_by', 'admin');
                 if ($hasCatFilter) {
                     $q->where('category_id', $categoryId);
                 }
@@ -146,17 +146,28 @@ class PujaController extends Controller
                     });
             }
 
-            // Map packages and asset URLs
-            $Pujalist = $Pujalist->map(function ($puja) {
-                $puja->packages = $puja->package();
+            // Batch fetch all packages to eliminate N+1 database queries
+            $allPackageIds = $Pujalist->pluck('package_id')
+                ->flatten()
+                ->filter(fn($id) => !empty($id))
+                ->unique()
+                ->values()
+                ->all();
+
+            $packagesById = !empty($allPackageIds)
+                ? Pujapackage::whereIn('id', $allPackageIds)->get()->keyBy('id')
+                : collect();
+
+            // Map packages and category name (puja_images accessor already generates full URLs)
+            $Pujalist = $Pujalist->map(function ($puja) use ($packagesById) {
+                $pkgIds = is_array($puja->package_id) ? $puja->package_id : [];
+                $puja->packages = collect($pkgIds)
+                    ->map(fn($id) => $packagesById->get($id))
+                    ->filter()
+                    ->values();
+
                 $cat = $puja->category;
                 $puja->category_name = $cat ? $cat->name : '';
-
-                if ($puja->puja_images && is_array($puja->puja_images)) {
-                    $puja->puja_images = array_map(function ($image) {
-                        return asset($image);
-                    }, $puja->puja_images);
-                }
 
                 return $puja;
             })->values();
@@ -190,11 +201,13 @@ class PujaController extends Controller
                 return response()->json(['error' => 'Puja id or slug is required', 'status' => 400], 400);
             }
 
-            $PujaDetails = Puja::where('id', $identifier)
+            $PujaDetails = Puja::with('category')
+                ->where('id', $identifier)
                 ->orWhere('slug', $identifier)
                 ->first();
             if ($PujaDetails) {
                 $PujaDetails->packages = $PujaDetails->package();
+                $PujaDetails->category_name = $PujaDetails->category ? $PujaDetails->category->name : '';
             }
 
 

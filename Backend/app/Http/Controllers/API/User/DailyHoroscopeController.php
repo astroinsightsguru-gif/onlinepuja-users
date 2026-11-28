@@ -28,8 +28,15 @@ class DailyHoroscopeController extends Controller
                 $currentDate->setISODate((int)$currentDate->format('o'), (int)$currentDate->format('W'), 1); // Set to the first day of the current week
                 $startOfWeekFormatted = $currentDate->format('Y-m-d');
 
-                $signRcd = DB::table('hororscope_signs')->where('id', $req->horoscopeSignId)->get();
-                $signName = $signRcd[0]->name;
+                $signRcd = DB::table('hororscope_signs')->where('id', $req->horoscopeSignId)->first();
+                if (!$signRcd) {
+                    return response()->json([
+                        'error' => true,
+                        'message' => 'Horoscope sign not found',
+                        'status' => 404,
+                    ], 404);
+                }
+                $signName = $signRcd->name;
                 $currentDate->modify('+6 days'); // Move to the last day of the current week
                 $endOfWeekFormatted = $currentDate->format('Y-m-d');
 

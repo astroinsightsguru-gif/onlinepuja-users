@@ -964,12 +964,18 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: Image.network(
-                          imageUrl,
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
-                          errorBuilder: (_, error, stack) => _buildCuratedBannerCard(curatedBanners[0]),
+                          placeholder: (_, _) => Container(
+                            color: Colors.amber.shade100,
+                            child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706)),
+                            ),
+                          ),
+                          errorWidget: (_, error, stack) => _buildCuratedBannerCard(curatedBanners[0]),
                         ),
                       ),
                     ),
@@ -2063,12 +2069,20 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                                     final rawImg = p.coverImage.trim();
                                     final imgUrl = rawImg.isNotEmpty ? MiscApi.imageUrl(rawImg) : '';
                                     if (imgUrl.isNotEmpty) {
-                                      return Image.network(
-                                        imgUrl,
+                                      return CachedNetworkImage(
+                                        imageUrl: imgUrl,
                                         height: 100,
                                         width: 210,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, e, s) => Container(
+                                        placeholder: (_, _) => Container(
+                                          height: 100,
+                                          width: 210,
+                                          color: const Color(0xFFFDE68A),
+                                          child: const Center(
+                                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706)),
+                                          ),
+                                        ),
+                                        errorWidget: (_, e, s) => Container(
                                           height: 100,
                                           color: const Color(0xFFFDE68A),
                                           child: const Icon(Icons.temple_hindu_rounded, size: 36),

@@ -145,9 +145,26 @@ class PujaRecommendController extends Controller
             ->where('puja_recommends.userId', '=', $req->userId)
             ->where('puja_recommends.recommDateTime', '>=', Carbon::now()->subDay())
             ->select('pujas.*', 'puja_recommends.recommDateTime', 'puja_recommends.package_id as puja_package_id','puja_recommends.id as recommend_id', 'astrologers.name as astrologerName','puja_recommends.isPurchased') // Select recommended package_id
-            ->get()
-            ->map(function ($puja) {
-                $puja->packages = $puja->package();
+            ->get();
+
+            // Batch fetch all packages to eliminate N+1 database queries
+            $allPackageIds = $Pujalist->pluck('package_id')
+                ->flatten()
+                ->filter(fn($id) => !empty($id))
+                ->unique()
+                ->values()
+                ->all();
+
+            $packagesById = !empty($allPackageIds)
+                ? Pujapackage::whereIn('id', $allPackageIds)->get()->keyBy('id')
+                : collect();
+
+            $Pujalist = $Pujalist->map(function ($puja) use ($packagesById) {
+                $pkgIds = is_array($puja->package_id) ? $puja->package_id : [];
+                $puja->packages = collect($pkgIds)
+                    ->map(fn($id) => $packagesById->get($id))
+                    ->filter()
+                    ->values();
                 return $puja;
             });
         

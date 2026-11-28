@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:op_shared/op_shared.dart';
 import 'package:provider/provider.dart';
 
@@ -1301,10 +1302,15 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
                       ),
                       child: ClipOval(
                         child: a.imageUrl.isNotEmpty
-                            ? Image.network(
-                                a.imageUrl,
+                            ? CachedNetworkImage(
+                                imageUrl: a.imageUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => _avatarFallback(a.name, isAi: isAiAcharya, size: 64),
+                                placeholder: (_, _) => Container(
+                                  width: 64,
+                                  height: 64,
+                                  color: Colors.amber.shade100,
+                                ),
+                                errorWidget: (_, _, _) => _avatarFallback(a.name, isAi: isAiAcharya, size: 64),
                               )
                             : _avatarFallback(a.name, isAi: isAiAcharya, size: 64),
                       ),
@@ -1638,10 +1644,13 @@ class _AstrologersScreenState extends State<AstrologersScreen> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: a.imageUrl.isNotEmpty
-                                ? Image.network(
-                                    a.imageUrl,
+                                ? CachedNetworkImage(
+                                    imageUrl: a.imageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => _avatarFallback(a.name),
+                                    placeholder: (_, _) => Container(
+                                      color: Colors.amber.shade100,
+                                    ),
+                                    errorWidget: (_, _, _) => _avatarFallback(a.name),
                                   )
                                 : _avatarFallback(a.name),
                           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:op_shared/op_shared.dart';
 
@@ -316,10 +317,11 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
         color: const Color(0xFFFED7AA),
       ),
       child: ClipOval(
-        child: Image.network(
-          url,
+        child: CachedNetworkImage(
+          imageUrl: url,
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => Center(
+          placeholder: (_, _) => const SizedBox(),
+          errorWidget: (_, _, _) => Center(
             child: Text(
               fallback,
               style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF9A3412)),
@@ -619,7 +621,34 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
               AspectRatio(
                 aspectRatio: 16 / 10,
                 child: p.coverImage.isNotEmpty
-                    ? Image.network(MiscApi.imageUrl(p.coverImage), fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF78350F), Color(0xFFB45309)], begin: Alignment.topLeft, end: Alignment.bottomRight)), child: const Center(child: Icon(Icons.temple_hindu_rounded, size: 64, color: Colors.white38))))
+                    ? CachedNetworkImage(
+                        imageUrl: MiscApi.imageUrl(p.coverImage),
+                        fit: BoxFit.cover,
+                        placeholder: (_, _) => Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF78350F), Color(0xFFB45309)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706)),
+                          ),
+                        ),
+                        errorWidget: (_, _, _) => Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF78350F), Color(0xFFB45309)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.temple_hindu_rounded, size: 64, color: Colors.white38),
+                          ),
+                        ),
+                      )
                     : Container(
                         color: const Color(0xFFFEF3C7),
                         child: const Icon(Icons.temple_hindu_rounded,

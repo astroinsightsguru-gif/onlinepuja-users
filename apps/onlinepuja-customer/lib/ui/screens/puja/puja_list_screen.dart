@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:op_shared/op_shared.dart';
 
 import '../../theme/customer_theme.dart';
@@ -927,25 +928,22 @@ class _PujaListScreenState extends State<PujaListScreen> {
     );
   }
 
-  /// Resilient multi-tier image loader with spiritual defaults
+  /// Resilient multi-tier image loader with spiritual defaults & high-performance caching
   Widget _buildPujaCoverImage(Puja p) {
     final rawUrl = p.coverImage.trim();
     final resolvedUrl = rawUrl.isNotEmpty ? MiscApi.imageUrl(rawUrl) : '';
 
     if (resolvedUrl.isNotEmpty) {
-      return Image.network(
-        resolvedUrl,
+      return CachedNetworkImage(
+        imageUrl: resolvedUrl,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _buildDivineFallbackImage(p),
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return Container(
-            color: const Color(0xFFFEF3C7),
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706)),
-            ),
-          );
-        },
+        placeholder: (context, url) => Container(
+          color: const Color(0xFFFEF3C7),
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706)),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildDivineFallbackImage(p),
       );
     }
 

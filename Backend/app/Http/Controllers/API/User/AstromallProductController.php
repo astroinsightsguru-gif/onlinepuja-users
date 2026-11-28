@@ -87,8 +87,8 @@ class AstromallProductController extends Controller
                         $product->productImage = asset($product->productImage);
                     }
                 } else {
-                    // default fallback image
-                    $product->productImage = asset('default/product.png');
+                    // default fallback image (verified asset)
+                    $product->productImage = asset('frontend/homeimage/shareproduct.png');
                 }
             }
 

@@ -12,6 +12,7 @@ use App\Models\UserModel\ProductCategory;
 use Illuminate\Support\Facades\Auth;
 use App\services\OneSignalService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -38,68 +39,85 @@ class CustomerHomeController extends Controller
             return asset($path);
         };
 
-        // Banner Section
-        $banner = Banner::query()
-            ->join('banner_types', 'banner_types.id', 'banners.bannerTypeId')
-            ->where('banners.isActive', '1')
-            ->whereDate('fromDate', '<=', Carbon::today())
-            ->whereDate('ToDate', '>=', Carbon::today())
-            ->limit(10)
-            ->select('banners.*', 'banner_types.name as bannerType')
-            ->orderBy('banners.id', 'DESC')
-            ->get()
-            ->map(function ($item) use ($formatImageUrl) {
-                $item->bannerImage = $formatImageUrl($item->bannerImage);
-                return $item;
-            });
+        // Cache public sections for 5 minutes to accelerate app launch
+        $staticSections = Cache::remember('customer_home_public_v1', 300, function () use ($formatImageUrl) {
+            // Banner Section
+            $banner = Banner::query()
+                ->join('banner_types', 'banner_types.id', 'banners.bannerTypeId')
+                ->where('banners.isActive', '1')
+                ->whereDate('fromDate', '<=', Carbon::today())
+                ->whereDate('ToDate', '>=', Carbon::today())
+                ->limit(10)
+                ->select('banners.*', 'banner_types.name as bannerType')
+                ->orderBy('banners.id', 'DESC')
+                ->get()
+                ->map(function ($item) use ($formatImageUrl) {
+                    $item->bannerImage = $formatImageUrl($item->bannerImage);
+                    return $item;
+                });
 
-        // Blog Section
-        $blog = Blog::query()
-            ->where('isActive', '1')
-            ->orderBy('id', 'DESC')
-            ->limit(10)
-            ->get()
-            ->map(function ($item) use ($formatImageUrl) {
-                $item->blogImage = $formatImageUrl($item->blogImage ?? null);
-                $item->previewImage = $formatImageUrl($item->previewImage ?? null);
-                $item->coverImage = $formatImageUrl($item->coverImage ?? null);
-                return $item;
-            });
+            // Blog Section
+            $blog = Blog::query()
+                ->where('isActive', '1')
+                ->orderBy('id', 'DESC')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) use ($formatImageUrl) {
+                    $item->blogImage = $formatImageUrl($item->blogImage ?? null);
+                    $item->previewImage = $formatImageUrl($item->previewImage ?? null);
+                    $item->coverImage = $formatImageUrl($item->coverImage ?? null);
+                    return $item;
+                });
 
-        // Product Category Section
-        $productCategory = ProductCategory::query()
-            ->where('isActive', '1')
-            ->orderBy('id', 'DESC')
-            ->limit(10)
-            ->get()
-            ->map(function ($item) use ($formatImageUrl) {
-                $item->categoryImage = $formatImageUrl($item->categoryImage ?? null);
-                return $item;
-            });
+            // Product Category Section
+            $productCategory = ProductCategory::query()
+                ->where('isActive', '1')
+                ->orderBy('id', 'DESC')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) use ($formatImageUrl) {
+                    $item->categoryImage = $formatImageUrl($item->categoryImage ?? null);
+                    return $item;
+                });
 
-        // Astrotalk In News Section
-        $astrotalkInNews = AstrotalkInNews::query()
-            ->where('isActive', '1')
-            ->orderBy('id', 'DESC')
-            ->limit(10)
-            ->get()
-            ->map(function ($item) use ($formatImageUrl) {
-                $item->coverImage = $formatImageUrl($item->coverImage ?? null);
-                $item->bannerImage = $formatImageUrl($item->bannerImage ?? null);
-                return $item;
-            });
+            // Astrotalk In News Section
+            $astrotalkInNews = AstrotalkInNews::query()
+                ->where('isActive', '1')
+                ->orderBy('id', 'DESC')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) use ($formatImageUrl) {
+                    $item->coverImage = $formatImageUrl($item->coverImage ?? null);
+                    $item->bannerImage = $formatImageUrl($item->bannerImage ?? null);
+                    return $item;
+                });
 
-        // Astrology Video Section
-        $astrologyVideo = AstrologyVideo::query()
-            ->where('isActive', '1')
-            ->orderBy('id', 'DESC')
-            ->limit(10)
-            ->get()
-            ->map(function ($item) use ($formatImageUrl) {
-                $item->previewImage = $formatImageUrl($item->previewImage ?? null);
-                $item->coverImage = $formatImageUrl($item->coverImage ?? null);
-                return $item;
-            });
+            // Astrology Video Section
+            $astrologyVideo = AstrologyVideo::query()
+                ->where('isActive', '1')
+                ->orderBy('id', 'DESC')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) use ($formatImageUrl) {
+                    $item->previewImage = $formatImageUrl($item->previewImage ?? null);
+                    $item->coverImage = $formatImageUrl($item->coverImage ?? null);
+                    return $item;
+                });
+
+            return [
+                'banner' => $banner,
+                'blog' => $blog,
+                'productCategory' => $productCategory,
+                'astrotalkInNews' => $astrotalkInNews,
+                'astrologyVideo' => $astrologyVideo,
+            ];
+        });
+
+        $banner = $staticSections['banner'];
+        $blog = $staticSections['blog'];
+        $productCategory = $staticSections['productCategory'];
+        $astrotalkInNews = $staticSections['astrotalkInNews'];
+        $astrologyVideo = $staticSections['astrologyVideo'];
 
         // If user not logged in
         if (!Auth::guard('api')->user()) {

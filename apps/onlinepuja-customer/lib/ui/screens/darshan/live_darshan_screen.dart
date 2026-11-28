@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:op_shared/op_shared.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -1355,10 +1356,19 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
               ],
             )
           else ...[
-            Image.network(
-              _selectedFeed.thumbnailUrl,
+            CachedNetworkImage(
+              imageUrl: _selectedFeed.thumbnailUrl,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+              placeholder: (_, _) => Container(
+                color: const Color(0xFF1E293B),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFD97706),
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
+              errorWidget: (_, _, _) => Container(
                 color: const Color(0xFF1E293B),
                 child: const Center(
                   child: Icon(Icons.temple_hindu_rounded,
@@ -2029,12 +2039,16 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
                 ClipRRect(
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(14)),
-                  child: Image.network(
-                    feed.thumbnailUrl,
+                  child: CachedNetworkImage(
+                    imageUrl: feed.thumbnailUrl,
                     height: 84,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
+                    placeholder: (_, _) => Container(
+                      height: 84,
+                      color: Colors.amber.shade900.withValues(alpha: 0.3),
+                    ),
+                    errorWidget: (_, _, _) => Container(
                       height: 84,
                       color: Colors.amber.shade900,
                       child: const Center(
