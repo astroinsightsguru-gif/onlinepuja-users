@@ -274,10 +274,41 @@ class Kernel extends ConsoleKernel
             ->name('sitemap_generate_evening')
             ->withoutOverlapping();
 
-        // 🕉️ WHATSAPP DEVOTIONAL ENGINE: Daily Hindi Panchang & 12-Rashi Broadcast (Daily 04:00 AM IST - Brahma Muhurta)
-        $schedule->command('whatsapp:daily-panchang-broadcast --dispatch')
+        // 🕉️ WHATSAPP 24-HOUR DEVOTIONAL & GROWTH LIFECYCLE ENGINE
+        // Slot 1: 04:00 AM IST — Brahma Muhurta Daily Panchang & 12-Rashi Broadcast
+        $schedule->command('whatsapp:lifecycle-broadcast --slot=panchang --dispatch')
             ->dailyAt('04:00')
-            ->name('whatsapp_daily_panchang_broadcast')
+            ->name('whatsapp_lifecycle_panchang')
+            ->withoutOverlapping();
+
+        // Slot 1b: 06:00 AM IST — Pandit Partner Daily Transit & Muhurat Briefing
+        $schedule->command('whatsapp:lifecycle-broadcast --slot=partner_brief --dispatch')
+            ->dailyAt('06:00')
+            ->name('whatsapp_lifecycle_partner_brief')
+            ->withoutOverlapping();
+
+        // Slot 2: 08:30 AM IST — Pratah Sanctum Aarti Video & Live Mandir Feed
+        $schedule->command('whatsapp:lifecycle-broadcast --slot=darshan --dispatch')
+            ->dailyAt('08:30')
+            ->name('whatsapp_lifecycle_darshan')
+            ->withoutOverlapping();
+
+        // Slot 3: 12:15 PM IST — Midday Planetary Transit & Free Consultation Hook
+        $schedule->command('whatsapp:lifecycle-broadcast --slot=transit --dispatch')
+            ->dailyAt('12:15')
+            ->name('whatsapp_lifecycle_transit')
+            ->withoutOverlapping();
+
+        // Slot 4: 05:30 PM IST — Sandhya Aarti & Special Vedic Puja Sankalp
+        $schedule->command('whatsapp:lifecycle-broadcast --slot=sandhya --dispatch')
+            ->dailyAt('17:30')
+            ->name('whatsapp_lifecycle_sandhya')
+            ->withoutOverlapping();
+
+        // Slot 5: 09:15 PM IST — Nisha Ratri, Vrat Preview & Bedtime 108 Japa Mala
+        $schedule->command('whatsapp:lifecycle-broadcast --slot=night --dispatch')
+            ->dailyAt('21:15')
+            ->name('whatsapp_lifecycle_night')
             ->withoutOverlapping();
     }
 
