@@ -36,10 +36,28 @@ class _PujaDetailScreenState extends State<PujaDetailScreen> {
   }
 
   Future<void> _loadDetails() async {
-    if (_puja.id == null) return;
     try {
       setState(() => _loadingDetails = true);
-      final detailed = await PujaApi.instance.detail(_puja.id);
+      dynamic targetId = _puja.id;
+      if (targetId == null && (_puja.slug != null || _puja.title != null)) {
+        final list = await PujaApi.instance.list();
+        final match = list.cast<Puja?>().firstWhere(
+          (p) =>
+              p != null &&
+              ((_puja.slug != null && p.slug == _puja.slug) ||
+                  (_puja.title != null &&
+                      p.title != null &&
+                      p.title!.toLowerCase().trim() ==
+                          _puja.title!.toLowerCase().trim())),
+          orElse: () => null,
+        );
+        if (match != null && match.id != null) {
+          targetId = match.id;
+          _puja = match;
+        }
+      }
+      if (targetId == null) return;
+      final detailed = await PujaApi.instance.detail(targetId);
       if (detailed != null && mounted) {
         setState(() {
           _puja = detailed;

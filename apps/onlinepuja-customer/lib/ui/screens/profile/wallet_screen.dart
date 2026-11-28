@@ -108,7 +108,7 @@ class _WalletScreenState extends State<WalletScreen> {
               ? 'शेष राशि अपडेट करने हेतु चेकआउट विंडो में भुगतान पूर्ण करें।'
               : 'Complete payment in checkout window to update balance.',
         );
-        await context.read<AppSession>().refreshUser();
+        _reload();
       }
     } on ApiException catch (e) {
       if (mounted) showSnack(context, e.message, error: true);

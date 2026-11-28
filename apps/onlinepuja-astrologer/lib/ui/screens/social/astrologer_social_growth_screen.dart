@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
+import 'package:op_shared/op_shared.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -28,8 +27,6 @@ class _AstrologerSocialGrowthScreenState
   Map<String, dynamic>? _statusData;
   List<Map<String, dynamic>> _creatives = [];
 
-  final String _baseUrl = 'https://onlinepuja.live/api/partner/social';
-
   @override
   void initState() {
     super.initState();
@@ -37,36 +34,40 @@ class _AstrologerSocialGrowthScreenState
   }
 
   Future<void> _loadSocialData() async {
-    setState(() => _isLoading = true);
     final session = context.read<PartnerSession>();
-    final astroId = session.astrologerId > 0 ? session.astrologerId : 1;
+    final astroId = session.astrologerId;
+    if (astroId <= 0) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+
+    setState(() => _isLoading = true);
 
     try {
-      final res = await http.get(
-        Uri.parse('$_baseUrl/status?astrologer_id=$astroId'),
-        headers: {'Accept': 'application/json'},
+      final data = await ApiClient.instance.get(
+        '/api/partner/social/status',
+        query: {'astrologer_id': astroId.toString()},
       );
 
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        if (data['success'] == true) {
-          _statusData = data;
-          final accounts = data['accounts'] as Map<String, dynamic>?;
-          _isAutopilotEnabled =
-              accounts?['instagram']?['is_autopilot_enabled'] ?? true;
-        }
+      if (data is Map<String, dynamic> && data['success'] == true) {
+        _statusData = data;
+        final accounts = data['accounts'] as Map<String, dynamic>?;
+        _isAutopilotEnabled =
+            accounts?['instagram']?['is_autopilot_enabled'] ?? true;
       }
 
-      final cRes = await http.get(
-        Uri.parse('$_baseUrl/creatives?astrologer_id=$astroId&type=$_activeFilter'),
-        headers: {'Accept': 'application/json'},
+      final cData = await ApiClient.instance.get(
+        '/api/partner/social/creatives',
+        query: {
+          'astrologer_id': astroId.toString(),
+          'type': _activeFilter,
+        },
       );
 
-      if (cRes.statusCode == 200) {
-        final cData = jsonDecode(cRes.body);
-        if (cData['success'] == true && cData['creatives'] is List) {
-          _creatives = List<Map<String, dynamic>>.from(cData['creatives']);
-        }
+      if (cData is Map<String, dynamic> &&
+          cData['success'] == true &&
+          cData['creatives'] is List) {
+        _creatives = List<Map<String, dynamic>>.from(cData['creatives']);
       }
     } catch (e) {
       debugPrint('Error loading astrologer social data: $e');
@@ -77,44 +78,41 @@ class _AstrologerSocialGrowthScreenState
 
   Future<void> _toggleAutopilot(bool val) async {
     final session = context.read<PartnerSession>();
-    final astroId = session.astrologerId > 0 ? session.astrologerId : 1;
+    final astroId = session.astrologerId;
+    if (astroId <= 0) return;
 
     setState(() => _isAutopilotEnabled = val);
     try {
-      final res = await http.post(
-        Uri.parse('$_baseUrl/toggle-autopilot'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: jsonEncode({'astrologer_id': astroId, 'enabled': val}),
+      final data = await ApiClient.instance.post(
+        '/api/partner/social/toggle-autopilot',
+        body: {'astrologer_id': astroId, 'enabled': val},
       );
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(data['message'] ?? 'Autopilot updated'),
-              backgroundColor: val ? PartnerTheme.emerald : Colors.amber.shade800,
-            ),
-          );
-        }
+      if (mounted && data is Map<String, dynamic>) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message']?.toString() ?? 'Autopilot updated'),
+            backgroundColor: val ? PartnerTheme.emerald : Colors.amber.shade800,
+          ),
+        );
       }
     } catch (_) {}
   }
 
   Future<void> _connectPlatform(String platform) async {
     final session = context.read<PartnerSession>();
-    final astroId = session.astrologerId > 0 ? session.astrologerId : 1;
+    final astroId = session.astrologerId;
+    if (astroId <= 0) return;
 
     HapticFeedback.lightImpact();
 
     try {
-      // 1. Fetch real official OAuth URL from backend (Meta Facebook/Instagram or Google YouTube)
-      final authRes = await http.get(
-        Uri.parse('$_baseUrl/auth-url?platform=$platform&astrologer_id=$astroId'),
-        headers: {'Accept': 'application/json'},
+      // 1. Fetch real official OAuth URL from backend
+      final authData = await ApiClient.instance.get(
+        '/api/partner/social/auth-url',
+        query: {'platform': platform, 'astrologer_id': astroId.toString()},
       );
 
-      if (authRes.statusCode == 200) {
-        final authData = jsonDecode(authRes.body);
+      if (authData is Map<String, dynamic>) {
         final authUrl = authData['auth_url'] as String?;
         if (authUrl != null && authUrl.isNotEmpty) {
           final uri = Uri.parse(authUrl);
@@ -135,26 +133,22 @@ class _AstrologerSocialGrowthScreenState
       }
 
       // 2. Direct connection fallback
-      final res = await http.post(
-        Uri.parse('$_baseUrl/connect'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: jsonEncode({
+      final data = await ApiClient.instance.post(
+        '/api/partner/social/connect',
+        body: {
           'astrologer_id': astroId,
           'platform': platform,
-        }),
+        },
       );
 
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✓ ${data['message']}'),
-              backgroundColor: PartnerTheme.emerald,
-            ),
-          );
-          _loadSocialData();
-        }
+      if (mounted && data is Map<String, dynamic>) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ ${data['message'] ?? 'Connected'}'),
+            backgroundColor: PartnerTheme.emerald,
+          ),
+        );
+        _loadSocialData();
       }
     } catch (e) {
       if (mounted) {
@@ -167,13 +161,13 @@ class _AstrologerSocialGrowthScreenState
 
   Future<void> _disconnectPlatform(String platform) async {
     final session = context.read<PartnerSession>();
-    final astroId = session.astrologerId > 0 ? session.astrologerId : 1;
+    final astroId = session.astrologerId;
+    if (astroId <= 0) return;
 
     try {
-      await http.post(
-        Uri.parse('$_baseUrl/disconnect'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: jsonEncode({'astrologer_id': astroId, 'platform': platform}),
+      await ApiClient.instance.post(
+        '/api/partner/social/disconnect',
+        body: {'astrologer_id': astroId, 'platform': platform},
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -186,7 +180,8 @@ class _AstrologerSocialGrowthScreenState
 
   Future<void> _generateCreativeNow(String topic, String type) async {
     final session = context.read<PartnerSession>();
-    final astroId = session.astrologerId > 0 ? session.astrologerId : 1;
+    final astroId = session.astrologerId;
+    if (astroId <= 0) return;
 
     Navigator.pop(context); // Close bottom sheet
     ScaffoldMessenger.of(context).showSnackBar(
@@ -203,26 +198,23 @@ class _AstrologerSocialGrowthScreenState
     );
 
     try {
-      final res = await http.post(
-        Uri.parse('$_baseUrl/generate-creative'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: jsonEncode({
+      final res = await ApiClient.instance.post(
+        '/api/partner/social/generate-creative',
+        body: {
           'astrologer_id': astroId,
           'type': type,
           'topic': topic,
-        }),
+        },
       );
 
-      if (res.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✓ Creative ready! Added to your Social Studio.'),
-              backgroundColor: PartnerTheme.emerald,
-            ),
-          );
-          _loadSocialData();
-        }
+      if (mounted && res is Map<String, dynamic>) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Creative ready! Added to your Social Studio.'),
+            backgroundColor: PartnerTheme.emerald,
+          ),
+        );
+        _loadSocialData();
       }
     } catch (e) {
       if (mounted) {
@@ -242,26 +234,22 @@ class _AstrologerSocialGrowthScreenState
     );
 
     try {
-      final res = await http.post(
-        Uri.parse('$_baseUrl/publish-creative'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: jsonEncode({
+      final data = await ApiClient.instance.post(
+        '/api/partner/social/publish-creative',
+        body: {
           'creative_id': creativeId,
           'platforms': ['instagram', 'facebook', 'youtube'],
-        }),
+        },
       );
 
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✓ ${data['message']}'),
-              backgroundColor: PartnerTheme.emerald,
-            ),
-          );
-          _loadSocialData();
-        }
+      if (mounted && data is Map<String, dynamic>) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ ${data['message'] ?? 'Published successfully'}'),
+            backgroundColor: PartnerTheme.emerald,
+          ),
+        );
+        _loadSocialData();
       }
     } catch (_) {}
   }
@@ -270,6 +258,39 @@ class _AstrologerSocialGrowthScreenState
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final session = context.watch<PartnerSession>();
+
+    if (session.astrologerId <= 0) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('AI Social Growth Hub')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.lock_person_rounded, size: 64, color: PartnerTheme.gold),
+                const SizedBox(height: 16),
+                const Text(
+                  'ज्योतिषी खाता प्रमाणीकरण आवश्यक',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'अपने सोशल मीडिया ऑटोपायलट एवं ब्रांड रील्स प्रबंधित करने हेतु कृपया पहले अपने खाते में लॉगिन करें।',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Navigator.pushNamed(context, '/login'),
+                  child: const Text('लॉगिन करें'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     final accounts = _statusData?['accounts'] as Map<String, dynamic>?;
 
     return Scaffold(

@@ -200,11 +200,30 @@ class _OnlinePujaAppState extends State<OnlinePujaApp> {
                 builder: (_) => PujaDetailScreen(puja: Puja(id: args, title: 'Vedic Sacred Puja')),
               );
             }
+            if (args is String) {
+              final parsedId = int.tryParse(args);
+              return MaterialPageRoute(
+                builder: (_) => PujaDetailScreen(
+                  puja: Puja(
+                    id: parsedId,
+                    slug: parsedId == null ? args : null,
+                    title: 'Vedic Sacred Puja',
+                  ),
+                ),
+              );
+            }
             if (args is Map<String, dynamic>) {
               final id = asInt(args['id'] ?? args['pujaId'] ?? args['puja_id']);
+              final slug = args['slug']?.toString();
               final title = args['title']?.toString() ?? args['puja_title']?.toString() ?? 'Vedic Sacred Puja';
               return MaterialPageRoute(
-                builder: (_) => PujaDetailScreen(puja: Puja(id: id, title: title)),
+                builder: (_) => PujaDetailScreen(
+                  puja: Puja(
+                    id: id > 0 ? id : null,
+                    slug: slug,
+                    title: title,
+                  ),
+                ),
               );
             }
             break;

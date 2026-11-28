@@ -164,16 +164,14 @@ class PujaController extends Controller
     {
         try {
 
-            $data = $request->only('id');
-            $validator = Validator::make($data, [
-                'id' => 'required'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['error' => $validator->messages(), 'status' => 400], 400);
+            $identifier = $request->id ?? $request->slug;
+            if (!$identifier) {
+                return response()->json(['error' => 'Puja id or slug is required', 'status' => 400], 400);
             }
 
-            $PujaDetails = Puja::where('id', $request->id)->first();
+            $PujaDetails = Puja::where('id', $identifier)
+                ->orWhere('slug', $identifier)
+                ->first();
             if ($PujaDetails) {
                 $PujaDetails->packages = $PujaDetails->package();
             }

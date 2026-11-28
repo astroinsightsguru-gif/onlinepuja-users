@@ -136,6 +136,55 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
   ];
 
   late AnimationController _pulseController;
+  bool _routeArgsChecked = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_routeArgsChecked) {
+      _routeArgsChecked = true;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        final feedId = args['feedId']?.toString();
+        if (feedId != null && feedId.isNotEmpty) {
+          final feeds = GrowthAiOsService.instance.activeTempleFeeds;
+          final matched = feeds.firstWhere(
+            (f) => f.id == feedId,
+            orElse: () => _selectedFeed,
+          );
+          setState(() {
+            _selectedFeed = matched;
+          });
+        }
+        if (args['openDiya'] == true) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _showDiyaLightingSheet();
+            }
+          });
+        } else if (args['aartiId'] != null) {
+          final aarti = _sacredAartis.firstWhere(
+            (a) => a.id == args['aartiId'] || a.feedId == args['aartiId'],
+            orElse: () => _sacredAartis.first,
+          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _showRealAartiExperience(aarti);
+            }
+          });
+        }
+      } else if (args is String && args.isNotEmpty) {
+        final feeds = GrowthAiOsService.instance.activeTempleFeeds;
+        final matched = feeds.firstWhere(
+          (f) => f.id == args,
+          orElse: () => _selectedFeed,
+        );
+        setState(() {
+          _selectedFeed = matched;
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
