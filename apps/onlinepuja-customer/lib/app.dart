@@ -13,6 +13,7 @@ import 'ui/screens/charity/annadaan_screen.dart';
 import 'ui/screens/chat/chat_session_screen.dart';
 import 'ui/screens/cosmic_ai_screen.dart';
 import 'ui/screens/darshan/live_darshan_screen.dart';
+import 'ui/screens/darshan/sanctum_chadhava_screen.dart';
 import 'ui/screens/explore/explore_screen.dart';
 import 'ui/screens/explore/prashna_oracle_screen.dart';
 import 'ui/screens/explore/swapna_shastra_screen.dart';
@@ -36,6 +37,7 @@ import 'ui/screens/profile/wallet_screen.dart';
 import 'ui/screens/puja/puja_detail_screen.dart';
 import 'ui/screens/puja/puja_list_screen.dart';
 import 'ui/screens/puja/sankalp_vault_screen.dart';
+import 'ui/screens/sangeet/bhakti_sangeet_screen.dart';
 import 'ui/screens/shorts/spiritual_shorts_screen.dart';
 import 'ui/screens/splash_screen.dart';
 
@@ -129,6 +131,8 @@ class _OnlinePujaAppState extends State<OnlinePujaApp> {
         KpCalendarScreen.route: (_) => const KpCalendarScreen(),
         ExploreScreen.route: (_) => const ExploreScreen(),
         VedicAudioScreen.route: (_) => const VedicAudioScreen(),
+        BhaktiSangeetScreen.route: (_) => const BhaktiSangeetScreen(),
+        SanctumChadhavaScreen.route: (_) => const SanctumChadhavaScreen(),
         SpiritualShortsScreen.route: (_) => const SpiritualShortsScreen(),
       },
       onGenerateRoute: (settings) {
@@ -402,6 +406,8 @@ extension OpNav on BuildContext {
   Future<void> openKpCalendar() => pushNamed(KpCalendarScreen.route);
   Future<void> openNotifications() => pushNamed(NotificationsScreen.route);
   Future<void> openVedicAudio() => pushNamed(VedicAudioScreen.route);
+  Future<void> openBhaktiSangeet() => pushNamed(BhaktiSangeetScreen.route);
+  Future<void> openSanctumChadhava() => pushNamed(SanctumChadhavaScreen.route);
   Future<void> openSpiritualShorts([int initialIndex = 0]) =>
       pushNamed(SpiritualShortsScreen.route, {'initialIndex': initialIndex});
 

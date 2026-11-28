@@ -9,6 +9,8 @@ import '../../../app.dart';
 import '../../../state/app_session.dart';
 import '../../theme/customer_theme.dart';
 
+import '../astrologer/astrologers_screen.dart';
+import '../mall/mall_screen.dart';
 import '../cosmic_ai_screen.dart';
 import '../history/history_screen.dart';
 import '../horoscope/daily_horoscope_screen.dart';
@@ -22,7 +24,6 @@ import '../profile/wallet_screen.dart';
 import '../puja/puja_detail_screen.dart';
 import '../puja/sankalp_vault_screen.dart';
 import '../kp/kp_calendar_screen.dart';
-import '../darshan/live_darshan_screen.dart';
 import '../charity/annadaan_screen.dart';
 import '../blog/blog_screen.dart';
 import '../explore/prashna_oracle_screen.dart';
@@ -115,6 +116,18 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
 
   void _goToTab(int tabIndex) {
     MainShellScope.of(context)?.selectTab(tabIndex);
+  }
+
+  void _goToAstrologers() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AstrologersScreen()),
+    );
+  }
+
+  void _goToMall() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MallScreen()),
+    );
   }
 
   @override
@@ -330,21 +343,21 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         tag: isHi ? 'विशेष पर्व' : 'Most Popular',
         color: const Color(0xFFB45309),
         bg: const Color(0xFFFEF3C7),
-        onTap: () => _goToTab(2),
+        onTap: () => _goToTab(1),
       ),
       (
         label: isHi ? '🌊 काशी १०८ दीपदान' : '🌊 Kashi 108 Deepdaan',
         tag: isHi ? 'देव दीपावली' : 'Dev Deepawali',
         color: const Color(0xFF1D4ED8),
         bg: const Color(0xFFDBEAFE),
-        onTap: () => _goToTab(2),
+        onTap: () => _goToTab(1),
       ),
       (
         label: isHi ? '🌕 करवा चौथ अखंड सुहाग' : '🌕 Karwa Chauth Vrat',
         tag: isHi ? 'व्रत कथा' : 'Vrat Katha',
         color: const Color(0xFFBE185D),
         bg: const Color(0xFFFCE7F3),
-        onTap: () => _goToTab(2),
+        onTap: () => _goToTab(1),
       ),
       (
         label: isHi ? '🌾 काशी गो-सेवा एवं अन्नदान' : '🌾 Kashi Gau Seva (₹51)',
@@ -705,7 +718,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
       child: Column(
         children: [
           GestureDetector(
-            onTap: () => _goToTab(1), // Jump to Consult tab (index 1)
+            onTap: _goToAstrologers, // Open Astrologers consultation directory
             child: Container(
               height: 48,
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -882,7 +895,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         icon: Icons.brightness_high_rounded,
         image: 'https://onlinepuja.live/public/storage/puja_images/puja_1764232697222466223.webp',
         gradient: const [Color(0xFF9A3412), Color(0xFFC2410C), Color(0xFFEA580C)],
-        onTap: () => _goToTab(2), // Puja tab (index 2)
+        onTap: () => _goToTab(1), // Puja tab (index 1)
       ),
       (
         title: isHi ? 'प्रामाणिक ऑनलाइन पूजा एवं हवन' : 'Authentic Online Puja & Hawan',
@@ -894,7 +907,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         icon: Icons.local_fire_department_rounded,
         image: 'https://onlinepuja.live/public/storage/puja_images/puja_17642331041781434446.png',
         gradient: const [Color(0xFF7F1D1D), Color(0xFF991B1B), Color(0xFFDC2626)],
-        onTap: () => _goToTab(2), // Puja tab (index 2)
+        onTap: () => _goToTab(1), // Puja tab (index 1)
       ),
       (
         title: isHi ? 'वैदिक आचार्यों से सटीक परामर्श' : 'Accurate Predictions by Vedic Astrologers',
@@ -906,7 +919,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         icon: Icons.self_improvement_rounded,
         image: 'https://onlinepuja.live/public/storage/puja_images/puja_17642330451605364386.jpg',
         gradient: const [Color(0xFF3B0764), Color(0xFF581C87), Color(0xFF7E22CE)],
-        onTap: () => _goToTab(1), // Consult tab (index 1)
+        onTap: _goToAstrologers, // Consult Astrologers
       ),
       (
         title: isHi ? '24/7 लाइव मंदिर दर्शन एवं आरती' : '24/7 Live Sanctum Darshan & Aarti',
@@ -918,7 +931,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         icon: Icons.temple_hindu_rounded,
         image: 'https://onlinepuja.live/public/storage/brain_media/brain_NBw7PwNZxf2gqejbRd_940x627.jpg',
         gradient: const [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F766E)],
-        onTap: () => Navigator.of(context).pushNamed(LiveDarshanScreen.route),
+        onTap: () => _goToTab(2), // Mandir / Sanctum tab
       ),
       (
         title: isHi ? 'वैदिक भण्डार एवं सिद्ध रुद्राक्ष' : 'Sacred Store & Energized Rudraksha',
@@ -930,7 +943,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
         icon: Icons.storefront_rounded,
         image: 'https://onlinepuja.live/public/storage/puja_images/puja_1764232697222466223.webp',
         gradient: const [Color(0xFF14532D), Color(0xFF166534), Color(0xFF15803D)],
-        onTap: () => _goToTab(3), // Vedic Store tab (index 3)
+        onTap: _goToMall, // Vedic Store
       ),
     ];
 
@@ -949,7 +962,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                 final imageUrl = rb['bannerImage']?.toString() ?? '';
                 if (imageUrl.isNotEmpty) {
                   return GestureDetector(
-                    onTap: () => _goToTab(2), // Navigate to Puja tab
+                    onTap: () => _goToTab(1), // Navigate to Puja tab
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       decoration: BoxDecoration(
@@ -1776,7 +1789,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                   ),
                   const SizedBox(width: 8),
                   GestureDetector(
-                    onTap: () => _goToTab(1), // Consult / Astrologers tab (index 1)
+                    onTap: _goToAstrologers,
                     child: Text(
                       '${AppStrings.viewAll} (${list.length}) →',
                       style: const TextStyle(
@@ -2013,7 +2026,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => _goToTab(2), // Puja tab (index 2)
+                    onTap: () => _goToTab(1), // Puja tab (index 1)
                     child: Text(
                       '${AppStrings.viewAll} →',
                       style: const TextStyle(
@@ -2249,7 +2262,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
               title: Text(isHi ? 'ज्योतिषी परामर्श (चैट / कॉल)' : 'Consult Astrologers'),
               onTap: () {
                 Navigator.pop(context);
-                _goToTab(1);
+                _goToAstrologers();
               },
             ),
             ListTile(
@@ -2257,15 +2270,23 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
               title: Text(isHi ? 'पूजा एवं हवन बुक करें' : 'Book a Puja'),
               onTap: () {
                 Navigator.pop(context);
-                _goToTab(2);
+                _goToTab(1);
               },
             ),
             ListTile(
               leading: const Icon(Icons.temple_hindu_rounded),
-              title: Text(isHi ? 'लाइव मंदिर दर्शन' : 'Live Temple Darshan'),
+              title: Text(isHi ? 'मंदिर व पवित्र चढ़ावा' : 'Temple & Sacred Chadhava'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.of(context).pushNamed(LiveDarshanScreen.route);
+                _goToTab(2);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.music_note_rounded),
+              title: Text(isHi ? 'भक्ति संगीत व भजन' : 'Bhakti Sangeet & Bhajan'),
+              onTap: () {
+                Navigator.pop(context);
+                _goToTab(3);
               },
             ),
             ListTile(
@@ -2273,7 +2294,7 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
               title: Text(isHi ? 'वैदिक भण्डार (रुद्राक्ष, रत्न व सामग्री)' : 'Sacred Store (Rudraksha & Gems)'),
               onTap: () {
                 Navigator.pop(context);
-                _goToTab(3);
+                _goToMall();
               },
             ),
             ListTile(
