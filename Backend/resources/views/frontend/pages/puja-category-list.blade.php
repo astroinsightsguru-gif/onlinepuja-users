@@ -157,7 +157,7 @@
     <div class="puja-card-custom">
         @php
             $image = $category->image;
-            $firstImage = !empty($image) ? $image : 'path/to/default/image.jpg';
+            $firstImage = !empty($image) ? $image : 'public/frontend/homeimage/360.png';
             $imageSrc = Str::startsWith($firstImage, ['http://','https://']) ? $firstImage : asset($firstImage);
         @endphp
 

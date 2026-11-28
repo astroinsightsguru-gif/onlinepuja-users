@@ -35,7 +35,7 @@
                     @foreach ($pujarecommend as $clist)
                     <?php 
                             $images = json_decode($clist->puja_images);
-                            $firstImage = !empty($images) ? $images[0] : 'path/to/default/image.jpg';
+                            $firstImage = !empty($images) ? $images[0] : 'build/assets/images/person.png';
                             // dd($images);
                         ?>
                         <tr class="intro-x">

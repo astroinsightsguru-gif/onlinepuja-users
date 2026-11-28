@@ -230,7 +230,7 @@
             if($startDatetime && $endDatetime && $startDatetime->eq($endDatetime)) continue;
 
             $images = $puja->puja_images;
-            $firstImage = !empty($images) ? $images[0] : 'path/to/default/image.jpg';
+            $firstImage = !empty($images) ? $images[0] : 'public/frontend/homeimage/360.png';
             $imageSrc = Str::startsWith($firstImage, ['http://','https://']) ? $firstImage : asset($firstImage);
 
             $startDateDisplay = $startDatetime ? $startDatetime->format('j M, D') : 'Date not available';

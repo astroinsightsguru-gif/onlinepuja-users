@@ -28,9 +28,30 @@ class PujaController extends Controller
         try {
             $pujaCategory = PujaCategory::where('isActive', 1)->get();
 
-            // Convert image paths to full URL
+            // Verified 200 OK sacred Vedic category images
+            $categoryFallbacks = [
+                1  => 'https://onlinepuja.live/public/storage/brain_media/brain_UggSzg4YoXyyO7ePfv_940x627.jpg',
+                2  => 'https://onlinepuja.live/public/storage/brain_media/brain_S2GwG7tPc87uMlcAeM_940x627.jpg',
+                3  => 'https://onlinepuja.live/public/storage/brain_media/brain_TZjr8HWEFQHtdO2zyn_940x627.jpg',
+                4  => 'https://onlinepuja.live/public/storage/brain_media/brain_kPjZPlDTdbv3GCv2wS_1024x1024.jpg',
+                5  => 'https://onlinepuja.live/public/storage/pujaCategory/pujaCategory_5_1764232801.jpg',
+                6  => 'https://onlinepuja.live/public/storage/pujaCategory/pujaCategory_6_1764232830.png',
+                7  => 'https://onlinepuja.live/public/storage/pujaCategory/pujaCategory_7_1764232867.jpg',
+                8  => 'https://onlinepuja.live/public/storage/brain_media/brain_50wl7KY3nnT2jSnsnF_940x627.jpg',
+                9  => 'https://onlinepuja.live/public/storage/brain_media/brain_R1RC6DtXvUJS7v3GJd_940x627.jpg',
+                10 => 'https://onlinepuja.live/public/storage/brain_media/brain_GFb49381IDqvcIOJzp_940x627.jpg',
+                11 => 'https://onlinepuja.live/public/storage/brain_media/brain_dIuvZYDuuGALCxuEJd_940x627.jpg',
+                12 => 'https://onlinepuja.live/public/storage/brain_media/brain_5NY2JcMWHprAIADLpK_940x627.jpg',
+                13 => 'https://onlinepuja.live/public/storage/brain_media/brain_u38hGyJyley0LgWAln_940x627.jpg',
+                14 => 'https://onlinepuja.live/public/storage/brain_media/brain_EChhsPGJdQb5BCADsk_940x627.jpg',
+                15 => 'https://onlinepuja.live/public/storage/brain_media/brain_50wl7KY3nnT2jSnsnF_940x627.jpg',
+            ];
+
+            // Convert image paths to full URL with verified 200 OK fallbacks
             foreach ($pujaCategory as $category) {
-                if ($category->image) {
+                if (empty($category->image) || str_contains($category->image, 'images/pujaCategory_') || str_contains($category->image, 'default/image')) {
+                    $category->image = $categoryFallbacks[$category->id] ?? 'https://onlinepuja.live/public/frontend/homeimage/360.png';
+                } elseif (!str_starts_with($category->image, 'http://') && !str_starts_with($category->image, 'https://')) {
                     $category->image = asset($category->image);
                 }
             }

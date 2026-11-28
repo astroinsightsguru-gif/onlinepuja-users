@@ -39,9 +39,20 @@ class ProductCategoryController extends Controller
 
         $productCategoryList = $productCategory->get();
 
-        // ✅ Convert categoryImage to full URL
+        // Convert categoryImage to full URL with verified 200 OK fallbacks
+        $prodFallbacks = [
+            6  => 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80', // Gemstone
+            32 => 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?auto=format&fit=crop&w=600&q=80', // Mala Bracelets
+            33 => 'https://images.unsplash.com/photo-1606293926075-69a00dbfde81?auto=format&fit=crop&w=600&q=80', // Idols
+            39 => 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80', // Books
+        ];
+
         foreach ($productCategoryList as $category) {
-            $category->categoryImage = $category->categoryImage ? asset($category->categoryImage) : null;
+            if (empty($category->categoryImage) || str_contains($category->categoryImage, 'images/productCategory_') || str_contains($category->categoryImage, 'catimg_1764221173')) {
+                $category->categoryImage = $prodFallbacks[$category->id] ?? 'https://onlinepuja.live/public/frontend/homeimage/360.png';
+            } elseif (!str_starts_with($category->categoryImage, 'http://') && !str_starts_with($category->categoryImage, 'https://')) {
+                $category->categoryImage = asset($category->categoryImage);
+            }
         }
 
         return response()->json([
