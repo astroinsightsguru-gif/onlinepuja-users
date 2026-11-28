@@ -12,6 +12,7 @@ class TempleFeed {
   final String timing;
   final String thumbnailUrl;
   final String streamUrl;
+  final String? officialWebUrl;
   final String description;
   final bool isActive;
   final int viewerCount;
@@ -26,6 +27,7 @@ class TempleFeed {
     required this.timing,
     required this.thumbnailUrl,
     required this.streamUrl,
+    this.officialWebUrl,
     required this.description,
     this.isActive = true,
     this.viewerCount = 1420,
@@ -41,6 +43,7 @@ class TempleFeed {
         'timing': timing,
         'thumbnailUrl': thumbnailUrl,
         'streamUrl': streamUrl,
+        'officialWebUrl': officialWebUrl,
         'description': description,
         'isActive': isActive,
         'viewerCount': viewerCount,
@@ -56,6 +59,7 @@ class TempleFeed {
         timing: json['timing'] as String? ?? '',
         thumbnailUrl: json['thumbnailUrl'] as String? ?? '',
         streamUrl: json['streamUrl'] as String? ?? '',
+        officialWebUrl: json['officialWebUrl'] as String?,
         description: json['description'] as String? ?? '',
         isActive: json['isActive'] as bool? ?? true,
         viewerCount: (json['viewerCount'] as num?)?.toInt() ?? 1200,
@@ -71,6 +75,7 @@ class TempleFeed {
     String? timing,
     String? thumbnailUrl,
     String? streamUrl,
+    String? officialWebUrl,
     String? description,
     bool? isActive,
     int? viewerCount,
@@ -85,6 +90,7 @@ class TempleFeed {
         timing: timing ?? this.timing,
         thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
         streamUrl: streamUrl ?? this.streamUrl,
+        officialWebUrl: officialWebUrl ?? this.officialWebUrl,
         description: description ?? this.description,
         isActive: isActive ?? this.isActive,
         viewerCount: viewerCount ?? this.viewerCount,
@@ -379,6 +385,25 @@ class SocialContentGenerator {
         '✨ *OnlinePuja.live - भारत का पावन मंदिर दर्शन एवं वैदिक सेवा पोर्टल*';
   }
 
+  /// Formatted Aarti Deepam Offering blessing share.
+  static String formatDeepamShare({
+    required String devoteeName,
+    required String aartiName,
+    required String gotra,
+    required String streamUrl,
+  }) {
+    return '🪔 *हर हर महादेव! पावन दीपदान संपन्न*\n'
+        '────────────────────\n'
+        '🕉️ *यजमान:* $devoteeName\n'
+        '🔱 *गोत्र:* $gotra\n'
+        '✨ *पावन आरती:* $aartiName\n'
+        '🪔 *संकल्प:* ₹11 पावन दीप सेवा अर्पित\n'
+        '────────────────────\n'
+        'घर बैठे श्री काशी विश्वनाथ एवं महा गंगा आरती का लाइव दर्शन करें व दीपदान करें:\n'
+        '$streamUrl\n\n'
+        '📲 *OnlinePuja.live - 24/7 लाइव गर्भगृह दर्शन व पूजा पोर्टल*';
+  }
+
   /// Devotee viral referral invite message.
   static String formatReferralInvite({
     required String devoteeName,
@@ -445,14 +470,15 @@ class GrowthAiOsService extends ChangeNotifier {
       name: 'Shri Kashi Vishwanath Jyotirlinga',
       deity: 'Lord Shiva',
       location: 'Varanasi, Uttar Pradesh',
-      timing: 'Mangala 3:00 AM • Bhog 12:00 PM • Sandhya 7:00 PM',
+      timing: 'Mangala 3:00 AM • Bhog 11:30 AM • Sandhya 7:00 PM • Shayan 9:00 PM',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80',
       streamUrl: 'https://www.youtube.com/@ShriKashiVishwanathTempleTrust/live',
+      officialWebUrl: 'https://shrikashivishwanath.org/frontend/home/livedarshan',
       description:
-          'Official Live Sanctum Darshan of the first sacred Jyotirlinga on the holy banks of river Ganga. Witness daily Vedic Abhishek and Maha Sandhya Aarti.',
+          'Official Live Sanctum Darshan of the first sacred Jyotirlinga on the holy banks of river Ganga. Witness daily Mangala Aarti (3:00 AM) and Vedic Abhishek directly from Kashi Vishwanath Dham.',
       viewerCount: 3820,
-      chadhavaMinPrice: 51,
+      chadhavaMinPrice: 11,
     ),
     TempleFeed(
       id: 'ganga_aarti',
@@ -463,10 +489,11 @@ class GrowthAiOsService extends ChangeNotifier {
       thumbnailUrl:
           'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=1200&q=80',
       streamUrl: 'https://www.youtube.com/@GangaAartiVaranasiOfficial/live',
+      officialWebUrl: 'https://www.gangasevanidhi.org/',
       description:
-          'The world-renowned Grand Sunset Aarti with sacred multi-tiered brass deepams, rhythmic shankha naad, and vedic Vedic hymns.',
+          'The world-renowned Grand Sunset Aarti with sacred multi-tiered brass deepams, rhythmic shankha naad, and vedic hymns on the holy Dashashwamedh Ghat.',
       viewerCount: 5140,
-      chadhavaMinPrice: 21,
+      chadhavaMinPrice: 11,
     ),
     TempleFeed(
       id: 'mahakal',
