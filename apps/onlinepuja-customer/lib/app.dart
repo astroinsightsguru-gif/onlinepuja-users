@@ -132,12 +132,68 @@ class _OnlinePujaAppState extends State<OnlinePujaApp> {
         SpiritualShortsScreen.route: (_) => const SpiritualShortsScreen(),
       },
       onGenerateRoute: (settings) {
+        final uri = Uri.tryParse(settings.name ?? '') ?? Uri();
+        final rawPath = uri.path.isNotEmpty ? uri.path : (settings.name ?? '');
+        final path = rawPath.endsWith('/') && rawPath.length > 1
+            ? rawPath.substring(0, rawPath.length - 1)
+            : rawPath;
+        final queryParams = uri.queryParameters;
         final args = settings.arguments;
-        Map<String, dynamic> map() =>
-            args is Map<String, dynamic> ? args : const {};
+
+        Map<String, dynamic> map() {
+          final m = <String, dynamic>{...queryParams};
+          if (args is Map<String, dynamic>) {
+            m.addAll(args);
+          }
+          return m;
+        }
+
         int asInt(dynamic v, [int fallback = 0]) =>
             v is int ? v : (v is num ? v.toInt() : (int.tryParse(v?.toString() ?? '') ?? fallback));
-        switch (settings.name) {
+
+        if (path.startsWith('/puja-details/')) {
+          final slugOrId = path.replaceFirst('/puja-details/', '');
+          final parsedId = int.tryParse(slugOrId);
+          return MaterialPageRoute(
+            builder: (_) => PujaDetailScreen(
+              puja: Puja(
+                id: parsedId,
+                slug: parsedId == null ? slugOrId : null,
+                title: map()['title']?.toString() ?? 'Vedic Sacred Puja',
+              ),
+            ),
+            settings: RouteSettings(name: path, arguments: map()),
+          );
+        }
+
+        switch (path) {
+          case LiveDarshanScreen.route:
+            final m = map();
+            final feedId = m['feed']?.toString() ?? m['feedId']?.toString();
+            return MaterialPageRoute(
+              builder: (_) => LiveDarshanScreen(initialFeedId: feedId),
+              settings: RouteSettings(name: path, arguments: m),
+            );
+          case PujaListScreen.route:
+            return MaterialPageRoute(
+              builder: (_) => const PujaListScreen(),
+              settings: RouteSettings(name: path, arguments: map()),
+            );
+          case PanchangScreen.route:
+            return MaterialPageRoute(
+              builder: (_) => const PanchangScreen(),
+              settings: RouteSettings(name: path, arguments: map()),
+            );
+          case ExploreScreen.route:
+            return MaterialPageRoute(
+              builder: (_) => const ExploreScreen(),
+              settings: RouteSettings(name: path, arguments: map()),
+            );
+          case '/astrologers':
+            return MaterialPageRoute(
+              builder: (_) => const MainShell(),
+              settings: RouteSettings(name: path, arguments: map()),
+            );
           case AstrologerDetailScreen.route:
             return MaterialPageRoute(
               builder: (_) =>
@@ -258,11 +314,13 @@ class _OnlinePujaAppState extends State<OnlinePujaApp> {
             }
             break;
           case SpiritualShortsScreen.route:
+            final m = map();
             final idx = args is int
                 ? args
-                : (args is Map<String, dynamic> ? asInt(args['initialIndex'] ?? args['index']) : 0);
+                : asInt(m['initialIndex'] ?? m['index'] ?? 0);
             return MaterialPageRoute(
               builder: (_) => SpiritualShortsScreen(initialIndex: idx),
+              settings: RouteSettings(name: path, arguments: m),
             );
         }
         return MaterialPageRoute(builder: (_) => const MainShell());
