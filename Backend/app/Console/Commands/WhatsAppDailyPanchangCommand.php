@@ -308,11 +308,17 @@ class WhatsAppDailyPanchangCommand extends Command
         $lines[] = "🌿 *आज का शुभ चौघड़िया:*";
         $lines[] = "{$choghadiya}";
         $lines[] = "";
-        $lines[] = "━━━━━━━ ✦ 🪔 ✦ ━━━━━━━\n🛕 *आज का पावन काशी विश्वनाथ संकल्प:*";
-        $lines[] = "काशी विश्वनाथ व दशाश्वमेध घाट पर अपने गोत्र संकल्प से दीपदान व रुद्राभिषेक पूजा बुक करें:";
+        $lines[] = "━━━━━━━ ✦ 🪔 ✦ ━━━━━━━\n🛕 *आज का पावन संकल्प व दर्शन:*";
+        $lines[] = "• 🔴 *24x7 लाइव मंदिर दर्शन व मंगला आरती:*";
+        $lines[] = "👉 https://onlinepuja.live/live-darshan";
+        $lines[] = "• 🔮 *आचार्य जी से 5 मिनट निःशुल्क परामर्श व कुंडली:*";
+        $lines[] = "👉 https://onlinepuja.live/astrologers";
+        $lines[] = "• 📿 *काशी विश्वनाथ नाम-गोत्र संकल्प पूजा:*";
         $lines[] = "👉 https://onlinepuja.live/pujas";
         $lines[] = "";
-        
+        $lines[] = "📲 *OnlinePuja मोबाइल ऐप डाउनलोड करें (दैनिक पंचांग, लाइव दर्शन व राशिफल):*";
+        $lines[] = "👉 https://onlinepuja.live/download";
+        $lines[] = "";
         $lines[] = "_(दैनिक पंचांग रोकने हेतु STOP लिखकर भेजें)_";
 
         return implode("\n", $lines);

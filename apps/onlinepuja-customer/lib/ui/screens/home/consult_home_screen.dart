@@ -678,8 +678,10 @@ class _ConsultHomeScreenState extends State<ConsultHomeScreen> {
                 },
                 icon: const Icon(Icons.local_fire_department_rounded, size: 16),
                 label: Text(
-                  isHi ? 'निर्देशित संकल्प पूजा अभी बुक करें' : 'Book Prescribed Sankalp Puja Now',
+                  isHi ? 'संकल्प पूजा बुक करें' : 'Book Sankalp Puja',
                   style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),

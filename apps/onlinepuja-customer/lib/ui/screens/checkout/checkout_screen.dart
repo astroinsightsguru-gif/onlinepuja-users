@@ -393,7 +393,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       : Text(
                           widget.puja != null
                               ? (isHi
-                                  ? 'दक्षिणा अर्पित करें एवं संकल्प लें · $currency${_price.toStringAsFixed(0)}'
+                                  ? 'संकल्प लें · $currency${_price.toStringAsFixed(0)}'
                                   : '${AppStrings.placeOrder} · $currency${_price.toStringAsFixed(0)}')
                               : '${AppStrings.placeOrder} · $currency${_price.toStringAsFixed(0)}',
                           style: const TextStyle(

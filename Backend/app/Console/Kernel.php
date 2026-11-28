@@ -274,9 +274,9 @@ class Kernel extends ConsoleKernel
             ->name('sitemap_generate_evening')
             ->withoutOverlapping();
 
-        // 🕉️ WHATSAPP DEVOTIONAL ENGINE: Daily Hindi Panchang & 12-Rashi Broadcast (Daily 06:30 AM IST)
+        // 🕉️ WHATSAPP DEVOTIONAL ENGINE: Daily Hindi Panchang & 12-Rashi Broadcast (Daily 04:00 AM IST - Brahma Muhurta)
         $schedule->command('whatsapp:daily-panchang-broadcast --dispatch')
-            ->dailyAt('06:30')
+            ->dailyAt('04:00')
             ->name('whatsapp_daily_panchang_broadcast')
             ->withoutOverlapping();
     }

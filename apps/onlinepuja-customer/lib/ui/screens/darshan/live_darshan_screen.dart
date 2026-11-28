@@ -916,7 +916,7 @@ class _LiveDarshanScreenState extends State<LiveDarshanScreen>
                 onPressed: _showChadhavaSheet,
                 icon: const Icon(Icons.volunteer_activism_rounded, size: 15),
                 label: Text(
-                  'Offer Chadhava ₹${_selectedFeed.chadhavaMinPrice}',
+                  'चढ़ावा ₹${_selectedFeed.chadhavaMinPrice}',
                   style: const TextStyle(
                       fontSize: 12, fontWeight: FontWeight.bold),
                 ),

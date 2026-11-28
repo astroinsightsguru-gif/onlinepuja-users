@@ -401,10 +401,10 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
         const SizedBox(height: 10),
         _actionTile(
           icon: Icons.chat_bubble_rounded,
-          title: isHi ? 'चैट परामर्श आरंभ करें' : 'Start Chat Consultation',
+          title: isHi ? 'चैट परामर्श' : 'Chat Consultation',
           subtitle: a.isChatOnline
-              ? (isHi ? 'आचार्य जी से सीधी त्वरित बातचीत' : 'Instant live conversation with astrologer')
-              : (isHi ? 'आचार्य जी अभी ऑफलाइन हैं' : 'Astrologer is currently offline'),
+              ? (isHi ? 'त्वरित व गोपनीय बातचीत' : 'Instant live chat')
+              : (isHi ? 'आचार्य जी अभी ऑफलाइन हैं' : 'Currently offline'),
           price: isFree
               ? (isHi ? 'निःशुल्क' : 'FREE')
               : '₹${a.charge.toStringAsFixed(0)}/${isHi ? 'मि' : 'min'}',
@@ -423,10 +423,10 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
         const SizedBox(height: 10),
         _actionTile(
           icon: Icons.phone_rounded,
-          title: isHi ? 'ऑडियो कॉल पर परामर्श' : 'Audio Call Consultation',
+          title: isHi ? 'ऑडियो कॉल' : 'Audio Call',
           subtitle: a.isCallOnline
-              ? (isHi ? 'गोपनीय व स्पष्ट आध्यात्मिक वॉयस कॉल' : 'High-clarity private spiritual voice call')
-              : (isHi ? 'आचार्य जी अभी दूसरे यजमान से बात कर रहे हैं' : 'Astrologer is currently on another call'),
+              ? (isHi ? 'स्पष्ट व गोपनीय वॉयस कॉल' : 'Private voice call')
+              : (isHi ? 'आचार्य जी अभी व्यस्त हैं' : 'Currently busy'),
           price: '₹${a.charge.toStringAsFixed(0)}/${isHi ? 'मि' : 'min'}',
           isFree: false,
           isOnline: a.isCallOnline,
@@ -438,10 +438,10 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
         const SizedBox(height: 10),
         _actionTile(
           icon: Icons.videocam_rounded,
-          title: isHi ? 'प्रत्यक्ष वीडियो परामर्श' : 'Live Video Consultation',
+          title: isHi ? 'वीडियो परामर्श' : 'Video Consultation',
           subtitle: a.isCallOnline
-              ? (isHi ? 'सामने बैठकर मुखाकृति व कुंडली दर्शन' : 'Face-to-face face reading & Kundli analysis')
-              : (isHi ? 'वीडियो लाइन अभी उपलब्ध नहीं है' : 'Video line currently unavailable'),
+              ? (isHi ? 'मुखाकृति व कुंडली दर्शन' : 'Face & Kundli analysis')
+              : (isHi ? 'लाइन अभी उपलब्ध नहीं है' : 'Line unavailable'),
           price: '₹${(a.videoCallRate > 0 ? a.videoCallRate : a.charge * 1.5).toStringAsFixed(0)}/${isHi ? 'मि' : 'min'}',
           isFree: false,
           isOnline: a.isCallOnline,
@@ -455,8 +455,8 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
         const SizedBox(height: 10),
         _actionTile(
           icon: Icons.auto_awesome_rounded,
-          title: isHi ? 'आचार्य जी के AI स्वरूप से संवाद (24/7)' : 'Chat with $displayName\'s AI Twin (24/7)',
-          subtitle: isHi ? 'आचार्य जी की वेदोक्त शैली व उपायों पर आधारित • शून्य प्रतीक्षा' : 'Trained on exact Vedic Jyotish & Upay style • Zero wait',
+          title: isHi ? 'AI अवतार चैट (24/7)' : 'AI Twin Chat (24/7)',
+          subtitle: isHi ? 'वैदिक शैली • शून्य प्रतीक्षा' : 'Trained on Jyotish • Instant',
           price: '₹${(a.charge > 0 ? (a.charge * 0.5).clamp(5, 25) : 10).toStringAsFixed(0)}/${isHi ? 'मि' : 'min'}',
           isFree: false,
           isOnline: true,
@@ -650,7 +650,7 @@ class _AstrologerDetailScreenState extends State<AstrologerDetailScreen> {
                         Icon(isVideo ? Icons.videocam_rounded : Icons.phone_forwarded_rounded, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          isHi ? 'परामर्श कॉल प्रारंभ करें' : 'Start Consultation Call',
+                          isHi ? 'कॉल शुरू करें' : 'Start Call',
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                         ),
                       ],

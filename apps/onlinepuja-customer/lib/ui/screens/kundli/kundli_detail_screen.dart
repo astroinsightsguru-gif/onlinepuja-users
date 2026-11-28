@@ -412,7 +412,11 @@ class _KundliDetailScreenState extends State<KundliDetailScreen>
           margin: const EdgeInsets.only(bottom: 16),
           child: FilledButton.icon(
             icon: const Icon(Icons.shield_rounded, size: 18),
-            label: const Text('View All Vedic Scripture Dosha Remedies'),
+            label: const Text(
+              'दोष निवारण उपाय (Dosha Remedies)',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFD97706),
               padding: const EdgeInsets.symmetric(vertical: 12),
